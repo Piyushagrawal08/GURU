@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+/* ----------------------------------------------------------------------------
+   Beacon — warm light design system (not a generic dark theme)
+   Off-white canvas · warm ink · coral / indigo / mint accents · soft shadows
+---------------------------------------------------------------------------- */
+
+@theme {
+  --color-bg: #faf7f1;
+  --color-bg-tint: #f3eee4;
+  --color-surface: #ffffff;
+  --color-ink: #211c16;
+  --color-ink-soft: #4a4338;
+  --color-muted: #80766a;
+  --color-faint: #aaa093;
+  --color-line: #ece4d6;
+  --color-line-strong: #ddd2bf;
+
+  --color-coral: #ff6a4d;
+  --color-coral-deep: #e6502f;
+  --color-coral-soft: #ffe7df;
+
+  --color-indigo: #5650f0;
+  --color-indigo-soft: #e7e6ff;
+
+  --color-mint: #11b39a;
+  --color-mint-soft: #d6f5ee;
+
+  --color-amber: #f0a128;
+  --color-amber-soft: #fdeccd;
+
+  --color-violet: #9b59ec;
+  --color-violet-soft: #f0e5ff;
+
+  --shadow-soft: 0 1px 2px rgba(60, 45, 25, 0.04), 0 8px 24px -12px rgba(60, 45, 25, 0.18);
+  --shadow-lift: 0 2px 4px rgba(60, 45, 25, 0.05), 0 18px 40px -16px rgba(60, 45, 25, 0.28);
+
+  --radius-card: 18px;
+}
+
+@theme inline {
+  --font-sans: var(--font-jakarta);
+  --font-display: var(--font-fraunces);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100dvh;
+}
+
+/* Ambient warm gradient blobs behind everything */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.aurora::before,
+.aurora::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.55;
+}
+.aurora::before {
+  width: 46vw;
+  height: 46vw;
+  top: -14vw;
+  right: -10vw;
+  background: radial-gradient(circle at 30% 30%, #ffd9cd, transparent 70%);
+  animation: drift 22s ease-in-out infinite alternate;
+}
+.aurora::after {
+  width: 40vw;
+  height: 40vw;
+  bottom: -16vw;
+  left: -10vw;
+  background: radial-gradient(circle at 40% 40%, #dcdbff, transparent 70%);
+  animation: drift 26s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2vw, 3vw, 0) scale(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before,
+  .aurora::after {
+    animation: none;
+  }
+}
+
+/* Display font for the wordmark + section headings */
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+  font-optical-sizing: auto;
+}
+
+/* Custom scrollbar that fits the warm palette */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+  border-radius: 99px;
+  border: 3px solid var(--color-bg);
+}
+
+/* Nice focus ring */
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 2px solid var(--color-indigo);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
