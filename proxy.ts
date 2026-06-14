@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { SUPABASE_KEY, SUPABASE_URL, isSupabaseConfigured } from "./lib/supabase/env";
 
 /**
  * Next.js 16 renamed `middleware` to `proxy`. This keeps the Supabase auth
@@ -10,16 +11,13 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   // If env isn't configured yet, don't crash every request — just pass through.
-  if (
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  ) {
+  if (!isSupabaseConfigured) {
     return response;
   }
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    SUPABASE_URL!,
+    SUPABASE_KEY!,
     {
       cookies: {
         getAll() {

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import type { DailyLog, Item } from "@/lib/types";
 import Dashboard from "@/components/Dashboard";
 import SetupNotice from "@/components/SetupNotice";
@@ -7,10 +8,7 @@ import SetupNotice from "@/components/SetupNotice";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  if (
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  ) {
+  if (!isSupabaseConfigured) {
     return <SetupNotice />;
   }
 
