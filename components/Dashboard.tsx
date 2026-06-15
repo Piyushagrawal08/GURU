@@ -2,29 +2,26 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Search, LogOut, Library, CalendarRange, Star, Layers } from "lucide-react";
+import { Search, LogOut, Library, BarChart3, Star, Layers } from "lucide-react";
 import { signOut } from "@/app/actions";
 import {
   TYPE_META,
-  type DailyLog,
   type Item,
   type ItemType,
 } from "@/lib/types";
 import AddBar from "./AddBar";
 import ItemCard from "./ItemCard";
 import ItemModal from "./ItemModal";
-import Tracker from "./Tracker";
+import Insights from "./Insights";
 
-type Tab = "library" | "tracker" | "bookmarks";
+type Tab = "library" | "insights" | "bookmarks";
 const TYPES: ItemType[] = ["link", "repo", "pdf", "image", "note"];
 
 export default function Dashboard({
   items,
-  logs,
   email,
 }: {
   items: Item[];
-  logs: DailyLog[];
   email: string;
 }) {
   const [tab, setTab] = useState<Tab>("library");
@@ -91,8 +88,8 @@ export default function Dashboard({
         <Tabs tab={tab} setTab={setTab} counts={{ all: items.length, fav: favCount }} />
       </div>
 
-      {tab === "tracker" ? (
-        <Tracker items={items} logs={logs} onOpen={setOpen} />
+      {tab === "insights" ? (
+        <Insights items={items} />
       ) : (
         <div className="space-y-6">
           <AddBar />
@@ -154,7 +151,7 @@ export default function Dashboard({
 
           {/* Grid */}
           {filtered.length > 0 ? (
-            <motion.div layout className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <motion.div layout className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <AnimatePresence mode="popLayout">
                 {filtered.map((it) => (
                   <ItemCard key={it.id} item={it} onOpen={setOpen} />
@@ -183,7 +180,7 @@ function Tabs({
 }) {
   const defs: { id: Tab; label: string; icon: typeof Library; badge?: number }[] = [
     { id: "library", label: "Library", icon: Layers, badge: counts.all },
-    { id: "tracker", label: "21-day tracker", icon: CalendarRange },
+    { id: "insights", label: "Insights", icon: BarChart3 },
     { id: "bookmarks", label: "Bookmarks", icon: Star, badge: counts.fav },
   ];
   return (

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import type { DailyLog, Item } from "@/lib/types";
+import type { Item } from "@/lib/types";
 import Dashboard from "@/components/Dashboard";
 import SetupNotice from "@/components/SetupNotice";
 
@@ -18,10 +18,10 @@ export default async function Home() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: itemRows }, { data: logRows }] = await Promise.all([
-    supabase.from("items").select("*").order("created_at", { ascending: false }),
-    supabase.from("daily_logs").select("*"),
-  ]);
+  const { data: itemRows } = await supabase
+    .from("items")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   const items = (itemRows ?? []) as Item[];
 
@@ -42,11 +42,5 @@ export default async function Home() {
     }
   }
 
-  return (
-    <Dashboard
-      items={items}
-      logs={(logRows ?? []) as DailyLog[]}
-      email={user.email ?? ""}
-    />
-  );
+  return <Dashboard items={items} email={user.email ?? ""} />;
 }

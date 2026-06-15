@@ -12,6 +12,7 @@ import {
   StickyNote,
   Quote,
   ExternalLink,
+  CalendarDays,
 } from "lucide-react";
 import { toggleFavorite } from "@/app/actions";
 import { TYPE_META, type Item, type ItemType } from "@/lib/types";
@@ -23,6 +24,18 @@ const ICONS: Record<ItemType, typeof LinkIcon> = {
   image: ImageIcon,
   note: StickyNote,
 };
+
+const dateFmt = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
+function formatDate(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : dateFmt.format(d);
+}
 
 export default function ItemCard({
   item,
@@ -51,28 +64,24 @@ export default function ItemCard({
       className="group flex cursor-pointer flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-soft transition-shadow hover:shadow-lift"
     >
       {preview && item.type !== "note" && (
-        <div className="relative aspect-[16/9] overflow-hidden bg-bg-tint">
+        <div className="relative aspect-[2/1] overflow-hidden bg-bg-tint">
           <Image
             src={preview}
             alt=""
             fill
-            sizes="(max-width:768px) 100vw, 360px"
-            className={
-              item.type === "image"
-                ? "object-cover transition-transform duration-500 group-hover:scale-105"
-                : "object-cover transition-transform duration-500 group-hover:scale-105"
-            }
+            sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 280px"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
             unoptimized
           />
         </div>
       )}
 
-      <div className="flex flex-1 flex-col gap-3 p-4">
+      <div className="flex flex-1 flex-col gap-2 p-3.5">
         <div className="flex items-center justify-between">
           <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${meta.tw}`}
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${meta.tw}`}
           >
-            <Icon className="h-3 w-3" />
+            <Icon className="h-2.5 w-2.5" />
             {meta.label}
           </span>
 
@@ -88,32 +97,32 @@ export default function ItemCard({
             className="rounded-full p-1 text-faint transition hover:bg-amber-soft hover:text-amber"
           >
             <Star
-              className={`h-4 w-4 ${item.favorite ? "fill-amber text-amber" : ""}`}
+              className={`h-3.5 w-3.5 ${item.favorite ? "fill-amber text-amber" : ""}`}
             />
           </button>
         </div>
 
-        <h3 className="line-clamp-2 font-semibold leading-snug text-ink">
+        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-ink">
           {item.title || "Untitled"}
         </h3>
 
         {item.type === "note" && item.description && (
-          <p className="line-clamp-3 text-sm text-muted">{item.description}</p>
+          <p className="line-clamp-2 text-xs text-muted">{item.description}</p>
         )}
 
         {item.highlight && (
-          <p className="flex gap-1.5 rounded-lg bg-bg-tint px-2.5 py-2 text-xs italic text-ink-soft">
+          <p className="flex gap-1.5 rounded-lg bg-bg-tint px-2 py-1.5 text-[11px] italic text-ink-soft">
             <Quote className="h-3 w-3 shrink-0 text-coral" />
             <span className="line-clamp-2">{item.highlight}</span>
           </p>
         )}
 
         {item.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {item.tags.slice(0, 4).map((t) => (
+          <div className="flex flex-wrap gap-1">
+            {item.tags.slice(0, 3).map((t) => (
               <span
                 key={t}
-                className="rounded-md bg-bg-tint px-2 py-0.5 text-[11px] font-medium text-muted"
+                className="rounded-md bg-bg-tint px-1.5 py-0.5 text-[10px] font-medium text-muted"
               >
                 #{t}
               </span>
@@ -121,10 +130,11 @@ export default function ItemCard({
           </div>
         )}
 
-        <div className="mt-auto flex items-center gap-2 pt-1 text-xs text-faint">
-          {item.day != null && (
-            <span className="rounded-md bg-indigo-soft px-2 py-0.5 font-semibold text-indigo">
-              Day {item.day}
+        <div className="mt-auto flex items-center gap-2 pt-1 text-[11px] text-faint">
+          {formatDate(item.created_at) && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-indigo-soft px-1.5 py-0.5 font-semibold text-indigo">
+              <CalendarDays className="h-2.5 w-2.5" />
+              {formatDate(item.created_at)}
             </span>
           )}
           {item.domain && <span className="truncate">{item.domain}</span>}

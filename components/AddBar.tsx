@@ -2,14 +2,12 @@
 
 import { useRef, useState, useTransition } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Paperclip, Sparkles, X, Hash, CalendarDays } from "lucide-react";
+import { Paperclip, Sparkles, X, Hash } from "lucide-react";
 import { addItem } from "@/app/actions";
-import { TOTAL_DAYS } from "@/lib/types";
 
-export default function AddBar({ defaultDay }: { defaultDay?: number | null }) {
+export default function AddBar() {
   const [text, setText] = useState("");
   const [tags, setTags] = useState("");
-  const [day, setDay] = useState<string>(defaultDay ? String(defaultDay) : "");
   const [file, setFile] = useState<File | null>(null);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +30,6 @@ export default function AddBar({ defaultDay }: { defaultDay?: number | null }) {
     const fd = new FormData();
     fd.set("text", text);
     fd.set("tags", tags);
-    fd.set("day", day);
     if (file) fd.set("file", file);
     start(async () => {
       const res = await addItem(fd);
@@ -110,22 +107,6 @@ export default function AddBar({ defaultDay }: { defaultDay?: number | null }) {
                   placeholder="tags, comma-separated"
                   className="w-40 bg-transparent outline-none placeholder:text-faint"
                 />
-              </label>
-
-              <label className="flex items-center gap-1.5 rounded-lg border border-line bg-bg/50 px-2.5 py-1.5 text-sm text-ink-soft">
-                <CalendarDays className="h-3.5 w-3.5 text-muted" />
-                <select
-                  value={day}
-                  onChange={(e) => setDay(e.target.value)}
-                  className="bg-transparent outline-none"
-                >
-                  <option value="">No day</option>
-                  {Array.from({ length: TOTAL_DAYS }, (_, i) => i + 1).map((d) => (
-                    <option key={d} value={d}>
-                      Day {d}
-                    </option>
-                  ))}
-                </select>
               </label>
 
               <button
