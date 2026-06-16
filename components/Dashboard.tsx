@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Search, LogOut, Library, BarChart3, Star, Layers } from "lucide-react";
+import { Search, LogOut, Library, BarChart3, Star, Layers, Sparkles } from "lucide-react";
 import { signOut } from "@/app/actions";
 import {
   TYPE_META,
@@ -13,8 +13,9 @@ import AddBar from "./AddBar";
 import ItemCard from "./ItemCard";
 import ItemModal from "./ItemModal";
 import Insights from "./Insights";
+import ClaudeSkills from "./ClaudeSkills";
 
-type Tab = "library" | "insights" | "bookmarks";
+type Tab = "library" | "insights" | "skills" | "bookmarks";
 const TYPES: ItemType[] = ["link", "repo", "pdf", "image", "note"];
 
 export default function Dashboard({
@@ -90,6 +91,8 @@ export default function Dashboard({
 
       {tab === "insights" ? (
         <Insights items={items} />
+      ) : tab === "skills" ? (
+        <ClaudeSkills />
       ) : (
         <div className="space-y-6">
           <AddBar />
@@ -181,6 +184,7 @@ function Tabs({
   const defs: { id: Tab; label: string; icon: typeof Library; badge?: number }[] = [
     { id: "library", label: "Library", icon: Layers, badge: counts.all },
     { id: "insights", label: "Insights", icon: BarChart3 },
+    { id: "skills", label: "Claude Skills", icon: Sparkles },
     { id: "bookmarks", label: "Bookmarks", icon: Star, badge: counts.fav },
   ];
   return (

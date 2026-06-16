@@ -13,8 +13,9 @@ import {
   Quote,
   ExternalLink,
   CalendarDays,
+  Trash2,
 } from "lucide-react";
-import { toggleFavorite } from "@/app/actions";
+import { toggleFavorite, deleteItem } from "@/app/actions";
 import { TYPE_META, type Item, type ItemType } from "@/lib/types";
 
 const ICONS: Record<ItemType, typeof LinkIcon> = {
@@ -45,6 +46,7 @@ export default function ItemCard({
   onOpen: (item: Item) => void;
 }) {
   const [pending, start] = useTransition();
+  const [deleting, startDelete] = useTransition();
   const meta = TYPE_META[item.type];
   const Icon = ICONS[item.type];
 
@@ -85,21 +87,40 @@ export default function ItemCard({
             {meta.label}
           </span>
 
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              start(() => {
-                toggleFavorite(item.id, !item.favorite);
-              });
-            }}
-            disabled={pending}
-            aria-label={item.favorite ? "Remove bookmark" : "Bookmark"}
-            className="rounded-full p-1 text-faint transition hover:bg-amber-soft hover:text-amber"
-          >
-            <Star
-              className={`h-3.5 w-3.5 ${item.favorite ? "fill-amber text-amber" : ""}`}
-            />
-          </button>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                start(() => {
+                  toggleFavorite(item.id, !item.favorite);
+                });
+              }}
+              disabled={pending}
+              aria-label={item.favorite ? "Remove bookmark" : "Bookmark"}
+              className="rounded-full p-1 text-faint transition hover:bg-amber-soft hover:text-amber"
+            >
+              <Star
+                className={`h-3.5 w-3.5 ${item.favorite ? "fill-amber text-amber" : ""}`}
+              />
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!confirm("Delete this item permanently?")) return;
+                startDelete(() => {
+                  deleteItem(item.id);
+                });
+              }}
+              disabled={deleting}
+              aria-label="Delete"
+              className="rounded-full p-1 text-faint transition hover:bg-coral-soft hover:text-coral-deep disabled:opacity-40"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-ink">
