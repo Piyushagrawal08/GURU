@@ -151,11 +151,18 @@ export async function updateHighlight(id: string, highlight: string): Promise<Ac
 
 export async function updateItemFields(
   id: string,
-  fields: { title?: string; tags?: string[]; day?: number | null },
+  fields: {
+    title?: string;
+    description?: string;
+    tags?: string[];
+    day?: number | null;
+  },
 ): Promise<ActionResult> {
   const { supabase } = await requireUser();
   const patch: Record<string, unknown> = {};
   if (fields.title !== undefined) patch.title = fields.title.trim() || null;
+  if (fields.description !== undefined)
+    patch.description = fields.description.trim() || null;
   if (fields.tags !== undefined)
     patch.tags = Array.from(
       new Set(fields.tags.map((t) => t.trim().replace(/^#/, "").toLowerCase()).filter(Boolean)),

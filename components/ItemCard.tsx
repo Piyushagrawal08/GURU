@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toggleFavorite, deleteItem } from "@/app/actions";
 import { TYPE_META, type Item, type ItemType } from "@/lib/types";
+import { linkify } from "@/lib/linkify";
 
 const ICONS: Record<ItemType, typeof LinkIcon> = {
   link: LinkIcon,
@@ -128,7 +129,9 @@ export default function ItemCard({
         </h3>
 
         {item.type === "note" && item.description && (
-          <p className="line-clamp-2 text-xs text-muted">{item.description}</p>
+          <p className="line-clamp-2 text-xs text-muted">
+            {linkify(item.description)}
+          </p>
         )}
 
         {item.highlight && (

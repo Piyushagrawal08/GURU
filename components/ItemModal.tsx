@@ -3,13 +3,22 @@
 import { useState, useTransition } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
-import { X, Trash2, ExternalLink, Quote, Check, CalendarDays } from "lucide-react";
+import {
+  X,
+  Trash2,
+  ExternalLink,
+  Quote,
+  Check,
+  CalendarDays,
+  Pencil,
+} from "lucide-react";
 import {
   deleteItem,
   updateHighlight,
   updateItemFields,
 } from "@/app/actions";
 import { TYPE_META, type Item } from "@/lib/types";
+import { linkify } from "@/lib/linkify";
 
 const dateFmt = new Intl.DateTimeFormat(undefined, {
   weekday: "short",
@@ -34,8 +43,11 @@ export default function ItemModal({
 
 function ModalBody({ item, onClose }: { item: Item; onClose: () => void }) {
   const meta = TYPE_META[item.type];
+  const [title, setTitle] = useState(item.title ?? "");
+  const [description, setDescription] = useState(item.description ?? "");
   const [highlight, setHighlight] = useState(item.highlight ?? "");
   const [tags, setTags] = useState(item.tags.join(", "));
+  const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const savedOn =
     item.created_at && !Number.isNaN(new Date(item.created_at).getTime())
@@ -48,15 +60,24 @@ function ModalBody({ item, onClose }: { item: Item; onClose: () => void }) {
   const preview =
     item.type === "image" ? item.file_url : item.image_url || item.file_url;
 
+  function cancelEditing() {
+    setTitle(item.title ?? "");
+    setDescription(item.description ?? "");
+    setEditing(false);
+  }
+
   function save() {
     start(async () => {
       await Promise.all([
         updateHighlight(item.id, highlight),
         updateItemFields(item.id, {
+          title,
+          description,
           tags: tags.split(","),
         }),
       ]);
       setSaved(true);
+      setEditing(false);
       setTimeout(() => setSaved(false), 1800);
     });
   }
@@ -75,45 +96,78 @@ function ModalBody({ item, onClose }: { item: Item; onClose: () => void }) {
         exit={{ y: 40, opacity: 0, scale: 0.98 }}
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-line bg-surface shadow-lift sm:rounded-[var(--radius-card)]"
+        className="flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl border border-line bg-surface shadow-lift sm:max-h-[88vh] sm:rounded-[var(--radius-card)]"
       >
-        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+        <div className="flex items-center justify-between border-b border-line px-6 py-4">
           <span
             className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${meta.tw}`}
           >
             {meta.label}
           </span>
-          <button
-            onClick={onClose}
-            className="rounded-full p-1.5 text-muted transition hover:bg-bg-tint hover:text-ink"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => (editing ? cancelEditing() : setEditing(true))}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                editing
+                  ? "bg-bg-tint text-ink-soft hover:bg-bg"
+                  : "text-indigo hover:bg-indigo-soft"
+              }`}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              {editing ? "Cancel" : "Edit"}
+            </button>
+            <button
+              onClick={onClose}
+              className="rounded-full p-1.5 text-muted transition hover:bg-bg-tint hover:text-ink"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
-        <div className="space-y-5 p-5">
+        <div className="flex-1 space-y-5 overflow-y-auto p-6">
           {preview && item.type !== "note" && (
             <div className="relative aspect-video overflow-hidden rounded-xl bg-bg-tint">
               <Image
                 src={preview}
                 alt=""
                 fill
-                sizes="512px"
+                sizes="768px"
                 className="object-cover"
                 unoptimized
               />
             </div>
           )}
 
-          <h2 className="font-display text-2xl font-semibold leading-tight text-ink">
-            {item.title || "Untitled"}
-          </h2>
+          {editing ? (
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Title"
+              className="w-full rounded-lg border border-line bg-bg/50 px-3.5 py-2.5 font-display text-2xl font-semibold text-ink outline-none transition focus:border-indigo focus:bg-surface"
+            />
+          ) : (
+            <h2 className="font-display text-2xl font-semibold leading-tight text-ink">
+              {item.title || "Untitled"}
+            </h2>
+          )}
 
-          {item.description && (
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-soft">
-              {item.description}
-            </p>
+          {editing ? (
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={10}
+              placeholder="Write your note here… links you paste will become clickable once saved."
+              className="min-h-[30vh] w-full resize-y rounded-xl border border-line bg-bg/50 px-3.5 py-2.5 text-sm leading-relaxed text-ink outline-none transition placeholder:text-faint focus:border-indigo focus:bg-surface"
+            />
+          ) : (
+            item.description && (
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-soft">
+                {linkify(item.description)}
+              </p>
+            )
           )}
 
           {href && (
@@ -164,39 +218,39 @@ function ModalBody({ item, onClose }: { item: Item; onClose: () => void }) {
               <CalendarDays className="h-3.5 w-3.5" /> Saved on {savedOn}
             </p>
           )}
+        </div>
 
-          <div className="flex items-center gap-3 pt-1">
-            <button
-              onClick={save}
-              disabled={pending}
-              className="flex items-center gap-2 rounded-xl bg-ink px-5 py-2.5 text-sm font-semibold text-bg transition hover:bg-coral-deep disabled:opacity-50"
-            >
-              {saved ? (
-                <>
-                  <Check className="h-4 w-4" /> Saved
-                </>
-              ) : pending ? (
-                "Saving…"
-              ) : (
-                "Save changes"
-              )}
-            </button>
+        <div className="flex items-center gap-3 border-t border-line px-6 py-4">
+          <button
+            onClick={save}
+            disabled={pending}
+            className="flex items-center gap-2 rounded-xl bg-ink px-5 py-2.5 text-sm font-semibold text-bg transition hover:bg-coral-deep disabled:opacity-50"
+          >
+            {saved ? (
+              <>
+                <Check className="h-4 w-4" /> Saved
+              </>
+            ) : pending ? (
+              "Saving…"
+            ) : (
+              "Save changes"
+            )}
+          </button>
 
-            <button
-              onClick={() => {
-                if (!confirm("Delete this item permanently?")) return;
-                startDelete(async () => {
-                  await deleteItem(item.id);
-                  onClose();
-                });
-              }}
-              disabled={deleting}
-              className="ml-auto flex items-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-medium text-muted transition hover:bg-coral-soft hover:text-coral-deep"
-            >
-              <Trash2 className="h-4 w-4" />
-              {deleting ? "Deleting…" : "Delete"}
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              if (!confirm("Delete this item permanently?")) return;
+              startDelete(async () => {
+                await deleteItem(item.id);
+                onClose();
+              });
+            }}
+            disabled={deleting}
+            className="ml-auto flex items-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-medium text-muted transition hover:bg-coral-soft hover:text-coral-deep"
+          >
+            <Trash2 className="h-4 w-4" />
+            {deleting ? "Deleting…" : "Delete"}
+          </button>
         </div>
       </motion.div>
     </motion.div>
