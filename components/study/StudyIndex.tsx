@@ -73,26 +73,16 @@ export default function StudyIndex({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.28, delay: Math.min(i * 0.03, 0.3), ease: [0.22, 1, 0.36, 1] }}
               whileHover={{ y: -4 }}
-              className={d.featured && !query ? "sm:col-span-2 lg:col-span-3" : ""}
             >
               <Link
                 href={`/study/${d.slug}`}
-                className={`group flex h-full flex-col rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift ${
-                  d.featured && !query ? "bg-gradient-to-br from-indigo-soft/60 via-surface to-coral-soft/50" : ""
-                }`}
+                className="group flex h-full flex-col rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift"
               >
                 <div className="flex items-start gap-3">
                   <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl text-xl ${d.accent}`}>
                     {d.emoji}
                   </span>
-                  <div className="min-w-0">
-                    <h3 className="font-display text-lg font-semibold leading-snug text-ink">{d.title}</h3>
-                    {d.featured && (
-                      <span className="mt-0.5 inline-block rounded-md bg-indigo-soft px-1.5 py-0.5 text-[11px] font-semibold text-indigo">
-                        All guides in one · cross-guide search
-                      </span>
-                    )}
-                  </div>
+                  <h3 className="min-w-0 font-display text-lg font-semibold leading-snug text-ink">{d.title}</h3>
                 </div>
                 <p className="mt-3 line-clamp-3 flex-1 text-sm text-muted">{d.description}</p>
                 <div className="mt-4 flex items-center gap-3 text-xs text-faint">

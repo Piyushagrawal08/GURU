@@ -11,8 +11,6 @@ export interface StudyDoc {
   emoji: string;
   /** Tailwind classes for the emoji tile. */
   accent: string;
-  /** The all-in-one bundle gets a wide featured card. */
-  featured?: boolean;
 }
 
 export type HighlightColor = "yellow" | "green" | "pink" | "blue";
@@ -44,8 +42,7 @@ export interface StudyAnnotation {
 export type StudyCounts = Record<string, { highlights: number; notes: number }>;
 
 /** Look & feel per guide. Unknown (newly imported) guides fall back to a default. */
-const STYLE: Record<string, { emoji: string; accent: string; featured?: boolean }> = {
-  "ai-study-library": { emoji: "📚", accent: "bg-indigo-soft text-indigo", featured: true },
+const STYLE: Record<string, { emoji: string; accent: string }> = {
   "ai-fundamentals-notes": { emoji: "🧠", accent: "bg-violet-soft text-violet" },
   "claude-field-guide": { emoji: "✳️", accent: "bg-coral-soft text-coral-deep" },
   "docker-field-guide": { emoji: "🐳", accent: "bg-indigo-soft text-indigo" },
@@ -61,7 +58,7 @@ const DEFAULT_STYLE = { emoji: "📘", accent: "bg-bg-tint text-ink-soft" };
 
 export const STUDY_DOCS: StudyDoc[] = manifest
   .map((m) => ({ ...m, ...DEFAULT_STYLE, ...STYLE[m.slug] }))
-  .sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)) || a.title.localeCompare(b.title));
+  .sort((a, b) => a.title.localeCompare(b.title));
 
 export function getStudyDoc(slug: string): StudyDoc | undefined {
   return STUDY_DOCS.find((d) => d.slug === slug);

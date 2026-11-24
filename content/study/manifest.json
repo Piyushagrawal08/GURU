@@ -8,14 +8,6 @@
     "updatedAt": "2026-10-15T03:49:05.301Z"
   },
   {
-    "slug": "ai-study-library",
-    "title": "AI Study Library",
-    "description": "All of the AI study guides in one place: AI Fundamentals notes, MCP, LangChain v1, Claude and RAG field guides, with search across every guide.",
-    "source": "ai-study-library.html",
-    "bytes": 1133877,
-    "updatedAt": "2026-11-09T14:26:33.290Z"
-  },
-  {
     "slug": "claude-field-guide",
     "title": "Claude Field Guide",
     "description": "A practical study guide to using Claude well: every major feature of the Claude apps, Cowork, Claude Code and the API, plus prompting techniques, workflow recipes and ways to save usage.",

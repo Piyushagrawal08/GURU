@@ -36,7 +36,7 @@ Until then the guides are readable but highlighting is disabled (a banner says s
 ## Adding or updating guides
 
 1. Generate/update the HTML in `Desktop/AI Study Library` (top-level `.html` only;
-   sub-folders and PDFs are ignored).
+   sub-folders, PDFs and the local index `ai-study-library.html` are ignored).
 2. `npm run study:import` (or `npm run study:import -- "D:/other/folder"`).
 3. Commit `content/study` and push — Vercel redeploys automatically.
 

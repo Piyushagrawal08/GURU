@@ -6,7 +6,8 @@
  *   npm run study:import -- "D:/some/folder"  # custom source folder
  *
  * - Copies ONLY the top-level *.html files (sub-folders, PDFs etc. are ignored)
- *   into content/study/<slug>.html.
+ *   into content/study/<slug>.html. The local index page (ai-study-library.html)
+ *   is skipped — the app's Study index replaces it.
  * - Rewrites links between guides (e.g. "Docker%20Field%20Guide.html") so they
  *   open the matching in-app reader page instead of a missing local file.
  * - Points local-only runtime scripts (e.g. /_runtime/mermaid-*.js) at a CDN.
@@ -25,7 +26,10 @@ const OUT = path.join(ROOT, "content", "study");
 const SRC =
   process.argv[2] || process.env.STUDY_SRC || "C:/Users/piyus/Desktop/AI Study Library";
 
-const MERMAID_CDN = "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js";
+// Files that exist only for local browsing (the app's Study index replaces them).
+const EXCLUDE = new Set(["ai-study-library.html"]);
+
+const MERMAID_CDN ="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js";
 
 const slugify = (name) =>
   name
@@ -65,7 +69,7 @@ try {
 }
 
 const files = entries
-  .filter((e) => e.isFile() && /\.html?$/i.test(e.name))
+  .filter((e) => e.isFile() && /\.html?$/i.test(e.name) && !EXCLUDE.has(e.name.toLowerCase()))
   .map((e) => e.name)
   .sort((a, b) => a.localeCompare(b));
 
