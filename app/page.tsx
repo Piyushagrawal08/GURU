@@ -4,6 +4,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import type { Item } from "@/lib/types";
 import Dashboard from "@/components/Dashboard";
 import SetupNotice from "@/components/SetupNotice";
+import { getStudyCounts } from "@/lib/study-server";
 
 export const dynamic = "force-dynamic";
 
@@ -42,5 +43,7 @@ export default async function Home() {
     }
   }
 
-  return <Dashboard items={items} email={user.email ?? ""} />;
+  const study = await getStudyCounts(supabase);
+
+  return <Dashboard items={items} email={user.email ?? ""} study={study} />;
 }

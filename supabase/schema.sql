@@ -83,3 +83,38 @@ begin
     end if;
   end loop;
 end $$;
+
+-- ---------- study_annotations (Study Library highlights + notes) ------------
+-- One row per highlight (kind='highlight', anchored by the quoted text plus a
+-- little surrounding context) or free-form page note (kind='note').
+create table if not exists public.study_annotations (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid not null references auth.users (id) on delete cascade default auth.uid(),
+  doc          text not null,
+  kind         text not null check (kind in ('highlight','note')),
+  color        text,
+  quote        text,
+  prefix       text,
+  suffix       text,
+  start_offset int,
+  note         text,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+create index if not exists study_annotations_user_doc_idx
+  on public.study_annotations (user_id, doc);
+
+alter table public.study_annotations enable row level security;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'study_annotations'
+      and policyname = 'study_annotations_all_own'
+  ) then
+    create policy study_annotations_all_own on public.study_annotations
+      for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  end if;
+end $$;

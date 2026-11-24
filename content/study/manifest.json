@@ -1,0 +1,82 @@
+[
+  {
+    "slug": "ai-fundamentals-notes",
+    "title": "AI Fundamentals Notes",
+    "description": "Study notes on the basics of artificial intelligence: an interactive mind map of IBM Technology's AI Fundamentals playlist, with the topics beginners still need added in a separate colour.",
+    "source": "ai-fundamentals-notes.html",
+    "bytes": 362950,
+    "updatedAt": "2026-10-15T03:49:05.301Z"
+  },
+  {
+    "slug": "ai-study-library",
+    "title": "AI Study Library",
+    "description": "All of the AI study guides in one place: AI Fundamentals notes, MCP, LangChain v1, Claude and RAG field guides, with search across every guide.",
+    "source": "ai-study-library.html",
+    "bytes": 1133877,
+    "updatedAt": "2026-11-09T14:26:33.290Z"
+  },
+  {
+    "slug": "claude-field-guide",
+    "title": "Claude Field Guide",
+    "description": "A practical study guide to using Claude well: every major feature of the Claude apps, Cowork, Claude Code and the API, plus prompting techniques, workflow recipes and ways to save usage.",
+    "source": "claude-field-guide.html",
+    "bytes": 102652,
+    "updatedAt": "2026-10-11T08:00:27.520Z"
+  },
+  {
+    "slug": "docker-field-guide",
+    "title": "Docker Field Guide",
+    "description": "A complete study guide to Docker: from what a container is to multi-stage builds, Compose, security, CI/CD and a full production-style AI service.",
+    "source": "Docker Field Guide.html",
+    "bytes": 199987,
+    "updatedAt": "2026-11-24T17:50:26.775Z"
+  },
+  {
+    "slug": "fastapi-field-guide",
+    "title": "FastAPI Field Guide",
+    "description": "A complete study guide to building APIs with FastAPI, testing them with Postman and Newman, and designing your own data-driven automated API testing tool.",
+    "source": "FastAPI Field Guide.html",
+    "bytes": 335892,
+    "updatedAt": "2026-11-24T17:50:27.975Z"
+  },
+  {
+    "slug": "langchain-v1-field-guide",
+    "title": "LangChain v1 Field Guide",
+    "description": "A complete study guide to LangChain v1: from what it is to production agents with middleware, memory, RAG, MCP and LangGraph.",
+    "source": "langchain-v1-field-guide.html",
+    "bytes": 177453,
+    "updatedAt": "2026-11-24T17:50:54.528Z"
+  },
+  {
+    "slug": "mcp-field-guide",
+    "title": "MCP Field Guide",
+    "description": "A beginner-friendly study guide to the Model Context Protocol: what it is, how it works, building and testing a server, connecting it to Claude and LangChain, and running it safely.",
+    "source": "mcp-field-guide.html",
+    "bytes": 73135,
+    "updatedAt": "2026-11-24T17:50:56.263Z"
+  },
+  {
+    "slug": "pydantic-field-guide",
+    "title": "Pydantic Field Guide",
+    "description": "A complete study guide to Pydantic v2: models, fields, validators, serialization, configuration, TypeAdapter, JSON Schema, settings, FastAPI and LLM structured output, with a full capstone project.",
+    "source": "Pydantic Field Guide.html",
+    "bytes": 156373,
+    "updatedAt": "2026-11-24T17:50:19.916Z"
+  },
+  {
+    "slug": "rag-field-guide",
+    "title": "RAG Field Guide",
+    "description": "A senior engineer's deep dive into Retrieval-Augmented Generation: the full pipeline, every major RAG architecture from Naive to Graph, Agentic, Self-RAG and Federated, with reference repos, Python code and when to use which.",
+    "source": "rag-field-guide.html",
+    "bytes": 382219,
+    "updatedAt": "2026-11-09T14:25:56.309Z"
+  },
+  {
+    "slug": "vector-search-rag-notes",
+    "title": "Vector Search & RAG Notes",
+    "description": "Beginner-friendly notes for every topic in the source document, in the same order: embeddings, similarity, indexes, vector databases, parsing, chunking, RAG evaluation and production concerns. Each topic shows where i…",
+    "source": "Vector Search & RAG Notes (1).html",
+    "bytes": 191855,
+    "updatedAt": "2026-11-24T17:50:59.870Z"
+  }
+]

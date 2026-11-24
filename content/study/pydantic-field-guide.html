@@ -1,0 +1,2293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pydantic Field Guide</title>
+<meta name="description" content="A complete study guide to Pydantic v2: models, fields, validators, serialization, configuration, TypeAdapter, JSON Schema, settings, FastAPI and LLM structured output, with a full capstone project.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sticky chapter rail on the left, a single reading column on the right; diagrams and code may break wider inside their own scrollers. */
+:root{
+  --paper:#f5f7fa; --sheet:#ffffff; --ink:#141c2b; --ink-2:#4b5870; --rule:#d8dfea; --rule-2:#b9c3d3;
+  --accent:#b3165f; --accent-soft:#fbe7f0; --graph:#0d7a6b; --graph-soft:#dff3ef;
+  --warn:#9a5b00; --warn-soft:#fbf0dc; --bad:#a3312b; --bad-soft:#f9e5e3;
+  --code-bg:#0e1626; --code-ink:#dbe4f2; --code-com:#7b8aa3; --code-str:#9fdcae; --code-kw:#f2b874; --code-fn:#8fc7ff; --code-num:#e9a3c9;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0d121c; --sheet:#141b28; --ink:#e3e9f3; --ink-2:#9daac0; --rule:#29344a; --rule-2:#3e4b63;
+    --accent:#ff86b4; --accent-soft:#3a1627; --graph:#5cc9ac; --graph-soft:#16302a;
+    --warn:#f0b75a; --warn-soft:#33270f; --bad:#ff8f86; --bad-soft:#3a1b19;
+    --code-bg:#090e17; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0d121c; --sheet:#141b28; --ink:#e3e9f3; --ink-2:#9daac0; --rule:#29344a; --rule-2:#3e4b63;
+  --accent:#ff86b4; --accent-soft:#3a1627; --graph:#5cc9ac; --graph-soft:#16302a;
+  --warn:#f0b75a; --warn-soft:#33270f; --bad:#ff8f86; --bad-soft:#3a1b19;
+  --code-bg:#090e17; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65;margin:0}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.shell{display:grid;grid-template-columns:260px minmax(0,1fr);gap:48px;max-width:1240px;margin:0 auto;padding-inline:24px;padding-block:32px 96px}
+@media (max-width:900px){.shell{grid-template-columns:minmax(0,1fr);gap:16px;padding-inline:16px}}
+
+/* rail */
+.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;font-size:13.5px;padding-right:8px}
+.rail details{border:0}
+.rail summary{font-family:var(--display);font-weight:700;font-size:15px;cursor:pointer;list-style:none;padding-block:4px 10px;color:var(--ink)}
+.rail summary::-webkit-details-marker{display:none}
+.rail ol{list-style:none;margin:0;padding:0;display:grid;gap:1px}
+.rail .part{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);margin-top:14px;padding-left:10px}
+.rail a{display:block;text-decoration:none;color:var(--ink-2);padding:3px 10px;border-left:2px solid transparent;border-radius:0 4px 4px 0}
+.rail a:hover{color:var(--ink);background:var(--accent-soft)}
+.rail a.on{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft);font-weight:500}
+.rail .ex-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle}
+@media (max-width:900px){.rail{position:static;max-height:none;background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:10px 14px}}
+
+/* reading column */
+main{min-width:0}
+.prose{max-width:760px}
+header.cover{padding-block:8px 32px;border-bottom:1px solid var(--rule);margin-bottom:24px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.15;color:var(--ink)}
+h1{font-size:clamp(2.2rem,5vw,3.4rem);margin:.3em 0 .3em;letter-spacing:-.015em}
+h2{font-size:1.85rem;margin:0 0 .5em;letter-spacing:-.01em}
+h3{font-size:1.25rem;margin:1.8em 0 .5em}
+h4{font-size:1.02rem;margin:1.4em 0 .4em;font-family:var(--body);font-weight:600}
+.lede{font-size:1.15rem;color:var(--ink-2);max-width:62ch}
+section.ch{padding-block:44px 8px;border-top:1px solid var(--rule);scroll-margin-top:16px}
+section.ch:first-of-type{border-top:0}
+.chno{font-family:var(--mono);font-size:12px;color:var(--ink-2);letter-spacing:.06em;display:block;margin-bottom:6px}
+p,li{max-width:68ch}
+ul,ol{padding-left:1.3em}
+li{margin-block:.25em}
+code{font-family:var(--mono);font-size:.86em;background:var(--accent-soft);color:var(--ink);padding:.1em .35em;border-radius:4px}
+strong{font-weight:600}
+
+/* definition block */
+.define{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:20px 24px;margin:20px 0}
+.define .term{font-family:var(--display);font-size:1.4rem;font-weight:700}
+.define .pos{font-family:var(--mono);font-size:12px;color:var(--ink-2);margin-left:8px}
+.define p{margin:.5em 0 0;font-size:1.06rem}
+
+/* callouts */
+.note{border-radius:8px;padding:12px 16px;margin:18px 0;font-size:.96rem}
+.note b{display:block;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.note.tip{background:var(--accent-soft)} .note.tip b{color:var(--accent)}
+.note.warn{background:var(--warn-soft)} .note.warn b{color:var(--warn)}
+.note.graph{background:var(--graph-soft)} .note.graph b{color:var(--graph)}
+.note.bad{background:var(--bad-soft)} .note.bad b{color:var(--bad)}
+.note p{margin:.3em 0}
+
+/* code */
+.code{position:relative;margin:16px 0 20px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 12px;font-family:var(--mono);font-size:11.5px;color:var(--code-com);border-bottom:1px solid #ffffff14}
+.code button{font-family:var(--mono);font-size:11px;background:transparent;color:var(--code-ink);border:1px solid #ffffff2a;border-radius:5px;padding:2px 8px;cursor:pointer}
+.code button:hover{background:#ffffff14}
+.code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6;color:var(--code-ink);tab-size:4}
+.code pre code{background:none;padding:0;color:inherit;font-size:inherit}
+.token.comment{color:var(--code-com);font-style:italic}
+.token.string,.token.triple-quoted-string{color:var(--code-str)}
+.token.keyword,.token.boolean,.token.builtin,.token.instruction{color:var(--code-kw)}
+.token.function,.token.decorator,.token.class-name,.token.key,.token.atrule{color:var(--code-fn)}
+.token.number{color:var(--code-num)}
+.token.operator,.token.punctuation{color:#b7c3d6}
+.output{font-family:var(--mono);font-size:12.5px;background:var(--sheet);border:1px dashed var(--rule-2);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink-2);margin:-8px 0 20px;overflow-x:auto}
+
+/* tables */
+.tbl{overflow-x:auto;margin:16px 0 22px;border:1px solid var(--rule);border-radius:10px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);font-weight:600;background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td code{white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+
+/* diagrams */
+figure{margin:22px 0 26px}
+.dia{overflow-x:auto;background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:14px}
+.dia svg{display:block;min-width:640px;width:100%;height:auto}
+figcaption{font-size:13px;color:var(--ink-2);margin-top:8px}
+figcaption b{color:var(--ink);font-weight:600}
+svg .bx{fill:var(--sheet);stroke:var(--rule-2);stroke-width:1.5}
+svg .bx-a{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg .bx-g{fill:var(--graph-soft);stroke:var(--graph);stroke-width:1.5}
+svg .bx-w{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.5}
+svg .bx-r{fill:var(--bad-soft);stroke:var(--bad);stroke-width:1.5}
+svg .bx-p{fill:var(--paper);stroke:var(--rule-2);stroke-width:1.5}
+svg .zone{fill:none;stroke:var(--rule-2);stroke-width:1.5;stroke-dasharray:6 5}
+svg .zone-a{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:6 5}
+svg .ln{stroke:var(--ink-2);stroke-width:1.6;fill:none}
+svg .ln-a{stroke:var(--accent);stroke-width:1.8;fill:none}
+svg .ln-g{stroke:var(--graph);stroke-width:1.8;fill:none}
+svg .ln-r{stroke:var(--bad);stroke-width:1.8;fill:none}
+svg .dash{stroke-dasharray:5 4}
+svg .ah{fill:var(--ink-2)}
+svg .ah-a{fill:var(--accent)}
+svg .ah-g{fill:var(--graph)}
+svg .ah-r{fill:var(--bad)}
+svg text{fill:var(--ink);font-family:var(--body);font-size:13px}
+svg .t-b{font-weight:600;font-size:14px}
+svg .t-s{font-size:11.5px;fill:var(--ink-2)}
+svg .t-m{font-family:var(--mono);font-size:12px}
+svg .t-a{fill:var(--accent)} svg .t-g{fill:var(--graph)} svg .t-w{fill:var(--warn)} svg .t-r{fill:var(--bad)}
+
+/* charts: single-series bars, recessive grid, hover via native title + highlight */
+.chart{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:16px 16px 10px;overflow-x:auto}
+.chart h5{font-family:var(--body);font-size:14px;font-weight:600;margin:0 0 2px}
+.chart .sub{font-size:12.5px;color:var(--ink-2);margin:0 0 10px}
+.chart svg{display:block;min-width:600px;width:100%;height:auto}
+svg .grid{stroke:var(--rule);stroke-width:1}
+svg .axis{stroke:var(--rule-2);stroke-width:1}
+svg .bar{fill:var(--accent)}
+svg .bar-m{fill:var(--rule-2)}
+svg g.mark{cursor:default}
+svg g.mark:hover .bar,svg g.mark:hover .bar-m{opacity:.75}
+svg g.mark:hover .hit{fill:var(--accent-soft)}
+svg .hit{fill:transparent}
+.chart details{margin-top:6px;font-size:13px}
+.chart summary{cursor:pointer;color:var(--ink-2)}
+
+/* grids */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:16px 0 22px}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;min-width:0}
+.card h4{margin:0 0 4px}
+.card p{margin:0;font-size:14.5px;color:var(--ink-2)}
+.yes h4{color:var(--graph)} .no h4{color:var(--bad)}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:99px;background:var(--accent-soft);color:var(--accent);vertical-align:middle}
+.pill.g{background:var(--graph-soft);color:var(--graph)}
+.pill.w{background:var(--warn-soft);color:var(--warn)}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps>li{counter-increment:s;position:relative;padding-left:40px;margin-block:12px}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--sheet);font-family:var(--mono);font-size:12.5px;display:grid;place-items:center}
+.check{list-style:none;padding:0}
+.check li{padding-left:26px;position:relative}
+.check li::before{content:"";position:absolute;left:2px;top:.55em;width:12px;height:12px;border:1.6px solid var(--accent);border-radius:3px}
+/* example boxes */
+.example{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:0 20px 6px;margin:26px 0}
+.example .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;background:var(--accent);color:var(--sheet);padding:3px 10px;border-radius:0 0 6px 6px}
+.example h4{margin:.6em 0 .3em;font-size:1.08rem}
+.example>p{margin:.4em 0 .8em}
+.example figure{margin:14px 0}
+.example .dia{border:0;padding:4px 0;background:transparent}
+@media (max-width:600px){.example{padding-inline:12px}}
+.tree{font-family:var(--mono);font-size:13px;background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:12px 16px;white-space:pre;overflow-x:auto;line-height:1.55}
+.res{display:grid;gap:10px;margin:14px 0 22px}
+.res .card a{font-weight:600}
+.res .card .why{font-size:14px;color:var(--ink-2);margin-top:2px}
+.foot{margin-top:56px;padding-top:20px;border-top:1px solid var(--rule);font-size:13.5px;color:var(--ink-2)}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+@media print{.rail{display:none}.shell{display:block}.code button{display:none}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-a"/></marker>
+    <marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-g"/></marker>
+    <marker id="arrR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-r"/></marker>
+  </defs>
+</svg>
+
+<div class="shell">
+<nav class="rail" aria-label="Chapters">
+  <details id="toc" open>
+    <summary>Contents</summary>
+    <ol>
+      <li class="part">Part I · Foundations</li>
+      <li><a href="#what">1. What is Pydantic<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#install">2. Install and first model<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#how">3. How validation works<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li class="part">Part II · Models and validation</li>
+      <li><a href="#fields">4. Fields, types, defaults<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#constraints">5. Field() and constraints<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#nested">6. Nested models and unions<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#validators">7. Validators<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#errors">8. Validation errors<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li class="part">Part III · Data out and config</li>
+      <li><a href="#serialize">9. Serialization<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#aliases">10. Aliases and naming<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#config">11. Model configuration</a></li>
+      <li><a href="#api">12. The model API</a></li>
+      <li class="part">Part IV · Beyond BaseModel</li>
+      <li><a href="#adapters">13. TypeAdapter and friends<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#generics">14. Generics and recursion</a></li>
+      <li><a href="#types">15. Special and custom types</a></li>
+      <li><a href="#secrets">16. SecretStr and secrets<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#schema">17. JSON Schema<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#settings">18. pydantic-settings<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li class="part">Part V · Implementation</li>
+      <li><a href="#fastapi">19. Pydantic in FastAPI<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#llm">20. Pydantic for LLM apps<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#perf">21. Performance</a></li>
+      <li><a href="#migrate">22. Migrating from v1</a></li>
+      <li><a href="#testing">23. Testing models</a></li>
+      <li><a href="#capstone">24. Capstone project<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li class="part">Part VI · Mastery</li>
+      <li><a href="#practices">25. Best practices</a></li>
+      <li><a href="#cheat">26. Cheat sheet</a></li>
+      <li><a href="#roadmap">27. Roadmap and exercises</a></li>
+      <li><a href="#resources">28. Docs and resources</a></li>
+      <li><a href="#glossary">29. Glossary</a></li>
+    </ol>
+  </details>
+</nav>
+
+<main>
+<header class="cover prose">
+  <div class="eyebrow">Senior developer notes · Pydantic 2.14 · pydantic-core 2.50 · Python 3.12</div>
+  <h1>Pydantic Field Guide</h1>
+  <p class="lede">One document that takes you from "what is a model?" to strict validation, custom validators and serializers, secrets handling, settings, FastAPI request models and validated LLM output. Every chapter has a plain explanation, a diagram where it helps, and code you can run.</p>
+  <div class="note tip"><b>How to read this</b><p>Parts I–II are the core: read them in order and run every snippet. Part III controls how data leaves your models. Part IV covers the tools you reach for once <code>BaseModel</code> is not enough, including <a href="#secrets">SecretStr</a> for passwords and API keys. Part V ties everything to FastAPI and LLM apps and ends with a capstone project.</p><p>Outputs shown under code blocks are <strong>real outputs</strong> captured from Pydantic 2.14.4 on Windows. Chapters marked with a dot <span class="ex-dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent)"></span> have <strong>Example</strong> boxes. Keep the <a href="#cheat">cheat sheet</a> open.</p></div>
+</header>
+
+<!-- ================= PART I ================= -->
+<section class="ch prose" id="what">
+  <span class="chno">Chapter 1 · Foundations</span>
+  <h2>What is Pydantic?</h2>
+  <div class="define">
+    <span class="term">Pydantic</span><span class="pos">noun · Python data validation library</span>
+    <p>A library that turns <strong>Python type hints into runtime rules</strong>. You describe the shape of your data as a class with typed fields; Pydantic checks incoming data against it, converts it to the right types where it safely can, and raises one clear error listing every problem when it cannot.</p>
+  </div>
+  <p>Python type hints are normally ignored at runtime: <code>def f(x: int)</code> happily accepts <code>"hello"</code>. Pydantic reads those hints and enforces them. Its core is written in Rust (<code>pydantic-core</code>), so validation is fast enough to run on every request of a busy API.</p>
+
+  <h3>The problem Pydantic solves</h3>
+  <p>Every program reads data it did not create: JSON from an HTTP request, rows from a CSV, environment variables, the output of an LLM. That data is untrusted. Without a validation layer you write the same defensive code again and again:</p>
+  <div class="code"><div class="cap"><span>without Pydantic</span><button type="button">Copy</button></div><pre><code class="language-python">def create_user(payload: dict):
+    if "id" not in payload:
+        raise ValueError("id missing")
+    try:
+        user_id = int(payload["id"])
+    except (TypeError, ValueError):
+        raise ValueError("id must be an integer")
+    name = payload.get("name")
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError("name must be a non-empty string")
+    # ... 30 more lines for email, dates, nested addresses ...</code></pre></div>
+  <div class="code"><div class="cap"><span>with Pydantic</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic import BaseModel, Field
+
+class User(BaseModel):
+    id: int
+    name: str = Field(min_length=1)
+
+user = User.model_validate(payload)   # validated, converted, typed</code></pre></div>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Where Pydantic sits in an application</h4>
+    <p>Pydantic is the gate between the untrusted outside world and your typed business logic. Data goes in through validation and comes out through serialization.</p>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 250" role="img" aria-label="Untrusted inputs (HTTP JSON, env vars, CSV, LLM output) flow into Pydantic validation, which produces typed Python objects for business logic; on failure a ValidationError is raised. Objects flow out through serialization to JSON, dicts and JSON Schema">
+          <text x="20" y="22" class="t-b">Untrusted input</text>
+          <rect x="20" y="34" width="150" height="34" rx="6" class="bx"/><text x="95" y="56" text-anchor="middle">HTTP JSON body</text>
+          <rect x="20" y="76" width="150" height="34" rx="6" class="bx"/><text x="95" y="98" text-anchor="middle">env vars / .env</text>
+          <rect x="20" y="118" width="150" height="34" rx="6" class="bx"/><text x="95" y="140" text-anchor="middle">CSV / DB rows</text>
+          <rect x="20" y="160" width="150" height="34" rx="6" class="bx"/><text x="95" y="182" text-anchor="middle">LLM output</text>
+          <rect x="230" y="60" width="170" height="110" rx="10" class="bx-a"/>
+          <text x="315" y="92" text-anchor="middle" class="t-b t-a">Pydantic model</text>
+          <text x="315" y="114" text-anchor="middle" class="t-s">validate + coerce</text>
+          <text x="315" y="132" text-anchor="middle" class="t-s">(pydantic-core, Rust)</text>
+          <text x="315" y="150" text-anchor="middle" class="t-s">serialize on the way out</text>
+          <path d="M170 51 L228 92" class="ln" marker-end="url(#arr)"/>
+          <path d="M170 93 L228 105" class="ln" marker-end="url(#arr)"/>
+          <path d="M170 135 L228 125" class="ln" marker-end="url(#arr)"/>
+          <path d="M170 177 L228 140" class="ln" marker-end="url(#arr)"/>
+          <rect x="460" y="40" width="130" height="56" rx="8" class="bx-g"/><text x="525" y="64" text-anchor="middle" class="t-b t-g">Typed object</text><text x="525" y="82" text-anchor="middle" class="t-s">user.id is an int</text>
+          <rect x="460" y="130" width="130" height="56" rx="8" class="bx-r"/><text x="525" y="154" text-anchor="middle" class="t-b t-r">ValidationError</text><text x="525" y="172" text-anchor="middle" class="t-s">every problem listed</text>
+          <path d="M400 95 L458 72" class="ln-g" marker-end="url(#arrG)"/>
+          <path d="M400 140 L458 156" class="ln-r" marker-end="url(#arrR)"/>
+          <rect x="630" y="40" width="110" height="56" rx="8" class="bx"/><text x="685" y="64" text-anchor="middle" class="t-b">Your logic</text><text x="685" y="82" text-anchor="middle" class="t-s">no checks needed</text>
+          <path d="M590 68 L628 68" class="ln-g" marker-end="url(#arrG)"/>
+          <text x="315" y="210" text-anchor="middle" class="t-s">model_dump() / model_dump_json() / model_json_schema()</text>
+          <path d="M685 96 L685 200 L420 205" class="ln dash" marker-end="url(#arr)"/>
+        </svg>
+      </div>
+      <figcaption><b>Figure 1.</b> Validate at the edges once; trust the typed objects everywhere inside.</figcaption>
+    </figure>
+  </div>
+
+  <h3>Who uses it</h3>
+  <p>Pydantic is one of the most downloaded Python packages. You already depend on it if you use any of these:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Project</th><th>What Pydantic does there</th></tr></thead>
+    <tbody>
+      <tr><td><strong>FastAPI</strong></td><td>Request bodies, query/path parameters, response models and the OpenAPI docs are all Pydantic.</td></tr>
+      <tr><td><strong>LangChain / LangGraph</strong></td><td>Tool argument schemas, <code>with_structured_output()</code>, message and config classes.</td></tr>
+      <tr><td><strong>Anthropic and OpenAI SDKs</strong></td><td>Response objects are Pydantic models; <code>messages.parse()</code> accepts a model as the output format.</td></tr>
+      <tr><td><strong>PydanticAI, Instructor, DSPy</strong></td><td>Agent frameworks built around validated LLM output.</td></tr>
+      <tr><td><strong>SQLModel, Beanie, Django Ninja, Prefect</strong></td><td>ORM models, document models, API schemas, flow parameters.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Pydantic vs the alternatives</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Tool</th><th>Validates at runtime?</th><th>Converts types?</th><th>Best for</th></tr></thead>
+    <tbody>
+      <tr><td><code>dataclasses</code></td><td>No</td><td>No</td><td>Plain internal data holders</td></tr>
+      <tr><td><code>TypedDict</code></td><td>No (type checker only)</td><td>No</td><td>Typing dicts you already trust</td></tr>
+      <tr><td><code>attrs</code></td><td>Opt-in validators</td><td>Opt-in converters</td><td>Rich classes with less magic</td></tr>
+      <tr><td><code>msgspec</code></td><td>Yes</td><td>Limited</td><td>Maximum JSON speed, fewer features</td></tr>
+      <tr><td><strong>Pydantic</strong></td><td>Yes</td><td>Yes (lax by default, strict on request)</td><td>Any boundary: APIs, configs, LLM output, files</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note tip"><b>Easy definition</b><p>A <strong>model</strong> is a class that describes the shape of valid data. <strong>Validation</strong> turns raw input into an instance of that class or raises an error. <strong>Serialization</strong> turns the instance back into dicts or JSON.</p></div>
+</section>
+
+<section class="ch prose" id="install">
+  <span class="chno">Chapter 2 · Foundations</span>
+  <h2>Install and your first model</h2>
+  <h3>Install</h3>
+  <div class="code"><div class="cap"><span>PowerShell · pick one</span><button type="button">Copy</button></div><pre><code class="language-bash"># with uv (recommended, as in your Langchain training project)
+uv add pydantic
+uv add "pydantic[email]"          # adds EmailStr support (email-validator)
+uv add pydantic-settings          # BaseSettings for config / .env
+
+# with pip in a venv
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install pydantic "pydantic[email]" pydantic-settings
+
+# check the version
+python -c "import pydantic; print(pydantic.version.version_info())"</code></pre></div>
+  <div class="output">             pydantic version: 2.14.4
+        pydantic-core version: 2.50.5
+          pydantic-core build: profile=release pgo=false
+               python version: 3.12.10</div>
+  <div class="note warn"><b>v1 vs v2</b><p>Everything here is <strong>Pydantic v2</strong> (released 2023). Tutorials that use <code>.dict()</code>, <code>.parse_obj()</code>, <code>@validator</code> or <code>class Config:</code> are v1. They still run with deprecation warnings, but do not copy them into new code. See <a href="#migrate">Chapter 22</a>.</p></div>
+
+  <h3>Your first model</h3>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Valid input, converted input, invalid input</h4>
+    <div class="code"><div class="cap"><span>first_model.py</span><button type="button">Copy</button></div><pre><code class="language-python">from datetime import date
+from pydantic import BaseModel, ValidationError
+
+class User(BaseModel):
+    id: int
+    name: str
+    signup: date
+    tags: list[str] = []
+
+# 1. strings that look like the right type are converted
+u = User(id="42", name="Asha", signup="2026-11-24", tags=("a", "b"))
+print(repr(u))
+print(u.id + 1)          # it really is an int now
+
+# 2. invalid input: ONE error object listing EVERY problem
+try:
+    User(id="abc", name=None, signup="24/11/2026")
+except ValidationError as e:
+    print(e)</code></pre></div>
+    <div class="output">User(id=42, name='Asha', signup=datetime.date(2026, 11, 24), tags=['a', 'b'])
+43
+3 validation errors for User
+id
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='abc', input_type=str]
+name
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+signup
+  Input should be a valid date or datetime, invalid character in year [type=date_from_datetime_parsing, input_value='24/11/2026', input_type=str]</div>
+    <p>Three things to notice: <code>"42"</code> became <code>42</code>, the tuple became a list, and the error lists <strong>all three</strong> problems at once rather than stopping at the first. Dates must be ISO 8601 (<code>YYYY-MM-DD</code>); <code>24/11/2026</code> is rejected.</p>
+  </div>
+
+  <h3>The four ways to create an instance</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Call</th><th>Input</th><th>Use when</th></tr></thead>
+    <tbody>
+      <tr><td><code>User(id=1, name="a", ...)</code></td><td>keyword arguments</td><td>Building objects in your own code</td></tr>
+      <tr><td><code>User.model_validate(data)</code></td><td>a dict (or object with <code>from_attributes</code>)</td><td>Data that arrived as a dict</td></tr>
+      <tr><td><code>User.model_validate_json(raw)</code></td><td>a JSON <code>str</code>/<code>bytes</code></td><td>Raw JSON: faster than <code>json.loads</code> + validate</td></tr>
+      <tr><td><code>User.model_construct(**data)</code></td><td>trusted data</td><td>Skip validation entirely (dangerous; see <a href="#api">Chapter 12</a>)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="ch prose" id="how">
+  <span class="chno">Chapter 3 · Foundations</span>
+  <h2>How validation works</h2>
+  <p>When Python defines your class, Pydantic reads the annotations and builds a <strong>core schema</strong>: a tree describing every field, type, constraint and validator. <code>pydantic-core</code> compiles that schema into a Rust validator and serializer, stored on the class. Each call to <code>model_validate</code> walks the input once through that compiled validator.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>From class definition to validated object</h4>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 230" role="img" aria-label="At class definition time annotations are turned into a core schema and compiled into a Rust validator and serializer. At runtime input goes through before validators, core type validation, after validators, then model validators, producing an instance or a ValidationError">
+          <text x="20" y="22" class="t-b">Once, when the class is defined</text>
+          <rect x="20" y="34" width="150" height="46" rx="8" class="bx"/><text x="95" y="54" text-anchor="middle" class="t-b">Type hints</text><text x="95" y="71" text-anchor="middle" class="t-s">id: int = Field(gt=0)</text>
+          <rect x="220" y="34" width="150" height="46" rx="8" class="bx-g"/><text x="295" y="54" text-anchor="middle" class="t-b t-g">Core schema</text><text x="295" y="71" text-anchor="middle" class="t-s">tree of rules</text>
+          <rect x="420" y="34" width="190" height="46" rx="8" class="bx-g"/><text x="515" y="54" text-anchor="middle" class="t-b t-g">Compiled in Rust</text><text x="515" y="71" text-anchor="middle" class="t-s">__pydantic_validator__</text>
+          <path d="M170 57 L218 57" class="ln-g" marker-end="url(#arrG)"/>
+          <path d="M370 57 L418 57" class="ln-g" marker-end="url(#arrG)"/>
+          <text x="20" y="118" class="t-b">Every call</text>
+          <rect x="20" y="130" width="90" height="46" rx="8" class="bx"/><text x="65" y="158" text-anchor="middle">raw input</text>
+          <rect x="135" y="130" width="120" height="46" rx="8" class="bx-w"/><text x="195" y="150" text-anchor="middle" class="t-b t-w">before</text><text x="195" y="167" text-anchor="middle" class="t-s">validators</text>
+          <rect x="280" y="130" width="140" height="46" rx="8" class="bx-a"/><text x="350" y="150" text-anchor="middle" class="t-b t-a">type + constraints</text><text x="350" y="167" text-anchor="middle" class="t-s">coerce, check gt/len</text>
+          <rect x="445" y="130" width="110" height="46" rx="8" class="bx-w"/><text x="500" y="150" text-anchor="middle" class="t-b t-w">after</text><text x="500" y="167" text-anchor="middle" class="t-s">validators</text>
+          <rect x="580" y="130" width="160" height="46" rx="8" class="bx-w"/><text x="660" y="150" text-anchor="middle" class="t-b t-w">model_validator</text><text x="660" y="167" text-anchor="middle" class="t-s">(after) cross-field</text>
+          <path d="M110 153 L133 153" class="ln" marker-end="url(#arr)"/>
+          <path d="M255 153 L278 153" class="ln" marker-end="url(#arr)"/>
+          <path d="M420 153 L443 153" class="ln" marker-end="url(#arr)"/>
+          <path d="M555 153 L578 153" class="ln" marker-end="url(#arr)"/>
+          <text x="660" y="205" text-anchor="middle" class="t-s t-g">instance  or  ValidationError</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 2.</b> Schema building is paid once per class. Validation is a single fast pass per call. Validators are covered in <a href="#validators">Chapter 7</a>.</figcaption>
+    </figure>
+  </div>
+
+  <h3>Lax mode vs strict mode</h3>
+  <p>By default Pydantic runs in <strong>lax mode</strong>: it accepts input that can be converted <em>without losing information</em>. <code>"42"</code> becomes <code>42</code>, but <code>4.5</code> is rejected for an <code>int</code> because the fraction would be lost. <strong>Strict mode</strong> accepts only the exact type.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Field type</th><th>Input</th><th>Lax (default)</th><th>Strict</th></tr></thead>
+    <tbody>
+      <tr><td><code>int</code></td><td><code>"42"</code></td><td>✓ <code>42</code></td><td>✗ <code>int_type</code></td></tr>
+      <tr><td><code>int</code></td><td><code>4.0</code></td><td>✓ <code>4</code></td><td>✗</td></tr>
+      <tr><td><code>int</code></td><td><code>4.5</code></td><td>✗ <code>int_from_float</code></td><td>✗</td></tr>
+      <tr><td><code>float</code></td><td><code>"1.5"</code> / <code>3</code></td><td>✓ <code>1.5</code> / <code>3.0</code></td><td>✗ / ✓ (int is allowed for float)</td></tr>
+      <tr><td><code>bool</code></td><td><code>"yes"</code>, <code>"on"</code>, <code>1</code>, <code>"true"</code></td><td>✓ <code>True</code></td><td>✗</td></tr>
+      <tr><td><code>str</code></td><td><code>123</code></td><td>✗ <code>string_type</code> (numbers are not turned into strings)</td><td>✗</td></tr>
+      <tr><td><code>date</code></td><td><code>"2026-11-24"</code></td><td>✓</td><td>✗ in Python mode, ✓ from JSON</td></tr>
+      <tr><td><code>list[int]</code></td><td><code>("1", 2)</code></td><td>✓ <code>[1, 2]</code></td><td>✗</td></tr>
+      <tr><td><code>UUID</code></td><td><code>"1234...-..."</code></td><td>✓</td><td>✓ from JSON only</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code"><div class="cap"><span>strict.py</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic import BaseModel, ConfigDict, Field, StrictInt
+
+class Strict(BaseModel):
+    model_config = ConfigDict(strict=True)   # whole model strict
+    n: int
+
+class Mixed(BaseModel):
+    a: StrictInt                     # this field only
+    b: int = Field(strict=True)      # same thing via Field
+    c: int                           # lax
+
+Strict(n="5")                                 # fails
+Strict.model_validate({"n": "5"}, strict=False)  # per-call override: passes</code></pre></div>
+  <div class="output">1 validation error for Strict
+n
+  Input should be a valid integer [type=int_type, input_value='5', input_type=str]</div>
+  <div class="note graph"><b>Strict from JSON</b><p>JSON has no date, UUID or Decimal types, so strict mode still accepts their string forms when you call <code>model_validate_json</code>. Strict mode stops <em>surprising</em> conversions, not impossible ones.</p></div>
+  <div class="note tip"><b>When to choose strict</b><p>Keep lax for HTTP, CSV, form data and env vars: those always arrive as strings. Use strict for internal Python-to-Python calls, financial values, and anywhere a silent <code>"1"</code> to <code>True</code> conversion would hide a bug.</p></div>
+</section>
+
+<!-- ================= PART II ================= -->
+<section class="ch prose" id="fields">
+  <span class="chno">Chapter 4 · Models and validation</span>
+  <h2>Fields, types and defaults</h2>
+  <p>A field is a class attribute with a type annotation. Whether it is <strong>required</strong> depends only on whether it has a default, never on whether its type allows <code>None</code>. This is the single most misunderstood rule in Pydantic.</p>
+
+  <h3>Required vs optional: every combination</h3>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Five fields, five behaviours</h4>
+    <div class="code"><div class="cap"><span>required_matrix.py</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Optional
+from pydantic import BaseModel, Field
+
+class M(BaseModel):
+    a: int                                  # required, cannot be None
+    b: int = 0                              # optional, default 0, cannot be None
+    c: Optional[int]                        # REQUIRED, but may be None
+    d: Optional[int] = None                 # optional, may be None
+    e: int | None = Field(default=None)     # same as d, modern syntax
+
+M()                 # fails: a and c missing
+M(a=1, c=None)      # passes</code></pre></div>
+    <div class="output">2 validation errors for M
+a
+  Field required [type=missing, input_value={}, input_type=dict]
+c
+  Field required [type=missing, input_value={}, input_type=dict]
+
+M(a=1, b=0, c=None, d=None, e=None)</div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Declaration</th><th>Must be sent?</th><th>May be <code>null</code>?</th><th>Typical use</th></tr></thead>
+    <tbody>
+      <tr><td><code>x: int</code></td><td>Yes</td><td>No</td><td>Mandatory value</td></tr>
+      <tr><td><code>x: int = 0</code></td><td>No</td><td>No</td><td>Has a sensible default</td></tr>
+      <tr><td><code>x: int | None</code></td><td>Yes</td><td>Yes</td><td>Caller must decide, "unknown" is allowed</td></tr>
+      <tr><td><code>x: int | None = None</code></td><td>No</td><td>Yes</td><td>Truly optional</td></tr>
+      <tr><td><code>x: int = Field(default_factory=...)</code></td><td>No</td><td>No</td><td>Computed default (time, uuid, list)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Mutable defaults are safe</h3>
+  <p>In plain Python, <code>def f(x=[])</code> shares one list between calls. Pydantic deep-copies mutable defaults per instance, so <code>tags: list[str] = []</code> is fine:</p>
+  <div class="code"><div class="cap"><span>python</span><button type="button">Copy</button></div><pre><code class="language-python">class Mut(BaseModel):
+    tags: list[str] = []
+
+a, b = Mut(), Mut()
+a.tags.append("x")
+print(a.tags, b.tags)</code></pre></div>
+  <div class="output">['x'] []</div>
+  <p>For defaults that must be computed at creation time, use <code>default_factory</code>:</p>
+  <div class="code"><div class="cap"><span>python</span><button type="button">Copy</button></div><pre><code class="language-python">from datetime import datetime, timezone
+from uuid import UUID, uuid4
+
+class Event(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    # WRONG: at: datetime = datetime.now()  -> evaluated once, at import time</code></pre></div>
+
+  <h3>Types you will use daily</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Annotation</th><th>Accepts (lax)</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>str</code>, <code>int</code>, <code>float</code>, <code>bool</code></td><td>see the table in Chapter 3</td><td><code>bool</code> accepts <code>"true"/"false"/"yes"/"no"/"on"/"off"/0/1</code></td></tr>
+      <tr><td><code>bytes</code></td><td>bytes, str</td><td></td></tr>
+      <tr><td><code>Decimal</code></td><td>str, int, float</td><td>Use for money; send as string to keep precision</td></tr>
+      <tr><td><code>datetime</code>, <code>date</code>, <code>time</code>, <code>timedelta</code></td><td>ISO 8601 strings, unix timestamps</td><td><code>AwareDatetime</code> requires a timezone</td></tr>
+      <tr><td><code>UUID</code></td><td>str, bytes</td><td></td></tr>
+      <tr><td><code>list[T]</code>, <code>set[T]</code>, <code>tuple[T, ...]</code></td><td>any iterable (list, tuple, set, generator)</td><td>Each item validated as <code>T</code></td></tr>
+      <tr><td><code>tuple[int, str]</code></td><td>exactly two items</td><td>Fixed-length positional</td></tr>
+      <tr><td><code>dict[str, int]</code></td><td>mappings</td><td>Keys and values validated</td></tr>
+      <tr><td><code>Literal["a", "b"]</code></td><td>exactly one of the values</td><td>Great for status fields and LLM output</td></tr>
+      <tr><td><code>Enum</code> subclass</td><td>enum member or its value</td><td><code>use_enum_values=True</code> stores the raw value</td></tr>
+      <tr><td><code>Path</code></td><td>str</td><td><code>FilePath</code>/<code>DirectoryPath</code> must exist</td></tr>
+      <tr><td><code>Any</code></td><td>anything</td><td>No validation at all; avoid at boundaries</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note tip"><b>Inheritance</b><p>Models are normal classes. <code>class Admin(User): level: int</code> gets all of <code>User</code>'s fields plus <code>level</code>, and also inherits its <code>model_config</code> and validators. Use a shared base model for fields that repeat (<code>id</code>, <code>created_at</code>).</p></div>
+</section>
+
+<section class="ch prose" id="constraints">
+  <span class="chno">Chapter 5 · Models and validation</span>
+  <h2>Field() and constraints</h2>
+  <p>A type says <em>what kind</em> of value. A constraint says <em>which</em> values of that kind are allowed. Constraints are declared with <code>Field(...)</code> and are checked in Rust, so they are faster than writing a validator.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>A product with four constraints, all violated</h4>
+    <div class="code"><div class="cap"><span>constraints.py</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Annotated
+from pydantic import BaseModel, Field
+
+class Product(BaseModel):
+    name: str = Field(min_length=2, max_length=50)
+    price: float = Field(gt=0, le=10_000)
+    sku: str = Field(pattern=r"^[A-Z]{3}-\d{4}$")
+    qty: Annotated[int, Field(ge=0)] = 0      # Annotated form, same effect
+
+Product(name="A", price=0, sku="abc-1", qty=-1)</code></pre></div>
+    <div class="output">4 validation errors for Product
+name
+  String should have at least 2 characters [type=string_too_short, input_value='A', input_type=str]
+price
+  Input should be greater than 0 [type=greater_than, input_value=0, input_type=int]
+sku
+  String should match pattern '^[A-Z]{3}-\d{4}$' [type=string_pattern_mismatch, input_value='abc-1', input_type=str]
+qty
+  Input should be greater than or equal to 0 [type=greater_than_equal, input_value=-1, input_type=int]</div>
+  </div>
+
+  <h3>Every Field() argument worth knowing</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Argument</th><th>Applies to</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>default</code>, <code>default_factory</code></td><td>all</td><td>Default value, or a zero-arg callable that makes one</td></tr>
+      <tr><td><code>gt</code>, <code>ge</code>, <code>lt</code>, <code>le</code></td><td>numbers, dates</td><td>Greater/less than (or equal)</td></tr>
+      <tr><td><code>multiple_of</code></td><td>numbers</td><td><code>multiple_of=5</code></td></tr>
+      <tr><td><code>max_digits</code>, <code>decimal_places</code></td><td><code>Decimal</code></td><td>Precision limits for money</td></tr>
+      <tr><td><code>min_length</code>, <code>max_length</code></td><td>str, bytes, list, set, dict</td><td>Length limits (items for collections)</td></tr>
+      <tr><td><code>pattern</code></td><td>str</td><td>Regex the whole string must match (Rust regex: no look-arounds)</td></tr>
+      <tr><td><code>strict</code></td><td>all</td><td>Strict mode for this field only</td></tr>
+      <tr><td><code>alias</code>, <code>validation_alias</code>, <code>serialization_alias</code></td><td>all</td><td>External names (<a href="#aliases">Chapter 10</a>)</td></tr>
+      <tr><td><code>title</code>, <code>description</code>, <code>examples</code></td><td>all</td><td>Documentation; goes into JSON Schema, OpenAPI and LLM tool schemas</td></tr>
+      <tr><td><code>exclude</code></td><td>all</td><td>Never include in <code>model_dump()</code></td></tr>
+      <tr><td><code>repr</code></td><td>all</td><td><code>repr=False</code> hides the field from <code>repr()</code></td></tr>
+      <tr><td><code>frozen</code></td><td>all</td><td>Field cannot be reassigned</td></tr>
+      <tr><td><code>discriminator</code></td><td>unions</td><td>Tag field for fast, clear union validation (<a href="#nested">Chapter 6</a>)</td></tr>
+      <tr><td><code>json_schema_extra</code></td><td>all</td><td>Extra keys in the generated schema</td></tr>
+      <tr><td><code>deprecated</code></td><td>all</td><td>Marks the field deprecated in schema and warns on access</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Reusable constrained types with Annotated</h3>
+  <p>Put the type and its constraints in one alias and reuse it everywhere. This is the idiomatic v2 style; the v1 helpers <code>conint</code>/<code>constr</code> still work but are discouraged.</p>
+  <div class="code"><div class="cap"><span>types.py</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Annotated
+from pydantic import Field, StringConstraints
+
+Username   = Annotated[str, StringConstraints(strip_whitespace=True, to_lower=True,
+                                              min_length=3, max_length=20,
+                                              pattern=r"^[a-z0-9_]+$")]
+Percentage = Annotated[float, Field(ge=0, le=100)]
+Quantity   = Annotated[int, Field(ge=1, le=999)]
+
+class Order(BaseModel):
+    buyer: Username
+    discount: Percentage = 0
+    lines: list[Quantity] = Field(min_length=1)   # list of 1..999, at least one</code></pre></div>
+  <p>Ready-made aliases exist too: <code>PositiveInt</code>, <code>NonNegativeInt</code>, <code>PositiveFloat</code>, <code>NegativeInt</code>, <code>FiniteFloat</code>, <code>StrictStr</code>, <code>StrictBool</code>, <code>FutureDate</code>, <code>PastDatetime</code>, <code>AwareDatetime</code>.</p>
+</section>
+
+<section class="ch prose" id="nested">
+  <span class="chno">Chapter 6 · Models and validation</span>
+  <h2>Nested models, unions and enums</h2>
+  <h3>Nesting</h3>
+  <p>A field typed as another model validates a nested dict into that model. Errors report the full path (<code>loc</code>) to the bad value.</p>
+  <div class="code"><div class="cap"><span>nested.py</span><button type="button">Copy</button></div><pre><code class="language-python">class Address(BaseModel):
+    city: str
+    pin: str = Field(pattern=r"^\d{6}$")
+
+class Customer(BaseModel):
+    name: str
+    addresses: list[Address]
+
+Customer.model_validate({
+    "name": "Asha",
+    "addresses": [{"city": "Pune", "pin": "411001"}, {"city": "Delhi", "pin": "11"}],
+})
+# error loc: addresses.1.pin  -> second address, pin field</code></pre></div>
+
+  <h3>Unions and smart mode</h3>
+  <p><code>int | str</code> tries each member. In the default <strong>smart</strong> mode Pydantic first looks for an exact type match across all members, then falls back to lax conversion. So <code>"1"</code> stays a string for <code>int | str</code>, while <code>1</code> stays an int. Use <code>Field(union_mode="left_to_right")</code> if you want the first member that succeeds to win.</p>
+
+  <h3>Discriminated unions</h3>
+  <p>When union members are models, add a <strong>tag field</strong> with a <code>Literal</code> type and name it as the discriminator. Pydantic reads the tag and validates against exactly one model: faster, and the error tells you which branch failed instead of listing every member's failures.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Pets keyed by pet_type</h4>
+    <div class="code"><div class="cap"><span>discriminated.py</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Annotated, Literal, Union
+from pydantic import BaseModel, Field
+
+class Cat(BaseModel):
+    pet_type: Literal["cat"]
+    meows: int
+
+class Dog(BaseModel):
+    pet_type: Literal["dog"]
+    barks: float
+
+class Owner(BaseModel):
+    pet: Annotated[Union[Cat, Dog], Field(discriminator="pet_type")]
+
+Owner(pet={"pet_type": "dog", "barks": 3})     # Dog
+Owner(pet={"pet_type": "fish"})                # unknown tag
+Owner(pet={"pet_type": "dog", "barks": "x"})   # right branch, bad field</code></pre></div>
+    <div class="output">Owner(pet=Dog(pet_type='dog', barks=3.0))
+
+1 validation error for Owner
+pet
+  Input tag 'fish' found using 'pet_type' does not match any of the expected tags: 'cat', 'dog' [type=union_tag_invalid, ...]
+
+1 validation error for Owner
+pet.dog.barks
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, ...]</div>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 700 170" role="img" aria-label="Input dict is routed by the value of pet_type: cat goes to the Cat model, dog goes to the Dog model, any other value raises union_tag_invalid">
+          <rect x="20" y="60" width="170" height="50" rx="8" class="bx"/><text x="105" y="82" text-anchor="middle" class="t-m">{"pet_type": ?,</text><text x="105" y="100" text-anchor="middle" class="t-m"> ...}</text>
+          <rect x="250" y="60" width="130" height="50" rx="8" class="bx-a"/><text x="315" y="82" text-anchor="middle" class="t-b t-a">read tag</text><text x="315" y="100" text-anchor="middle" class="t-s">pet_type</text>
+          <rect x="460" y="14" width="210" height="38" rx="8" class="bx-g"/><text x="565" y="38" text-anchor="middle">"cat" → validate as <tspan class="t-b">Cat</tspan></text>
+          <rect x="460" y="66" width="210" height="38" rx="8" class="bx-g"/><text x="565" y="90" text-anchor="middle">"dog" → validate as <tspan class="t-b">Dog</tspan></text>
+          <rect x="460" y="118" width="210" height="38" rx="8" class="bx-r"/><text x="565" y="142" text-anchor="middle" class="t-r">other → union_tag_invalid</text>
+          <path d="M190 85 L248 85" class="ln" marker-end="url(#arr)"/>
+          <path d="M380 78 L458 34" class="ln-g" marker-end="url(#arrG)"/>
+          <path d="M380 85 L458 85" class="ln-g" marker-end="url(#arrG)"/>
+          <path d="M380 92 L458 136" class="ln-r" marker-end="url(#arrR)"/>
+        </svg>
+      </div>
+      <figcaption><b>Figure 3.</b> One dictionary lookup chooses the model; only that model's errors are reported.</figcaption>
+    </figure>
+  </div>
+  <div class="note tip"><b>Use this for LLM output and events</b><p>Discriminated unions are the right shape for "the model may return one of several actions" (<code>{"action": "search", ...}</code> vs <code>{"action": "answer", ...}</code>) and for webhook or event payloads.</p></div>
+
+  <h3>Enums and Literal</h3>
+  <div class="code"><div class="cap"><span>python</span><button type="button">Copy</button></div><pre><code class="language-python">from enum import Enum
+
+class Status(str, Enum):     # str mixin: serializes as plain strings
+    open = "open"
+    closed = "closed"
+
+class Ticket(BaseModel):
+    status: Status = Status.open
+    priority: Literal["low", "medium", "high"] = "medium"
+
+Ticket(status="closed").status        # Status.closed
+Ticket(priority="urgent")             # Input should be 'low', 'medium' or 'high'</code></pre></div>
+  <p>Prefer <code>Literal</code> for small, local sets of strings; prefer <code>Enum</code> when the values are used across the codebase and you want named constants.</p>
+</section>
+
+<section class="ch prose" id="validators">
+  <span class="chno">Chapter 7 · Models and validation</span>
+  <h2>Validators</h2>
+  <p>When types and constraints cannot express a rule, write a validator: a function Pydantic calls during validation. Return the (possibly changed) value to accept it; raise <code>ValueError</code> or <code>AssertionError</code> to reject it. Pydantic wraps your exception into a <code>ValidationError</code> with the right <code>loc</code>.</p>
+
+  <h3>The four modes</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Mode</th><th>Runs</th><th>Receives</th><th>Use for</th></tr></thead>
+    <tbody>
+      <tr><td><strong>after</strong> (default)</td><td>after Pydantic's own type check</td><td>an already-typed value</td><td>Business rules: "must be even", "end after start". Safest choice.</td></tr>
+      <tr><td><strong>before</strong></td><td>before the type check</td><td>raw input (anything)</td><td>Normalising input: split <code>"a,b"</code> into a list, strip text</td></tr>
+      <tr><td><strong>wrap</strong></td><td>around the type check</td><td>raw input + a <code>handler</code> to call</td><td>Try validation, recover from a specific failure</td></tr>
+      <tr><td><strong>plain</strong></td><td>instead of the type check</td><td>raw input</td><td>Full control; Pydantic's own check is skipped</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Field validator plus a cross-field model validator</h4>
+    <div class="code"><div class="cap"><span>signup.py</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic import BaseModel, field_validator, model_validator
+
+class Signup(BaseModel):
+    email: str
+    password: str
+    confirm: str
+
+    @field_validator("email")            # mode="after" by default
+    @classmethod
+    def normalise_email(cls, v: str) -> str:
+        if "@" not in v:
+            raise ValueError("must contain @")
+        return v.strip().lower()
+
+    @model_validator(mode="after")       # whole object, all fields valid
+    def passwords_match(self):
+        if self.password != self.confirm:
+            raise ValueError("passwords do not match")
+        return self
+
+Signup(email="  Asha@X.COM ", password="p", confirm="p")
+Signup(email="nope", password="p", confirm="p")
+Signup(email="a@b.c", password="p", confirm="q")</code></pre></div>
+    <div class="output">Signup(email='asha@x.com', password='p', confirm='p')
+
+1 validation error for Signup
+email
+  Value error, must contain @ [type=value_error, input_value='nope', input_type=str]
+
+1 validation error for Signup
+  Value error, passwords do not match [type=value_error, input_value={'email': 'a@b.c', ...}, input_type=dict]</div>
+    <p>The model-level error has an empty <code>loc</code> because it belongs to the whole object. (In real code, store passwords as <code>SecretStr</code>: see <a href="#secrets">Chapter 16</a>.)</p>
+  </div>
+
+  <h3>Before, wrap and Annotated validators</h3>
+  <div class="code"><div class="cap"><span>modes.py</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Annotated, Any
+from pydantic import (BaseModel, Field, field_validator, model_validator,
+                      AfterValidator, BeforeValidator, ValidationError,
+                      ValidatorFunctionWrapHandler)
+
+# 1. before: accept "a, b, c" as well as a real list
+class Post(BaseModel):
+    tags: list[str]
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def split_csv(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return [t.strip() for t in v.split(",") if t.strip()]
+        return v                      # let Pydantic validate everything else
+
+# 2. wrap: truncate instead of failing on too-long input
+class Code(BaseModel):
+    code: Annotated[str, Field(max_length=5)]
+
+    @field_validator("code", mode="wrap")
+    @classmethod
+    def truncate(cls, v: Any, handler: ValidatorFunctionWrapHandler) -> str:
+        try:
+            return handler(v)                         # normal validation
+        except ValidationError as err:
+            if err.errors()[0]["type"] == "string_too_long":
+                return handler(v[:5])
+            raise
+
+print(Code(code="ABCDEFGH"))        # code='ABCDE'
+
+# 3. reusable validators via Annotated (no decorator, no class needed)
+def must_be_even(v: int) -> int:
+    if v % 2:
+        raise ValueError("must be even")
+    return v
+
+Even     = Annotated[int, AfterValidator(must_be_even)]
+Stripped = Annotated[str, BeforeValidator(lambda v: v.strip() if isinstance(v, str) else v)]
+
+# 4. model before: accept a compact string form of the whole object
+class Pair(BaseModel):
+    key: str
+    value: int
+
+    @model_validator(mode="before")
+    @classmethod
+    def from_string(cls, data: Any) -> Any:
+        if isinstance(data, str):            # "x=5"
+            k, v = data.split("=")
+            return {"key": k, "value": v}
+        return data
+
+Pair.model_validate("x=5")          # Pair(key='x', value=5)</code></pre></div>
+
+  <h3>Order of execution</h3>
+  <ol class="steps">
+    <li><strong>Model <code>before</code></strong> validators run on the raw input dict.</li>
+    <li>For each field, in definition order: <strong>before</strong> and <strong>wrap</strong> validators, last-declared first; then the <strong>core type check and constraints</strong>; then <strong>after</strong> validators, first-declared first. A <code>@field_validator</code> counts as declared <em>after</em> any Annotated validators on that field.</li>
+    <li><strong>Model <code>after</code></strong> validators run on the built instance. They only run if every field passed.</li>
+  </ol>
+  <div class="note warn"><b>Validators see earlier fields only</b><p>In a field validator, <code>info.data</code> holds fields defined <em>above</em> the current one that already passed. For rules that involve several fields, use a <code>model_validator(mode="after")</code> instead of reaching into <code>info.data</code>.</p></div>
+
+  <h3>Validation context</h3>
+  <p>Pass runtime information (the current user, a list of banned words, a tenant id) into validators without global variables:</p>
+  <div class="code"><div class="cap"><span>context.py</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic import ValidationInfo
+from pydantic_core import PydanticCustomError
+
+class Comment(BaseModel):
+    word: str
+
+    @field_validator("word")
+    @classmethod
+    def not_banned(cls, v: str, info: ValidationInfo) -> str:
+        banned = (info.context or {}).get("banned", set())
+        if v in banned:
+            raise PydanticCustomError("banned_word", "'{word}' is not allowed", {"word": v})
+        return v
+
+Comment.model_validate({"word": "spam"}, context={"banned": {"spam"}})</code></pre></div>
+  <div class="output">1 validation error for Comment
+word
+  'spam' is not allowed [type=banned_word, input_value='spam', input_type=str]</div>
+</section>
+
+<section class="ch prose" id="errors">
+  <span class="chno">Chapter 8 · Models and validation</span>
+  <h2>Validation errors</h2>
+  <p>Every failure raises <code>pydantic.ValidationError</code> (a subclass of <code>ValueError</code>). It collects all problems from one validation call. Its printed form is for humans; its <code>.errors()</code> list is for code.</p>
+  <h3>Anatomy of one error</h3>
+  <div class="code"><div class="cap"><span>python</span><button type="button">Copy</button></div><pre><code class="language-python">try:
+    User(id="abc", name="x", signup="2026-01-01")
+except ValidationError as e:
+    print(e.error_count())
+    print(e.errors())
+    print(e.json())</code></pre></div>
+  <div class="output">1
+[{'type': 'int_parsing', 'loc': ('id',), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'abc', 'url': 'https://errors.pydantic.dev/2.14/v/int_parsing'}]
+[{"type":"int_parsing","loc":["id"],"msg":"Input should be a valid integer, unable to parse string as an integer","input":"abc","url":"..."}]</div>
+  <div class="tbl"><table>
+    <thead><tr><th>Key</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>type</code></td><td>Stable machine-readable error code. Branch on this, never on <code>msg</code>.</td></tr>
+      <tr><td><code>loc</code></td><td>Path to the bad value: <code>('addresses', 1, 'pin')</code>. Empty for model-level errors.</td></tr>
+      <tr><td><code>msg</code></td><td>Human-readable message (may change between versions).</td></tr>
+      <tr><td><code>input</code></td><td>The value that failed. <strong>Can contain secrets</strong>: see <a href="#secrets">Chapter 16</a>.</td></tr>
+      <tr><td><code>ctx</code></td><td>Extra details, e.g. <code>{'gt': 0}</code> or <code>{'min_length': 8, 'actual_length': 5}</code>.</td></tr>
+      <tr><td><code>url</code></td><td>Docs page for the error type.</td></tr>
+    </tbody>
+  </table></div>
+  <p>Control what you get back with <code>e.errors(include_url=False, include_context=False, include_input=False)</code>.</p>
+
+  <h3>Error types you will meet most</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>type</th><th>Cause</th></tr></thead>
+    <tbody>
+      <tr><td><code>missing</code></td><td>Required field not sent</td></tr>
+      <tr><td><code>extra_forbidden</code></td><td>Unknown field with <code>extra="forbid"</code></td></tr>
+      <tr><td><code>int_parsing</code>, <code>float_parsing</code></td><td>String cannot be read as a number</td></tr>
+      <tr><td><code>int_type</code>, <code>string_type</code>, <code>bool_type</code></td><td>Wrong type (or strict mode)</td></tr>
+      <tr><td><code>int_from_float</code></td><td>Float with a fraction given for an int</td></tr>
+      <tr><td><code>greater_than</code>, <code>less_than_equal</code>, ...</td><td>Numeric constraint failed</td></tr>
+      <tr><td><code>string_too_short</code>, <code>string_too_long</code>, <code>too_short</code></td><td>Length constraint failed</td></tr>
+      <tr><td><code>string_pattern_mismatch</code></td><td><code>pattern</code> did not match</td></tr>
+      <tr><td><code>literal_error</code>, <code>enum</code></td><td>Value not in the allowed set</td></tr>
+      <tr><td><code>union_tag_invalid</code></td><td>Unknown discriminator value</td></tr>
+      <tr><td><code>value_error</code>, <code>assertion_error</code></td><td>Raised from your validator</td></tr>
+      <tr><td><code>json_invalid</code></td><td><code>model_validate_json</code> got broken JSON</td></tr>
+      <tr><td><code>frozen_instance</code></td><td>Assigning to a frozen model</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Turning errors into a friendly API response</h3>
+  <div class="code"><div class="cap"><span>friendly_errors.py</span><button type="button">Copy</button></div><pre><code class="language-python">def to_problems(e: ValidationError) -> list[dict]:
+    return [
+        {"field": ".".join(str(p) for p in err["loc"]) or "(body)",
+         "code": err["type"],
+         "message": err["msg"]}
+        for err in e.errors(include_input=False, include_url=False)
+    ]
+
+try:
+    Invoice.model_validate_json('{"vendor":"Acme","total":"twelve","currency":"GBP"}')
+except ValidationError as e:
+    for p in to_problems(e):
+        print(p["field"], "->", p["message"])</code></pre></div>
+  <div class="output">total -> Input should be a valid number, unable to parse string as a number
+currency -> Input should be 'INR', 'USD' or 'EUR'</div>
+  <h3>Custom error types</h3>
+  <p><code>ValueError</code> always becomes <code>type=value_error</code>. Raise <code>PydanticCustomError(type, message_template, ctx)</code> when clients need a stable code of their own, as in the <code>banned_word</code> example in Chapter 7.</p>
+</section>
+
+<!-- ================= PART III ================= -->
+<section class="ch prose" id="serialize">
+  <span class="chno">Chapter 9 · Data out and config</span>
+  <h2>Serialization</h2>
+  <p>Serialization is validation in reverse: turning a model into a <code>dict</code> or JSON. Two methods do almost everything:</p>
+  <ul>
+    <li><code>model_dump()</code> returns a Python <code>dict</code>. By default values keep their Python types (<code>datetime</code>, <code>UUID</code>, <code>Decimal</code>, enum members).</li>
+    <li><code>model_dump_json()</code> returns a JSON <code>str</code>, produced in Rust. Faster than <code>json.dumps(m.model_dump())</code> and it knows how to encode dates, UUIDs and Decimals.</li>
+  </ul>
+  <p><code>model_dump(mode="json")</code> gives a dict containing only JSON-safe values: use it when another library will call <code>json.dumps</code> on the result.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>python mode vs json mode, plus a custom field serializer</h4>
+    <div class="code"><div class="cap"><span>dump_modes.py</span><button type="button">Copy</button></div><pre><code class="language-python">from datetime import datetime
+from decimal import Decimal
+from enum import Enum
+from uuid import UUID, uuid4
+from pydantic import BaseModel, Field, field_serializer
+
+class Status(str, Enum):
+    open = "open"
+    closed = "closed"
+
+class Ticket(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    status: Status = Status.open
+    created: datetime
+    amount: Decimal
+
+    @field_serializer("created")
+    def fmt_created(self, v: datetime) -> str:
+        return v.strftime("%d %b %Y %H:%M")
+
+t = Ticket(id="12345678-1234-5678-1234-567812345678", status="closed",
+           created="2026-11-24T10:30:00Z", amount="12.50")
+print(t.model_dump())
+print(t.model_dump(mode="json"))</code></pre></div>
+    <div class="output">{'id': UUID('12345678-1234-5678-1234-567812345678'), 'status': &lt;Status.closed: 'closed'&gt;, 'created': '24 Nov 2026 10:30', 'amount': Decimal('12.50')}
+{'id': '12345678-1234-5678-1234-567812345678', 'status': 'closed', 'created': '24 Nov 2026 10:30', 'amount': '12.50'}</div>
+  </div>
+
+  <h3>Dump options</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Option</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>mode="json"</code></td><td>Only JSON-compatible values in the dict</td></tr>
+      <tr><td><code>include={"a", "b"}</code> / <code>exclude={"password"}</code></td><td>Pick or drop fields; nested: <code>exclude={"user": {"email"}}</code></td></tr>
+      <tr><td><code>by_alias=True</code></td><td>Use aliases as keys (camelCase APIs)</td></tr>
+      <tr><td><code>exclude_unset=True</code></td><td>Only fields the caller actually set: the key to PATCH endpoints</td></tr>
+      <tr><td><code>exclude_defaults=True</code></td><td>Drop fields equal to their default</td></tr>
+      <tr><td><code>exclude_none=True</code></td><td>Drop fields whose value is <code>None</code></td></tr>
+      <tr><td><code>round_trip=True</code></td><td>Output that can be validated back into the same model</td></tr>
+      <tr><td><code>indent=2</code> (JSON only)</td><td>Pretty-print</td></tr>
+      <tr><td><code>context={...}</code></td><td>Passed to serializers, like validation context</td></tr>
+    </tbody>
+  </table></div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>One model, five outputs</h4>
+    <div class="code"><div class="cap"><span>dump_options.py</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic import BaseModel, ConfigDict, computed_field
+from pydantic.alias_generators import to_camel
+
+class Order(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, validate_by_name=True)
+    order_id: int
+    unit_price: float
+    qty: int = 1
+    note: str | None = None
+
+    @computed_field          # included in dumps and JSON Schema
+    @property
+    def total(self) -> float:
+        return self.unit_price * self.qty
+
+o = Order.model_validate({"orderId": 7, "unitPrice": 2.5, "qty": 4})
+print(o.model_dump())
+print(o.model_dump(by_alias=True, exclude_none=True))
+print(o.model_dump_json())
+print(o.model_dump(exclude_unset=True))
+print(o.model_dump(include={"order_id", "total"}))</code></pre></div>
+    <div class="output">{'order_id': 7, 'unit_price': 2.5, 'qty': 4, 'note': None, 'total': 10.0}
+{'orderId': 7, 'unitPrice': 2.5, 'qty': 4, 'total': 10.0}
+{"order_id":7,"unit_price":2.5,"qty":4,"note":null,"total":10.0}
+{'order_id': 7, 'unit_price': 2.5, 'qty': 4, 'total': 10.0}
+{'order_id': 7, 'total': 10.0}</div>
+  </div>
+
+  <h3>Custom serializers</h3>
+  <div class="code"><div class="cap"><span>serializers.py</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Annotated
+from pydantic import PlainSerializer, model_serializer
+
+# reusable: round floats to 2 places on output only
+Money = Annotated[float, PlainSerializer(lambda v: round(v, 2), return_type=float)]
+
+class Line(BaseModel):
+    price: Money
+
+print(Line(price=3.14159).model_dump())      # {'price': 3.14}
+
+# whole-model serializer: replaces the dict entirely
+class Amount(BaseModel):
+    value: int
+    currency: str
+
+    @model_serializer
+    def as_text(self) -> str:
+        return f"{self.value} {self.currency}"
+
+print(Amount(value=5, currency="INR").model_dump())   # '5 INR'</code></pre></div>
+  <p><code>@field_serializer(..., when_used="json")</code> applies only to JSON output; <code>when_used="unless-none"</code> skips <code>None</code> values.</p>
+</section>
+
+<section class="ch prose" id="aliases">
+  <span class="chno">Chapter 10 · Data out and config</span>
+  <h2>Aliases and naming</h2>
+  <p>Python fields are <code>snake_case</code>; JSON APIs are often <code>camelCase</code> or use names that are not valid Python (<code>"class"</code>, <code>"X-Request-Id"</code>). Aliases map between the two.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Setting</th><th>Used when reading input</th><th>Used when dumping</th></tr></thead>
+    <tbody>
+      <tr><td><code>Field(alias="fullName")</code></td><td>Yes</td><td>Only with <code>by_alias=True</code></td></tr>
+      <tr><td><code>Field(validation_alias=...)</code></td><td>Yes</td><td>No</td></tr>
+      <tr><td><code>Field(serialization_alias=...)</code></td><td>No</td><td>With <code>by_alias=True</code></td></tr>
+      <tr><td><code>ConfigDict(alias_generator=to_camel)</code></td><td colspan="2">Generates an alias for every field (<code>to_camel</code>, <code>to_pascal</code>, <code>to_snake</code>)</td></tr>
+      <tr><td><code>ConfigDict(validate_by_name=True)</code></td><td colspan="2">Accept the Python name <em>as well as</em> the alias (replaces v1's <code>populate_by_name</code>)</td></tr>
+      <tr><td><code>ConfigDict(serialize_by_alias=True)</code></td><td colspan="2">Make <code>by_alias=True</code> the default for dumps</td></tr>
+    </tbody>
+  </table></div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Several possible input names, and a value nested deep inside</h4>
+    <div class="code"><div class="cap"><span>alias_choices.py</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic import AliasChoices, AliasPath, BaseModel, Field
+
+class Contact(BaseModel):
+    # accept any of three keys
+    name: str = Field(validation_alias=AliasChoices("name", "full_name", "fullName"))
+    # read data["address"]["city"]
+    city: str = Field(validation_alias=AliasPath("address", "city"))
+
+Contact.model_validate({"fullName": "Asha", "address": {"city": "Pune"}})</code></pre></div>
+    <div class="output">Contact(name='Asha', city='Pune')</div>
+  </div>
+  <div class="note warn"><b>Alias gotcha</b><p>Once a field has an alias, <code>Model(full_name="x")</code> fails unless <code>validate_by_name=True</code> is set, because the constructor expects the alias. Static type checkers also need the <code>pydantic.mypy</code> plugin (or Pyright, which reads <code>alias</code>) to understand this.</p></div>
+</section>
+
+<section class="ch prose" id="config">
+  <span class="chno">Chapter 11 · Data out and config</span>
+  <h2>Model configuration</h2>
+  <p>Behaviour for a whole model is set with <code>model_config = ConfigDict(...)</code>. Child classes inherit and can override it. The options you will actually use:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>extra</code></td><td><code>"ignore"</code></td><td><code>"ignore"</code> drops unknown keys · <code>"forbid"</code> rejects them (<code>extra_forbidden</code>) · <code>"allow"</code> keeps them in <code>model_extra</code></td></tr>
+      <tr><td><code>strict</code></td><td><code>False</code></td><td>Strict mode for every field</td></tr>
+      <tr><td><code>frozen</code></td><td><code>False</code></td><td>Immutable and hashable instances</td></tr>
+      <tr><td><code>validate_assignment</code></td><td><code>False</code></td><td>Re-validate on <code>obj.field = value</code></td></tr>
+      <tr><td><code>validate_default</code></td><td><code>False</code></td><td>Also validate default values</td></tr>
+      <tr><td><code>str_strip_whitespace</code>, <code>str_to_lower</code>, <code>str_to_upper</code></td><td><code>False</code></td><td>Normalise every <code>str</code> field</td></tr>
+      <tr><td><code>str_min_length</code>, <code>str_max_length</code></td><td>none</td><td>Length limits for every <code>str</code> field</td></tr>
+      <tr><td><code>from_attributes</code></td><td><code>False</code></td><td>Validate from object attributes (ORM rows); was <code>orm_mode</code></td></tr>
+      <tr><td><code>alias_generator</code>, <code>validate_by_name</code>, <code>validate_by_alias</code>, <code>serialize_by_alias</code></td><td></td><td>Naming (Chapter 10)</td></tr>
+      <tr><td><code>use_enum_values</code></td><td><code>False</code></td><td>Store <code>"open"</code> instead of <code>Status.open</code></td></tr>
+      <tr><td><code>arbitrary_types_allowed</code></td><td><code>False</code></td><td>Allow fields of any class (checked with <code>isinstance</code> only)</td></tr>
+      <tr><td><code>hide_input_in_errors</code></td><td><code>False</code></td><td>Remove <code>input_value</code> from error <em>messages</em> (Chapter 16)</td></tr>
+      <tr><td><code>ser_json_timedelta</code>, <code>ser_json_bytes</code></td><td></td><td>How timedelta/bytes appear in JSON</td></tr>
+      <tr><td><code>json_schema_extra</code>, <code>title</code></td><td></td><td>Schema customisation</td></tr>
+      <tr><td><code>defer_build</code></td><td><code>False</code></td><td>Build the validator on first use (faster imports)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code"><div class="cap"><span>config_demo.py</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic import BaseModel, ConfigDict
+
+class ApiInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    name: str
+
+class Point(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    x: int
+    y: int
+
+class Form(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
+    age: int
+
+ApiInput(name=" x ", nickname="y")   # Extra inputs are not permitted [type=extra_forbidden]
+p = Point(x=1, y=2); p.x = 5        # Instance is frozen [type=frozen_instance]
+f = Form(age=1); f.age = "zz"       # Input should be a valid integer ... [type=int_parsing]
+{Point(x=1, y=2)}                   # frozen models are hashable: usable in sets/dict keys</code></pre></div>
+  <div class="note tip"><b>Shared base config</b><p>Create one <code>class StrictBase(BaseModel): model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)</code> and inherit all API input models from it. Rejecting unknown fields catches client typos such as <code>"emial"</code> that <code>"ignore"</code> would silently swallow.</p></div>
+</section>
+
+<section class="ch prose" id="api">
+  <span class="chno">Chapter 12 · Data out and config</span>
+  <h2>The model API</h2>
+  <p>Every public method on <code>BaseModel</code> starts with <code>model_</code>, so your own field names never collide with them.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Member</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>Model.model_validate(obj, strict=, context=, from_attributes=)</code></td><td>Validate a dict or object</td></tr>
+      <tr><td><code>Model.model_validate_json(data)</code></td><td>Parse and validate JSON in one Rust pass</td></tr>
+      <tr><td><code>Model.model_validate_strings(obj)</code></td><td>Validate a dict whose values are all strings (query strings, CSV)</td></tr>
+      <tr><td><code>Model.model_construct(**values)</code></td><td>Create <strong>without validation</strong>. Only for data you produced yourself.</td></tr>
+      <tr><td><code>obj.model_dump()</code> / <code>model_dump_json()</code></td><td>Serialize (Chapter 9)</td></tr>
+      <tr><td><code>obj.model_copy(update={...}, deep=False)</code></td><td>Copy with changes. <strong>The update is not validated.</strong></td></tr>
+      <tr><td><code>Model.model_json_schema()</code></td><td>JSON Schema dict (Chapter 17)</td></tr>
+      <tr><td><code>Model.model_fields</code></td><td>Dict of field name to <code>FieldInfo</code> (annotation, default, constraints)</td></tr>
+      <tr><td><code>Model.model_computed_fields</code></td><td>Computed fields</td></tr>
+      <tr><td><code>obj.model_fields_set</code></td><td>Names the caller explicitly set</td></tr>
+      <tr><td><code>obj.model_extra</code></td><td>Extra keys when <code>extra="allow"</code></td></tr>
+      <tr><td><code>Model.model_rebuild()</code></td><td>Resolve forward references defined later</td></tr>
+      <tr><td><code>obj.model_post_init(context)</code></td><td>Hook that runs after validation; good for private attributes</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code"><div class="cap"><span>api_demo.py</span><button type="button">Copy</button></div><pre><code class="language-python">u = User(id=1, name="a", signup="2026-01-01")
+u.model_copy(update={"name": "b"})          # User(id=1, name='b', ...)
+User.model_construct(id="not-int", name=1)  # User(id='not-int', name=1, tags=[])  no checks!
+list(User.model_fields)                      # ['id', 'name', 'signup', 'tags']
+User.model_fields["tags"]                    # annotation=list[str] required=False default=[]</code></pre></div>
+  <div class="note bad"><b>Two holes in validation</b><p><code>model_construct()</code> and <code>model_copy(update=...)</code> both skip validation. To change a field safely, either enable <code>validate_assignment</code> and assign, or rebuild: <code>User.model_validate({**u.model_dump(), "name": "b"})</code>.</p></div>
+
+  <h3>Private attributes</h3>
+  <p>Attributes whose names start with <code>_</code> are not fields: they are not validated, dumped or put in the schema. Declare them with <code>PrivateAttr</code> for caches, clients or internal state.</p>
+  <div class="code"><div class="cap"><span>private_attr.py</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Any
+from pydantic import PrivateAttr
+
+class Service(BaseModel):
+    url: str
+    _client: Any = PrivateAttr(default=None)
+
+    def model_post_init(self, context: Any) -> None:
+        self._client = f"client({self.url})"
+
+s = Service(url="x")
+print(s._client, s.model_dump())    # client(x) {'url': 'x'}</code></pre></div>
+</section>
+
+<!-- ================= PART IV ================= -->
+<section class="ch prose" id="adapters">
+  <span class="chno">Chapter 13 · Beyond BaseModel</span>
+  <h2>TypeAdapter, validate_call, dataclasses and RootModel</h2>
+  <p>Not everything you validate is a model. Pydantic can validate any type, function arguments, and standard dataclasses.</p>
+  <h3>TypeAdapter: validate any type</h3>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>A list of positive ints, from Python and from JSON</h4>
+    <div class="code"><div class="cap"><span>type_adapter.py</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic import PositiveInt, TypeAdapter
+
+ta = TypeAdapter(list[PositiveInt])        # build ONCE (module level), reuse
+
+ta.validate_python(["1", 2, 3])            # [1, 2, 3]
+ta.validate_json('[1, -2, "x"]')
+ta.dump_json([1, 2])                       # b'[1,2]'
+ta.json_schema()                           # {'items': {'exclusiveMinimum': 0, 'type': 'integer'}, 'type': 'array'}</code></pre></div>
+    <div class="output">2 validation errors for list[constrained-int]
+1
+  Input should be greater than 0 [type=greater_than, input_value=-2, input_type=int]
+2
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='x', input_type=str]</div>
+    <p>Use <code>TypeAdapter(list[User])</code> to validate a JSON array of users in one call, or <code>TypeAdapter(MyTypedDict)</code> to validate a <code>TypedDict</code>.</p>
+  </div>
+  <div class="note warn"><b>Do not build adapters in a loop</b><p>Creating a <code>TypeAdapter</code> builds and compiles a schema. Create it once at module level, not inside a function that runs per request.</p></div>
+
+  <h3>@validate_call: validate function arguments</h3>
+  <div class="code"><div class="cap"><span>validate_call.py</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic import PositiveInt, validate_call
+
+@validate_call(validate_return=True)
+def repeat(s: str, n: PositiveInt) -> str:
+    return s * n
+
+repeat("ab", "3")     # 'ababab'   ("3" coerced to 3)
+repeat("ab", 0)       # ValidationError: 1 validation error for repeat / 1 / Input should be greater than 0</code></pre></div>
+  <p>Good for public library functions and tool functions an LLM calls. Note that the <code>loc</code> of a positional argument is its index (<code>1</code>).</p>
+
+  <h3>Pydantic dataclasses</h3>
+  <div class="code"><div class="cap"><span>python</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic.dataclasses import dataclass
+
+@dataclass
+class Point:
+    x: int
+    y: int = 0
+
+Point(x="3")          # Point(x=3, y=0)  validated, but still a real dataclass</code></pre></div>
+  <p>Use them when you want standard dataclass behaviour (<code>dataclasses.asdict</code>, <code>__eq__</code> semantics) plus validation. They have no <code>model_dump</code>; use <code>TypeAdapter(Point).dump_python(p)</code>.</p>
+
+  <h3>RootModel: when the top level is not an object</h3>
+  <div class="code"><div class="cap"><span>python</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic import RootModel
+
+class Tags(RootModel[list[str]]):
+    pass
+
+t = Tags(["a", "b"])
+t.root                 # ['a', 'b']
+t.model_dump()         # ['a', 'b']   not {'root': [...]}</code></pre></div>
+</section>
+
+<section class="ch prose" id="generics">
+  <span class="chno">Chapter 14 · Beyond BaseModel</span>
+  <h2>Generics and recursive models</h2>
+  <h3>Generic models</h3>
+  <p>Write a wrapper once and parametrise it: <code>Page[User]</code>, <code>Page[Order]</code>, <code>ApiResponse[T]</code>.</p>
+  <div class="code"><div class="cap"><span>generics.py</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Generic, TypeVar
+from pydantic import BaseModel
+
+T = TypeVar("T")
+
+class Page(BaseModel, Generic[T]):
+    items: list[T]
+    total: int
+
+Page[int](items=["1", 2], total=2)     # Page[int](items=[1, 2], total=2)
+Page[int](items=["x"], total=1)        # error at loc items.0
+
+# Python 3.12+ syntax (PEP 695) works too
+class Envelope[T](BaseModel):
+    data: T
+    ok: bool = True</code></pre></div>
+  <p>An unparametrised <code>Page(items=[...])</code> treats <code>T</code> as <code>Any</code> and validates nothing inside the list. Always parametrise at the boundary.</p>
+  <h3>Recursive and forward references</h3>
+  <div class="code"><div class="cap"><span>tree.py</span><button type="button">Copy</button></div><pre><code class="language-python">class Node(BaseModel):
+    name: str
+    children: list["Node"] = []      # refers to itself
+
+Node.model_validate({"name": "root", "children": [{"name": "a", "children": [{"name": "b"}]}]})
+# Node(name='root', children=[Node(name='a', children=[Node(name='b', children=[])])])
+
+# Two models that reference each other: define both, then
+# ModelA.model_rebuild()  if Pydantic could not resolve the name at class creation</code></pre></div>
+</section>
+
+<section class="ch prose" id="types">
+  <span class="chno">Chapter 15 · Beyond BaseModel</span>
+  <h2>Special and custom types</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Type</th><th>Import</th><th>Validates</th></tr></thead>
+    <tbody>
+      <tr><td><code>EmailStr</code>, <code>NameEmail</code></td><td><code>pydantic</code> (needs <code>pydantic[email]</code>)</td><td>Email syntax and normalisation</td></tr>
+      <tr><td><code>HttpUrl</code>, <code>AnyUrl</code>, <code>AnyHttpUrl</code>, <code>PostgresDsn</code>, <code>RedisDsn</code></td><td><code>pydantic</code></td><td>URLs and DSNs; gives <code>.host</code>, <code>.port</code>, <code>.path</code></td></tr>
+      <tr><td><code>SecretStr</code>, <code>SecretBytes</code>, <code>Secret[T]</code></td><td><code>pydantic</code></td><td>Values hidden from logs and dumps (<a href="#secrets">Chapter 16</a>)</td></tr>
+      <tr><td><code>IPvAnyAddress</code>, <code>IPvAnyNetwork</code></td><td><code>pydantic</code></td><td>IPv4/IPv6 addresses and networks</td></tr>
+      <tr><td><code>FilePath</code>, <code>DirectoryPath</code>, <code>NewPath</code></td><td><code>pydantic</code></td><td>Path exists / is a file / is a dir / does not exist</td></tr>
+      <tr><td><code>Json[T]</code></td><td><code>pydantic</code></td><td>A JSON string that is parsed and validated as <code>T</code></td></tr>
+      <tr><td><code>ByteSize</code></td><td><code>pydantic</code></td><td><code>"10MB"</code> to bytes</td></tr>
+      <tr><td><code>ImportString</code></td><td><code>pydantic</code></td><td><code>"math.sqrt"</code> to the object</td></tr>
+      <tr><td><code>Color</code>, <code>PhoneNumber</code>, <code>CountryAlpha2</code>, <code>Currency</code>, <code>ULID</code>, <code>SemanticVersion</code></td><td><code>pydantic-extra-types</code> package</td><td>Domain-specific formats</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code"><div class="cap"><span>url.py</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic import BaseModel, HttpUrl
+
+class Hook(BaseModel):
+    url: HttpUrl
+
+h = Hook(url="https://example.com/a?b=1")
+h.url.host         # 'example.com'
+Hook(url="not a url")   # Input should be a valid URL, relative URL without a base [type=url_parsing]</code></pre></div>
+  <h3>Your own type</h3>
+  <p>Nearly every custom type is an <code>Annotated</code> alias with validators and a serializer. Reach for <code>__get_pydantic_core_schema__</code> only for third-party classes you cannot otherwise describe.</p>
+  <div class="code"><div class="cap"><span>custom_type.py</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Annotated
+from pydantic import AfterValidator, BeforeValidator, PlainSerializer, WithJsonSchema
+
+def parse_inr(v):
+    if isinstance(v, str):
+        v = v.replace("₹", "").replace(",", "").strip()
+    return v
+
+def to_paise(v: float) -> int:
+    return round(v * 100)
+
+# accepts "₹1,234.50" or 1234.5 ; stores paise as int ; dumps rupees as string
+Rupees = Annotated[
+    float,
+    BeforeValidator(parse_inr),
+    AfterValidator(to_paise),
+    PlainSerializer(lambda p: f"₹{p / 100:,.2f}", return_type=str),
+    WithJsonSchema({"type": "string", "examples": ["₹1,234.50"]}),
+]</code></pre></div>
+</section>
+
+<section class="ch prose" id="secrets">
+  <span class="chno">Chapter 16 · Beyond BaseModel</span>
+  <h2>SecretStr and handling secrets</h2>
+  <div class="define">
+    <span class="term">SecretStr</span><span class="pos">type · pydantic.SecretStr</span>
+    <p>A string wrapper that <strong>hides its value</strong> everywhere it would normally be shown: <code>repr()</code>, <code>str()</code>, f-strings, logs, tracebacks, <code>model_dump()</code> and <code>model_dump_json()</code>. You read the real value only by calling <code>.get_secret_value()</code>. <code>SecretBytes</code> does the same for <code>bytes</code>, and <code>Secret[T]</code> for any type.</p>
+  </div>
+  <p>Passwords, API keys, tokens, database URLs with credentials and webhook signing keys all end up in model objects. Those objects get printed in debug sessions, written to logs by error handlers, sent to Sentry, and dumped into JSON responses. A plain <code>str</code> leaks in all of those places. <code>SecretStr</code> makes "show it" an explicit, searchable act.</p>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>What a SecretStr shows, and what it keeps</h4>
+    <div class="code"><div class="cap"><span>secret_basics.py</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic import BaseModel, Field, SecretBytes, SecretStr
+
+class Login(BaseModel):
+    username: str
+    password: SecretStr = Field(min_length=8)
+    token: SecretBytes | None = None
+
+l = Login(username="asha", password="hunter2!!", token=b"abc")
+
+print(repr(l))
+print(f"pw={l.password}")
+print(l.model_dump())
+print(l.model_dump_json())
+print(l.password.get_secret_value(), l.token.get_secret_value())   # explicit reveal
+print(len(l.password), l.password == SecretStr("hunter2!!"), l.password == "hunter2!!")</code></pre></div>
+    <div class="output">Login(username='asha', password=SecretStr('**********'), token=SecretBytes(b'**********'))
+pw=**********
+{'username': 'asha', 'password': SecretStr('**********'), 'token': SecretBytes(b'**********')}
+{"username":"asha","password":"**********","token":"**********"}
+hunter2!! b'abc'
+9 True False</div>
+    <p>The mask is always ten stars regardless of length, so it reveals nothing. <code>len()</code> works (handy for checks) and two <code>SecretStr</code> objects compare by value, but a <code>SecretStr</code> never equals a plain <code>str</code>.</p>
+  </div>
+
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 760 210" role="img" aria-label="A plain string flows to repr, logs, model_dump and JSON responses in clear text. A SecretStr shows stars in all of these and only gives the real value through get_secret_value, which should be called only at the point of use such as an HTTP header or database connect">
+        <text x="20" y="22" class="t-b">Where a value travels</text>
+        <rect x="20" y="40" width="150" height="40" rx="8" class="bx-r"/><text x="95" y="65" text-anchor="middle" class="t-b t-r">api_key: str</text>
+        <rect x="20" y="130" width="150" height="40" rx="8" class="bx-a"/><text x="95" y="155" text-anchor="middle" class="t-b t-a">api_key: SecretStr</text>
+        <rect x="240" y="34" width="110" height="30" rx="6" class="bx"/><text x="295" y="54" text-anchor="middle" class="t-s">repr / print</text>
+        <rect x="240" y="70" width="110" height="30" rx="6" class="bx"/><text x="295" y="90" text-anchor="middle" class="t-s">logs / Sentry</text>
+        <rect x="370" y="34" width="110" height="30" rx="6" class="bx"/><text x="425" y="54" text-anchor="middle" class="t-s">model_dump</text>
+        <rect x="370" y="70" width="110" height="30" rx="6" class="bx"/><text x="425" y="90" text-anchor="middle" class="t-s">JSON response</text>
+        <text x="520" y="70" class="t-r">sk-live-9f2c… in clear text ✗</text>
+        <path d="M170 60 L238 50" class="ln-r" marker-end="url(#arrR)"/>
+        <rect x="240" y="124" width="240" height="30" rx="6" class="bx"/><text x="360" y="144" text-anchor="middle" class="t-s">repr · logs · dump · JSON</text>
+        <text x="520" y="144" class="t-g">********** ✓</text>
+        <path d="M170 146 L238 140" class="ln-g" marker-end="url(#arrG)"/>
+        <rect x="240" y="166" width="240" height="30" rx="6" class="bx-g"/><text x="360" y="186" text-anchor="middle" class="t-m">.get_secret_value()</text>
+        <text x="520" y="186" class="t-s">only at the point of use (HTTP header, DB connect)</text>
+        <path d="M170 158 L238 180" class="ln-a" marker-end="url(#arrA)"/>
+      </svg>
+    </div>
+    <figcaption><b>Figure 4.</b> SecretStr is a guard against <em>accidental</em> disclosure. It is not encryption: the value is in memory in plain form.</figcaption>
+  </figure>
+
+  <h3>Typical uses</h3>
+  <div class="code"><div class="cap"><span>secret_usage.py</span><button type="button">Copy</button></div><pre><code class="language-python">import anthropic
+from pydantic import SecretStr
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    anthropic_api_key: SecretStr          # read from env / .env, never printed
+    db_password: SecretStr
+
+settings = Settings()
+print(settings)       # ... anthropic_api_key=SecretStr('**********') db_password=SecretStr('**********')
+
+# reveal at the last possible moment, never store the revealed value
+client = anthropic.Anthropic(api_key=settings.anthropic_api_key.get_secret_value())</code></pre></div>
+
+  <h3>Constraints and validation on secrets</h3>
+  <p>Length constraints work directly. Note the different error type: <code>too_short</code>, not <code>string_too_short</code>. <code>pattern</code> does <strong>not</strong> work on <code>SecretStr</code> and raises a <code>TypeError</code> at validation time. Use <code>Secret[...]</code> around a constrained <code>str</code>, or an <code>AfterValidator</code>:</p>
+  <div class="code"><div class="cap"><span>secret_rules.py</span><button type="button">Copy</button></div><pre><code class="language-python">import re
+from typing import Annotated
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, Secret, SecretStr, StringConstraints
+
+# ✗ TypeError: Unable to apply constraint 'pattern' to supplied value **********
+# pin: Annotated[SecretStr, StringConstraints(pattern=r"^\d{4}$")]
+
+# ✓ option 1: wrap a constrained str in Secret[...]
+Pin = Secret[Annotated[str, StringConstraints(pattern=r"^\d{4}$")]]
+
+# ✓ option 2: validate the revealed value in an after validator
+def strong(v: SecretStr) -> SecretStr:
+    s = v.get_secret_value()
+    if not (re.search(r"\d", s) and re.search(r"[A-Z]", s)):
+        raise ValueError("password needs a digit and an uppercase letter")
+    return v                      # return the SecretStr, not s
+
+class Register(BaseModel):
+    model_config = ConfigDict(hide_input_in_errors=True)
+    pin: Pin
+    password: Annotated[SecretStr, Field(min_length=8), AfterValidator(strong)]</code></pre></div>
+  <p><code>Secret[T]</code> works for non-string values too: <code>Secret[date]</code> for a date of birth, <code>Secret[int]</code> for a PIN number. <code>.get_secret_value()</code> returns the validated <code>date</code> or <code>int</code>.</p>
+
+  <h3>Three traps (all verified on 2.14)</h3>
+  <div class="note bad"><b>Trap 1 · The raw secret appears in ValidationError</b><p>A failed secret field prints <code>input_value='short'</code>: the actual password. Error messages end up in logs. Set <code>ConfigDict(hide_input_in_errors=True)</code> on models that hold secrets. That cleans the <em>message</em>, but <code>e.errors()</code> still contains <code>'input': 'short'</code>, so when you return errors to a client (FastAPI 422 bodies include <code>input</code>) call <code>e.errors(include_input=False)</code>.</p></div>
+  <div class="code"><div class="cap"><span>trap1.py</span><button type="button">Copy</button></div><pre><code class="language-python">class Login(BaseModel):
+    model_config = ConfigDict(hide_input_in_errors=True)
+    password: SecretStr = Field(min_length=8)
+
+try:
+    Login(password="short")
+except ValidationError as e:
+    print(e)                                        # no input_value in the text
+    print(e.errors()[0]["input"])                   # 'short'  still here!
+    print(e.errors(include_input=False))            # safe to return to a client</code></pre></div>
+  <div class="output">1 validation error for Login
+password
+  Value should have at least 8 items after validation, not 5 [type=too_short]
+short
+[{'type': 'too_short', 'loc': ('password',), 'msg': 'Value should have at least 8 items after validation, not 5', 'ctx': {...}}]</div>
+  <div class="note bad"><b>Trap 2 · JSON round trip destroys the secret</b><p><code>model_dump_json()</code> writes <code>"**********"</code>. Validating that JSON back gives a <code>SecretStr</code> whose real value is the ten stars. Caching a settings object to disk or a queue this way silently corrupts it. If you truly must serialize the value (for example, to an encrypted store), add a serializer that reveals it, and only for that purpose:</p></div>
+  <div class="code"><div class="cap"><span>trap2.py</span><button type="button">Copy</button></div><pre><code class="language-python">dumped = Login(password="hunter2!!").model_dump_json()
+Login.model_validate_json(dumped).password.get_secret_value()   # '**********'  data lost
+
+class StoredCredential(BaseModel):
+    api_key: SecretStr
+
+    @field_serializer("api_key", when_used="json")
+    def reveal(self, v: SecretStr) -> str:
+        return v.get_secret_value()      # JSON shows the key; dict and repr stay masked
+
+StoredCredential(api_key="sk-live-123").model_dump_json()   # '{"api_key":"sk-live-123"}'</code></pre></div>
+  <div class="note bad"><b>Trap 3 · It is a mask, not encryption</b><p><code>SecretStr</code> is a wrapper, not a security boundary (it even accepts a plain <code>str</code> in strict mode). Anything that can reach the object can call <code>.get_secret_value()</code>, and once you assign the revealed value to a variable or put it in an f-string, the protection is gone. Reveal inline at the call site; never log, return or cache the revealed value.</p></div>
+
+  <h3>SecretStr in JSON Schema and OpenAPI</h3>
+  <p>Secrets appear as <code>{"type": "string", "format": "password", "writeOnly": true}</code>, so Swagger UI renders a password box and clients know the field is never returned.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Situation</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td>API key, token, password in settings</td><td><code>SecretStr</code> in <code>BaseSettings</code></td></tr>
+      <tr><td>Password in a sign-up request</td><td><code>SecretStr</code> + <code>hide_input_in_errors</code>; hash it immediately, never return it</td></tr>
+      <tr><td>Binary key material</td><td><code>SecretBytes</code></td></tr>
+      <tr><td>Sensitive non-string (DOB, PIN, account number)</td><td><code>Secret[date]</code>, <code>Secret[int]</code>, <code>Secret[Annotated[str, ...]]</code></td></tr>
+      <tr><td>Database DSN containing a password</td><td><code>SecretStr</code>, or a <code>PostgresDsn</code> plus a separate <code>SecretStr</code> password</td></tr>
+      <tr><td>Field that must never be dumped at all</td><td><code>Field(exclude=True)</code> (can combine with <code>SecretStr</code>)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="ch prose" id="schema">
+  <span class="chno">Chapter 17 · Beyond BaseModel</span>
+  <h2>JSON Schema</h2>
+  <p>Every model can describe itself as <a href="https://json-schema.org/" target="_blank" rel="noopener">JSON Schema</a>. This one feature powers FastAPI's <code>/docs</code>, LLM tool definitions, structured outputs, form generators and contract tests.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Docstring, description, constraint and Literal in the schema</h4>
+    <div class="code"><div class="cap"><span>schema.py</span><button type="button">Copy</button></div><pre><code class="language-python">import json
+from typing import Literal
+from pydantic import BaseModel, Field
+
+class Item(BaseModel):
+    """An item for sale."""
+    name: str = Field(description="Product name")
+    price: float = Field(gt=0)
+    kind: Literal["book", "toy"] = "book"
+
+print(json.dumps(Item.model_json_schema(), indent=2))</code></pre></div>
+    <div class="output">{
+  "description": "An item for sale.",
+  "properties": {
+    "name": {"description": "Product name", "title": "Name", "type": "string"},
+    "price": {"exclusiveMinimum": 0, "title": "Price", "type": "number"},
+    "kind": {"default": "book", "enum": ["book", "toy"], "title": "Kind", "type": "string"}
+  },
+  "required": ["name", "price"],
+  "title": "Item",
+  "type": "object"
+}</div>
+  </div>
+  <ul>
+    <li>The class <strong>docstring</strong> becomes the schema <code>description</code>; <code>Field(description=...)</code> describes each property. LLMs read both, so write them as instructions.</li>
+    <li><code>model_json_schema(mode="serialization")</code> describes the output shape (includes computed fields); the default <code>"validation"</code> describes accepted input.</li>
+    <li>Nested models go into <code>$defs</code> and are referenced with <code>$ref</code>.</li>
+    <li>Add keys with <code>Field(json_schema_extra={"examples": [...]})</code> or <code>model_config = ConfigDict(json_schema_extra=...)</code>.</li>
+    <li><code>extra="forbid"</code> adds <code>"additionalProperties": false</code>, which strict LLM tool schemas require.</li>
+  </ul>
+</section>
+
+<section class="ch prose" id="settings">
+  <span class="chno">Chapter 18 · Beyond BaseModel</span>
+  <h2>pydantic-settings</h2>
+  <p><code>pydantic-settings</code> (a separate package) gives you <code>BaseSettings</code>: a model whose fields are filled from environment variables, <code>.env</code> files, secret files and CLI arguments, then validated like any model. Misconfiguration fails at startup with a clear error instead of at 3 a.m. in production.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>App settings from .env with nested config and secrets</h4>
+    <div class="code"><div class="cap"><span>.env</span><button type="button">Copy</button></div><pre><code class="language-bash">APP_ENV=dev
+APP_DEBUG=true
+APP_ANTHROPIC_API_KEY=sk-ant-xxxx
+APP_DB__HOST=localhost
+APP_DB__PORT=5432
+APP_DB__PASSWORD=secret
+APP_ALLOWED_ORIGINS=["http://localhost:3000"]</code></pre></div>
+    <div class="code"><div class="cap"><span>settings.py</span><button type="button">Copy</button></div><pre><code class="language-python">from functools import lru_cache
+from typing import Literal
+from pydantic import BaseModel, Field, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class DbSettings(BaseModel):
+    host: str = "localhost"
+    port: int = 5432
+    password: SecretStr
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="APP_",              # APP_DEBUG -> debug
+        env_file=".env",
+        env_nested_delimiter="__",      # APP_DB__HOST -> db.host
+        extra="ignore",
+    )
+    env: Literal["dev", "staging", "prod"] = "dev"
+    debug: bool = False
+    anthropic_api_key: SecretStr
+    model: str = "claude-opus-5-5"
+    db: DbSettings
+    allowed_origins: list[str] = []     # complex types are read as JSON
+    request_timeout_s: float = Field(30, gt=0)
+
+@lru_cache                               # read the environment once
+def get_settings() -> Settings:
+    return Settings()</code></pre></div>
+  </div>
+  <h3>Where values come from (highest priority first)</h3>
+  <ol class="steps">
+    <li>Arguments passed to the constructor: <code>Settings(debug=True)</code></li>
+    <li>Environment variables (names are case-insensitive by default)</li>
+    <li>The <code>.env</code> file(s) in <code>env_file</code></li>
+    <li>Secret files in <code>secrets_dir</code> (Docker/Kubernetes secrets: one file per value)</li>
+    <li>Field defaults</li>
+  </ol>
+  <div class="note tip"><b>Habits that pay off</b><p>Every credential is a <code>SecretStr</code>. Keep <code>.env</code> out of git and commit a <code>.env.example</code>. Provide settings through a cached function (FastAPI: <code>Depends(get_settings)</code>) so tests can override them. Use <code>cli_parse_args=True</code> to get a typed CLI for free.</p></div>
+</section>
+
+<!-- ================= PART V ================= -->
+<section class="ch prose" id="fastapi">
+  <span class="chno">Chapter 19 · Implementation</span>
+  <h2>Pydantic in FastAPI</h2>
+  <p>FastAPI is built on Pydantic. A parameter typed as a model is read from the JSON body and validated; a failure becomes an automatic <strong>422</strong> response listing the <code>.errors()</code>. The <code>response_model</code> filters and serializes what you return. Your <a href="/study/fastapi-field-guide" target="_top">FastAPI Field Guide</a> covers the HTTP side; this chapter covers the model design.</p>
+  <h3>Separate input, output and update models</h3>
+  <p>Never use one model for everything. Inputs must not let clients set <code>id</code> or <code>created_at</code>; outputs must never contain passwords; updates must make every field optional.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>The Create / Update / Out pattern</h4>
+    <div class="code"><div class="cap"><span>schemas.py + main.py</span><button type="button">Copy</button></div><pre><code class="language-python">from datetime import datetime, timezone
+from fastapi import FastAPI, HTTPException, status
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr
+
+class StrictBase(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True,
+                              hide_input_in_errors=True)
+
+class UserBase(StrictBase):
+    email: EmailStr
+    full_name: str = Field(min_length=1, max_length=80)
+
+class UserCreate(UserBase):                    # POST body
+    password: SecretStr = Field(min_length=8)
+
+class UserUpdate(StrictBase):                  # PATCH body: everything optional
+    email: EmailStr | None = None
+    full_name: str | None = Field(default=None, min_length=1, max_length=80)
+
+class UserOut(UserBase):                       # response: no password
+    model_config = ConfigDict(from_attributes=True)   # build from ORM rows
+    id: int
+    created_at: datetime
+
+app = FastAPI()
+DB: dict[int, dict] = {}
+
+@app.post("/users", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+def create_user(body: UserCreate):
+    uid = len(DB) + 1
+    row = body.model_dump(exclude={"password"}) | {
+        "id": uid,
+        "created_at": datetime.now(timezone.utc),
+        "password_hash": hash_password(body.password.get_secret_value()),
+    }
+    DB[uid] = row
+    return row          # response_model drops password_hash automatically
+
+@app.patch("/users/{uid}", response_model=UserOut)
+def update_user(uid: int, body: UserUpdate):
+    if uid not in DB:
+        raise HTTPException(404, "user not found")
+    DB[uid] |= body.model_dump(exclude_unset=True)   # only fields the client sent
+    return DB[uid]</code></pre></div>
+  </div>
+  <div class="note warn"><b>PATCH needs exclude_unset</b><p>Without <code>exclude_unset=True</code>, a PATCH that sends only <code>{"full_name": "B"}</code> would also write <code>email=None</code> and wipe the stored email.</p></div>
+  <div class="note bad"><b>422 bodies echo the input</b><p>FastAPI's default 422 response includes each error's <code>input</code>, including a rejected password. For endpoints that accept secrets, register a <code>RequestValidationError</code> handler that returns <code>exc.errors()</code> with the <code>input</code> key removed (see the capstone).</p></div>
+  <h3>Query parameters as a model</h3>
+  <div class="code"><div class="cap"><span>python</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Annotated, Literal
+from fastapi import Query
+
+class ListParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    limit: int = Field(20, ge=1, le=100)
+    offset: int = Field(0, ge=0)
+    order: Literal["asc", "desc"] = "desc"
+
+@app.get("/users")
+def list_users(params: Annotated[ListParams, Query()]):
+    ...</code></pre></div>
+</section>
+
+<section class="ch prose" id="llm">
+  <span class="chno">Chapter 20 · Implementation</span>
+  <h2>Pydantic for LLM apps</h2>
+  <p>LLMs produce text. Applications need typed data. Pydantic is the bridge in both directions: <code>model_json_schema()</code> tells the model <em>what</em> to produce, and <code>model_validate_json()</code> checks <em>that</em> it did.</p>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 760 200" role="img" aria-label="A Pydantic model provides a JSON schema to the LLM request. The LLM returns JSON which is validated by the same model. Success produces a typed object; failure sends the error list back to the LLM for a retry, up to a limit">
+        <rect x="20" y="70" width="140" height="56" rx="8" class="bx-a"/><text x="90" y="94" text-anchor="middle" class="t-b t-a">Pydantic model</text><text x="90" y="112" text-anchor="middle" class="t-s">class Invoice(...)</text>
+        <rect x="220" y="20" width="150" height="46" rx="8" class="bx"/><text x="295" y="40" text-anchor="middle" class="t-b">JSON Schema</text><text x="295" y="57" text-anchor="middle" class="t-s">model_json_schema()</text>
+        <rect x="420" y="20" width="130" height="46" rx="8" class="bx-g"/><text x="485" y="48" text-anchor="middle" class="t-b t-g">Claude</text>
+        <rect x="420" y="120" width="130" height="56" rx="8" class="bx-a"/><text x="485" y="144" text-anchor="middle" class="t-b t-a">validate</text><text x="485" y="162" text-anchor="middle" class="t-s">model_validate_json</text>
+        <rect x="610" y="96" width="130" height="40" rx="8" class="bx-g"/><text x="675" y="121" text-anchor="middle" class="t-g">typed object ✓</text>
+        <rect x="610" y="150" width="130" height="40" rx="8" class="bx-r"/><text x="675" y="175" text-anchor="middle" class="t-r">errors → retry</text>
+        <path d="M160 88 L218 50" class="ln-a" marker-end="url(#arrA)"/>
+        <path d="M370 43 L418 43" class="ln" marker-end="url(#arr)"/>
+        <path d="M485 66 L485 118" class="ln" marker-end="url(#arr)"/>
+        <text x="495" y="96" class="t-s">JSON text</text>
+        <path d="M160 108 L418 146" class="ln-a dash" marker-end="url(#arrA)"/>
+        <path d="M550 140 L608 118" class="ln-g" marker-end="url(#arrG)"/>
+        <path d="M550 160 L608 168" class="ln-r" marker-end="url(#arrR)"/>
+        <path d="M740 170 L752 170 L752 8 L485 8 L485 18" class="ln-r dash" marker-end="url(#arrR)"/>
+      </svg>
+    </div>
+    <figcaption><b>Figure 5.</b> The same model is both the instruction and the check.</figcaption>
+  </figure>
+
+  <h3>Claude structured output with messages.parse()</h3>
+  <p>The Anthropic Python SDK accepts a Pydantic model directly. It sends the schema as the output format and returns a validated instance in <code>parsed_output</code>.</p>
+  <div class="code"><div class="cap"><span>claude_parse.py</span><button type="button">Copy</button></div><pre><code class="language-python">import anthropic
+from pydantic import BaseModel, Field
+
+class ContactInfo(BaseModel):
+    """Contact details extracted from a sales email."""
+    name: str
+    email: str
+    plan: str = Field(description="Plan the customer asked for, e.g. Free, Pro, Enterprise")
+    interests: list[str]
+    demo_requested: bool
+
+client = anthropic.Anthropic()        # reads ANTHROPIC_API_KEY
+
+response = client.messages.parse(
+    model="claude-opus-5-5",
+    max_tokens=16000,
+    messages=[{"role": "user", "content":
+        "Extract: Jane Doe (jane@co.com) wants Enterprise, interested in API and SDKs, wants a demo."}],
+    output_format=ContactInfo,
+)
+
+if response.stop_reason in ("refusal", "max_tokens"):
+    raise RuntimeError(f"no usable output: {response.stop_reason}")
+contact = response.parsed_output     # a ContactInfo instance
+print(contact.name, contact.interests)</code></pre></div>
+  <div class="note graph"><b>What the API enforces vs what Pydantic enforces</b><p>Structured outputs support types, <code>enum</code>/<code>Literal</code>, <code>anyOf</code>, <code>$ref</code> and string formats like <code>date</code> and <code>email</code>. They do <strong>not</strong> support <code>minimum</code>/<code>maximum</code>, <code>minLength</code>/<code>maxLength</code> or recursive schemas. The Python SDK removes unsupported constraints from the schema it sends and checks them client-side. Cross-field rules (totals add up, end after start) live only in your validators, so always keep a validation step you own.</p></div>
+
+  <h3>Tool use with a Pydantic schema</h3>
+  <div class="code"><div class="cap"><span>claude_tool.py</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Literal
+from pydantic import BaseModel, ConfigDict, Field
+
+class BookFlight(BaseModel):
+    """Book a flight for the user."""
+    model_config = ConfigDict(extra="forbid")      # -> additionalProperties: false
+    destination: str = Field(description="IATA airport code, e.g. NRT")
+    date: str = Field(description="Departure date, YYYY-MM-DD")
+    passengers: Literal[1, 2, 3, 4, 5, 6, 7, 8]
+
+tool = {
+    "name": "book_flight",
+    "description": BookFlight.__doc__,
+    "strict": True,                                  # inputs must match the schema
+    "input_schema": BookFlight.model_json_schema(),
+}
+
+response = client.messages.create(
+    model="claude-opus-5-5", max_tokens=16000, tools=[tool],
+    messages=[{"role": "user", "content": "Book a flight to Tokyo for 2 on 2027-03-15"}],
+)
+for block in response.content:
+    if block.type == "tool_use" and block.name == "book_flight":
+        args = BookFlight.model_validate(block.input)   # typed, re-checked
+        book(args)</code></pre></div>
+  <p>Keep strict tool schemas to what structured outputs support (types, enums, <code>Literal</code>); put numeric and length limits in validators. On Claude Opus 5.5, forcing a tool with <code>tool_choice</code> <code>any</code>/<code>tool</code> is rejected: use the default <code>auto</code> and name the tool in the prompt, or use <code>messages.parse()</code> when you only need JSON back.</p>
+
+  <h3>The same idea in other frameworks</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Framework</th><th>Call</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Anthropic SDK</td><td><code>client.messages.parse(..., output_format=Model)</code></td><td><code>response.parsed_output</code></td></tr>
+      <tr><td>LangChain v1</td><td><code>init_chat_model("anthropic:claude-opus-5-5").with_structured_output(Model)</code></td><td><code>.invoke(...)</code> returns a <code>Model</code></td></tr>
+      <tr><td>LangChain tools</td><td><code>@tool(args_schema=Model)</code></td><td>Tool arguments validated by the model</td></tr>
+      <tr><td>PydanticAI</td><td><code>Agent("anthropic:claude-opus-5-5", output_type=Model)</code></td><td><code>result.output</code>; validation errors are retried automatically</td></tr>
+      <tr><td>OpenAI SDK</td><td><code>client.responses.parse(..., text_format=Model)</code></td><td><code>response.output_parsed</code></td></tr>
+      <tr><td>Instructor</td><td><code>client.create(response_model=Model, max_retries=3)</code></td><td>A <code>Model</code> instance</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note tip"><b>Write schemas for the model, not only for the code</b><p>Docstrings and <code>Field(description=...)</code> are part of the prompt. Prefer <code>Literal</code> over free strings, give units (<code>amount_inr</code>, <code>duration_minutes</code>), allow <code>None</code> where the source may not contain the value (forcing a value invites invention), and keep nesting shallow.</p></div>
+</section>
+
+<section class="ch prose" id="perf">
+  <span class="chno">Chapter 21 · Implementation</span>
+  <h2>Performance</h2>
+  <p>Measured on this machine (Pydantic 2.14.4, Python 3.12, 100,000 calls, a 4-field model):</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Call</th><th class="num">µs per call</th></tr></thead>
+    <tbody>
+      <tr><td><code>P.model_validate_json(raw)</code></td><td class="num">1.92</td></tr>
+      <tr><td><code>P.model_validate(json.loads(raw))</code></td><td class="num">3.31</td></tr>
+      <tr><td><code>P(**json.loads(raw))</code></td><td class="num">3.31</td></tr>
+      <tr><td><code>TypeAdapter(list[P]).validate_json</code> on 1,000 items</td><td class="num">1,270 (1.27 µs per item)</td></tr>
+    </tbody>
+  </table></div>
+  <ul class="check">
+    <li>Validate raw JSON with <code>model_validate_json</code> / <code>validate_json</code>: parsing and validation happen in one Rust pass, about 40% faster here.</li>
+    <li>Validate a whole list with one <code>TypeAdapter(list[Model])</code> call instead of a Python loop.</li>
+    <li>Create <code>TypeAdapter</code>s once, at module level.</li>
+    <li>Prefer built-in constraints and <code>Literal</code> over Python validators; every Python validator crosses back from Rust into Python.</li>
+    <li>Use discriminated unions instead of plain unions of models.</li>
+    <li>Use concrete types (<code>list</code>, <code>dict</code>) rather than abstract ones (<code>Sequence</code>, <code>Mapping</code>) when you do not need the generality.</li>
+    <li>Many models and slow startup? <code>ConfigDict(defer_build=True)</code> builds validators on first use.</li>
+    <li><code>model_construct()</code> skips validation for data you produced yourself (from your own database, for example). Never for external input.</li>
+  </ul>
+</section>
+
+<section class="ch prose" id="migrate">
+  <span class="chno">Chapter 22 · Implementation</span>
+  <h2>Migrating from v1</h2>
+  <p>Run <code>pip install bump-pydantic</code> then <code>bump-pydantic my_package/</code> for the mechanical rewrites, then fix the rest by hand with this table. During a transition, <code>from pydantic import v1</code> gives you the old API side by side.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>v1</th><th>v2</th></tr></thead>
+    <tbody>
+      <tr><td><code>class Config:</code> inner class</td><td><code>model_config = ConfigDict(...)</code></td></tr>
+      <tr><td><code>orm_mode = True</code></td><td><code>from_attributes=True</code></td></tr>
+      <tr><td><code>allow_population_by_field_name</code> / <code>populate_by_name</code></td><td><code>validate_by_name=True</code></td></tr>
+      <tr><td><code>.dict()</code> / <code>.json()</code></td><td><code>.model_dump()</code> / <code>.model_dump_json()</code></td></tr>
+      <tr><td><code>.parse_obj()</code> / <code>.parse_raw()</code></td><td><code>.model_validate()</code> / <code>.model_validate_json()</code></td></tr>
+      <tr><td><code>.copy()</code> / <code>.construct()</code></td><td><code>.model_copy()</code> / <code>.model_construct()</code></td></tr>
+      <tr><td><code>.schema()</code> / <code>.__fields__</code></td><td><code>.model_json_schema()</code> / <code>.model_fields</code></td></tr>
+      <tr><td><code>@validator</code> (with <code>pre=True</code>)</td><td><code>@field_validator</code> (with <code>mode="before"</code>), plus <code>@classmethod</code></td></tr>
+      <tr><td><code>@root_validator</code></td><td><code>@model_validator(mode="before"|"after")</code></td></tr>
+      <tr><td><code>parse_obj_as(T, x)</code></td><td><code>TypeAdapter(T).validate_python(x)</code></td></tr>
+      <tr><td><code>__root__</code> field</td><td><code>RootModel</code></td></tr>
+      <tr><td><code>GenericModel</code></td><td><code>BaseModel, Generic[T]</code></td></tr>
+      <tr><td><code>BaseSettings</code> in <code>pydantic</code></td><td><code>pydantic_settings.BaseSettings</code></td></tr>
+      <tr><td><code>Optional[x]</code> meant "not required"</td><td><code>Optional[x]</code> is required unless it has a default</td></tr>
+      <tr><td><code>int</code> field accepted <code>"3.7"</code>, <code>str</code> accepted <code>123</code></td><td>Both rejected: v2 lax mode never loses data</td></tr>
+      <tr><td><code>regex=</code>, <code>min_items=</code>, <code>const=</code></td><td><code>pattern=</code>, <code>min_length=</code>, <code>Literal[...]</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="ch prose" id="testing">
+  <span class="chno">Chapter 23 · Implementation</span>
+  <h2>Testing models</h2>
+  <p>Test your <em>rules</em>, not Pydantic. One accepted case and one rejected case per rule, asserting on error <code>type</code> and <code>loc</code>, not on the message text.</p>
+  <div class="code"><div class="cap"><span>tests/test_signup.py</span><button type="button">Copy</button></div><pre><code class="language-python">import pytest
+from pydantic import ValidationError
+from app.schemas import Signup
+
+def error_types(exc: ValidationError) -> set[tuple]:
+    return {(e["type"], e["loc"]) for e in exc.errors()}
+
+def test_email_is_normalised():
+    s = Signup(email="  A@B.COM ", password="p", confirm="p")
+    assert s.email == "a@b.com"
+
+@pytest.mark.parametrize("payload, expected", [
+    ({"password": "p", "confirm": "p"},                  ("missing", ("email",))),
+    ({"email": "nope", "password": "p", "confirm": "p"},  ("value_error", ("email",))),
+    ({"email": "a@b.c", "password": "p", "confirm": "q"}, ("value_error", ())),
+])
+def test_rejects(payload, expected):
+    with pytest.raises(ValidationError) as exc:
+        Signup.model_validate(payload)
+    assert expected in error_types(exc.value)
+
+def test_round_trip():
+    s = Signup(email="a@b.c", password="p", confirm="p")
+    assert Signup.model_validate_json(s.model_dump_json()) == s
+
+def test_schema_snapshot():
+    # catch accidental API contract changes
+    assert set(Signup.model_json_schema()["required"]) == {"email", "password", "confirm"}
+
+def test_secret_never_leaks():
+    from app.schemas import UserCreate
+    u = UserCreate(email="a@b.co", full_name="A", password="Sup3rSecret!")
+    assert "Sup3rSecret" not in repr(u)
+    assert "Sup3rSecret" not in u.model_dump_json()</code></pre></div>
+  <p>For property-based testing, <code>hypothesis</code> can generate valid instances from your types (<code>st.builds(Model)</code>) and finds edge cases you did not think of.</p>
+</section>
+
+<section class="ch prose" id="capstone">
+  <span class="chno">Chapter 24 · Implementation</span>
+  <h2>Capstone: an invoice extraction service</h2>
+  <p>A FastAPI service that takes invoice text, asks Claude to extract it, validates the result with business rules, retries with the errors when validation fails, and returns typed JSON. It uses nearly every chapter of this guide: settings with <code>SecretStr</code>, strict input models, <code>Literal</code>, <code>Decimal</code>, field and model validators, computed fields, discriminated unions, error formatting, JSON Schema and tests.</p>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 760 220" role="img" aria-label="Client posts invoice text to FastAPI. ExtractRequest validates the body. The extractor calls Claude with the InvoiceDraft schema, then validates the draft into the strict Invoice domain model. On validation failure the errors are sent back to Claude for up to two retries. The response is a discriminated union: ok with the invoice, or failed with the problems list">
+        <rect x="20" y="80" width="100" height="50" rx="8" class="bx"/><text x="70" y="110" text-anchor="middle" class="t-b">Client</text>
+        <rect x="160" y="80" width="130" height="50" rx="8" class="bx-a"/><text x="225" y="100" text-anchor="middle" class="t-b t-a">POST /extract</text><text x="225" y="118" text-anchor="middle" class="t-s">ExtractRequest</text>
+        <rect x="330" y="20" width="130" height="50" rx="8" class="bx-g"/><text x="395" y="40" text-anchor="middle" class="t-b t-g">Claude</text><text x="395" y="58" text-anchor="middle" class="t-s">→ InvoiceDraft</text>
+        <rect x="330" y="140" width="130" height="50" rx="8" class="bx-a"/><text x="395" y="160" text-anchor="middle" class="t-b t-a">Invoice</text><text x="395" y="178" text-anchor="middle" class="t-s">business rules</text>
+        <rect x="520" y="80" width="220" height="50" rx="8" class="bx"/><text x="630" y="100" text-anchor="middle" class="t-b">ExtractResponse</text><text x="630" y="118" text-anchor="middle" class="t-s">ok | failed (discriminated)</text>
+        <path d="M120 105 L158 105" class="ln" marker-end="url(#arr)"/>
+        <path d="M290 95 L328 50" class="ln" marker-end="url(#arr)"/>
+        <path d="M395 70 L395 138" class="ln" marker-end="url(#arr)"/>
+        <path d="M330 170 L300 170 L300 60 L328 55" class="ln-r dash" marker-end="url(#arrR)"/>
+        <text x="215" y="200" class="t-s t-r">errors fed back · max 2 retries</text>
+        <path d="M460 160 L518 115" class="ln-g" marker-end="url(#arrG)"/>
+      </svg>
+    </div>
+    <figcaption><b>Figure 6.</b> A loose schema for the LLM, a strict model for the business, and a retry loop between them.</figcaption>
+  </figure>
+  <div class="tree">invoice_service/
+├── .env                  # APP_ANTHROPIC_API_KEY=...
+├── settings.py
+├── models.py
+├── extractor.py
+├── api.py
+└── tests/
+    └── test_models.py</div>
+  <h3>1. settings.py</h3>
+  <div class="code"><div class="cap"><span>settings.py</span><button type="button">Copy</button></div><pre><code class="language-python">from functools import lru_cache
+from pydantic import Field, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="APP_", env_file=".env", extra="ignore")
+    anthropic_api_key: SecretStr
+    model: str = "claude-opus-5-5"
+    max_retries: int = Field(2, ge=0, le=5)
+    max_text_chars: int = 50_000
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()</code></pre></div>
+  <h3>2. models.py</h3>
+  <p>Two layers. <code>InvoiceDraft</code> is what the LLM fills: simple types only, so it fits the structured-output schema rules. <code>Invoice</code> is the domain model with <code>Decimal</code> money and the rules that matter to the business.</p>
+  <div class="code"><div class="cap"><span>models.py</span><button type="button">Copy</button></div><pre><code class="language-python">from datetime import date
+from decimal import Decimal
+from typing import Annotated, Literal
+from pydantic import (BaseModel, ConfigDict, Field, computed_field,
+                      field_validator, model_validator)
+
+Currency = Literal["INR", "USD", "EUR", "GBP"]
+
+# ---------- layer 1: what the LLM produces ----------
+class LineDraft(BaseModel):
+    description: str
+    quantity: float
+    unit_price: str = Field(description="Unit price as a plain decimal string, no symbols, e.g. '1250.00'")
+
+class InvoiceDraft(BaseModel):
+    """Data extracted from one invoice. Use null when a value is not in the text; never guess."""
+    invoice_number: str | None
+    vendor: str
+    issue_date: str | None = Field(description="YYYY-MM-DD")
+    due_date: str | None = Field(description="YYYY-MM-DD")
+    currency: Currency
+    lines: list[LineDraft]
+    stated_total: str = Field(description="Grand total printed on the invoice, plain decimal string")
+
+# ---------- layer 2: the business model ----------
+Money = Annotated[Decimal, Field(max_digits=14, decimal_places=2, ge=0)]
+
+class Line(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    description: str = Field(min_length=1)
+    quantity: Decimal = Field(gt=0)
+    unit_price: Money
+
+    @computed_field
+    @property
+    def amount(self) -> Decimal:
+        return (self.quantity * self.unit_price).quantize(Decimal("0.01"))
+
+class Invoice(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    invoice_number: str | None = None
+    vendor: str = Field(min_length=2)
+    issue_date: date | None = None
+    due_date: date | None = None
+    currency: Currency
+    lines: list[Line] = Field(min_length=1)
+    stated_total: Money
+
+    @field_validator("vendor")
+    @classmethod
+    def tidy_vendor(cls, v: str) -> str:
+        return " ".join(v.split())
+
+    @computed_field
+    @property
+    def computed_total(self) -> Decimal:
+        return sum((l.amount for l in self.lines), Decimal("0.00"))
+
+    @model_validator(mode="after")
+    def check_rules(self):
+        if self.issue_date and self.due_date and self.due_date &lt; self.issue_date:
+            raise ValueError("due_date is before issue_date")
+        if abs(self.computed_total - self.stated_total) > Decimal("0.05"):
+            raise ValueError(f"line items add up to {self.computed_total}, "
+                             f"but the stated total is {self.stated_total}")
+        return self
+
+# ---------- API models ----------
+class ExtractRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    text: str = Field(min_length=20, description="Raw invoice text")
+
+class Problem(BaseModel):
+    field: str
+    code: str
+    message: str
+
+class ExtractOk(BaseModel):
+    status: Literal["ok"] = "ok"
+    attempts: int
+    invoice: Invoice
+
+class ExtractFailed(BaseModel):
+    status: Literal["failed"] = "failed"
+    attempts: int
+    problems: list[Problem]
+
+ExtractResponse = Annotated[ExtractOk | ExtractFailed, Field(discriminator="status")]</code></pre></div>
+  <h3>3. extractor.py</h3>
+  <div class="code"><div class="cap"><span>extractor.py</span><button type="button">Copy</button></div><pre><code class="language-python">import anthropic
+from pydantic import ValidationError
+from models import ExtractFailed, ExtractOk, Invoice, InvoiceDraft, Problem
+from settings import Settings
+
+SYSTEM = ("You extract invoices into the given schema. Copy numbers exactly as printed. "
+          "Use null for anything the text does not state.")
+
+def to_problems(e: ValidationError) -> list[Problem]:
+    return [Problem(field=".".join(map(str, err["loc"])) or "(invoice)",
+                    code=err["type"], message=err["msg"])
+            for err in e.errors(include_input=False, include_url=False)]
+
+class Extractor:
+    def __init__(self, settings: Settings):
+        self.settings = settings
+        self.client = anthropic.Anthropic(
+            api_key=settings.anthropic_api_key.get_secret_value())   # revealed only here
+
+    def run(self, text: str) -> ExtractOk | ExtractFailed:
+        messages = [{"role": "user", "content": f"Invoice text:\n\n{text}"}]
+        problems: list[Problem] = []
+        attempts = 0
+        for attempts in range(1, self.settings.max_retries + 2):
+            response = self.client.messages.parse(
+                model=self.settings.model,
+                max_tokens=16000,
+                system=SYSTEM,
+                messages=messages,
+                output_format=InvoiceDraft,
+            )
+            if response.stop_reason in ("refusal", "max_tokens") or response.parsed_output is None:
+                problems = [Problem(field="(llm)", code=str(response.stop_reason),
+                                    message="model returned no usable output")]
+                break
+            draft: InvoiceDraft = response.parsed_output
+            try:
+                invoice = Invoice.model_validate(draft.model_dump())
+                return ExtractOk(attempts=attempts, invoice=invoice)
+            except ValidationError as e:
+                problems = to_problems(e)
+                feedback = "\n".join(f"- {p.field}: {p.message}" for p in problems)
+                messages += [
+                    {"role": "assistant", "content": draft.model_dump_json()},
+                    {"role": "user", "content":
+                        f"That extraction failed these checks:\n{feedback}\n"
+                        "Re-read the invoice and correct only what is wrong."},
+                ]
+        return ExtractFailed(attempts=attempts, problems=problems)</code></pre></div>
+  <h3>4. api.py</h3>
+  <div class="code"><div class="cap"><span>api.py</span><button type="button">Copy</button></div><pre><code class="language-python">from functools import lru_cache
+from typing import Annotated
+from fastapi import Depends, FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from extractor import Extractor
+from models import ExtractRequest, ExtractResponse
+from settings import Settings, get_settings
+
+app = FastAPI(title="Invoice extractor")
+
+@app.exception_handler(RequestValidationError)
+async def safe_422(request: Request, exc: RequestValidationError):
+    # same shape as FastAPI's default, minus the echoed input
+    errors = [{k: v for k, v in e.items() if k not in ("input", "ctx", "url")}
+              for e in exc.errors()]
+    return JSONResponse(status_code=422, content={"detail": errors})
+
+@lru_cache
+def get_extractor() -> Extractor:
+    return Extractor(get_settings())
+
+@app.post("/extract", response_model=ExtractResponse)
+def extract(body: ExtractRequest,
+            settings: Annotated[Settings, Depends(get_settings)],
+            extractor: Annotated[Extractor, Depends(get_extractor)]):
+    return extractor.run(body.text[: settings.max_text_chars])
+
+# run:  uv add fastapi uvicorn anthropic pydantic-settings
+#       uv run uvicorn api:app --reload      then open http://127.0.0.1:8000/docs</code></pre></div>
+  <h3>5. tests/test_models.py (no API key needed)</h3>
+  <div class="code"><div class="cap"><span>tests/test_models.py</span><button type="button">Copy</button></div><pre><code class="language-python">from decimal import Decimal
+import pytest
+from pydantic import TypeAdapter, ValidationError
+from models import ExtractResponse, Invoice
+
+GOOD = {"vendor": "  Acme   Traders ", "currency": "INR", "stated_total": "2500.00",
+        "issue_date": "2026-11-01", "due_date": "2026-11-30",
+        "lines": [{"description": "Widget", "quantity": 2, "unit_price": "1250.00"}]}
+
+def test_valid_invoice():
+    inv = Invoice.model_validate(GOOD)
+    assert inv.vendor == "Acme Traders"
+    assert inv.computed_total == Decimal("2500.00")
+
+def test_total_mismatch_is_reported_at_model_level():
+    bad = GOOD | {"stated_total": "9999.00"}
+    with pytest.raises(ValidationError) as exc:
+        Invoice.model_validate(bad)
+    err = exc.value.errors()[0]
+    assert err["loc"] == () and "add up to 2500.00" in err["msg"]
+
+def test_due_before_issue():
+    with pytest.raises(ValidationError):
+        Invoice.model_validate(GOOD | {"due_date": "2026-10-01"})
+
+def test_response_union_picks_branch():
+    ta = TypeAdapter(ExtractResponse)
+    out = ta.validate_python({"status": "failed", "attempts": 3, "problems": []})
+    assert type(out).__name__ == "ExtractFailed"</code></pre></div>
+  <h3>Stretch goals</h3>
+  <ul class="check">
+    <li>Accept PDFs: send the file as a <code>document</code> content block and keep the same models.</li>
+    <li>Add a <code>Receipt</code> model and make the draft a discriminated union on <code>doc_type</code>.</li>
+    <li>Store results in SQLite with SQLModel, and build <code>Invoice</code> back with <code>from_attributes=True</code>.</li>
+    <li>Use the Message Batches API to process a folder of invoices at lower cost.</li>
+    <li>Production: enable server-side refusal fallbacks (see the Anthropic docs on refusals and fallbacks) and log <code>response._request_id</code> on failures.</li>
+  </ul>
+</section>
+
+<!-- ================= PART VI ================= -->
+<section class="ch prose" id="practices">
+  <span class="chno">Chapter 25 · Mastery</span>
+  <h2>Best practices</h2>
+  <div class="cards">
+    <div class="card yes"><h4>Boundaries</h4><p>Validate once at every edge (HTTP, files, env, LLM output, queues) · trust typed objects inside · <code>model_validate_json</code> for raw JSON.</p></div>
+    <div class="card yes"><h4>Model design</h4><p>Separate Create / Update / Out models · shared <code>StrictBase</code> with <code>extra="forbid"</code> · reusable <code>Annotated</code> types · <code>Literal</code> and discriminated unions over free strings.</p></div>
+    <div class="card yes"><h4>Validation</h4><p>Constraints before validators · <code>after</code> mode by default · cross-field rules in <code>model_validator(mode="after")</code> · branch on error <code>type</code>, never <code>msg</code>.</p></div>
+    <div class="card yes"><h4>Secrets</h4><p>Every credential is <code>SecretStr</code> · <code>hide_input_in_errors=True</code> · <code>errors(include_input=False)</code> in responses · reveal inline at the point of use.</p></div>
+    <div class="card yes"><h4>Data out</h4><p><code>response_model</code> / Out models control exposure · <code>exclude_unset</code> for PATCH · <code>mode="json"</code> when another library serializes.</p></div>
+    <div class="card yes"><h4>Performance</h4><p>Module-level <code>TypeAdapter</code>s · validate lists in one call · Rust constraints over Python validators · <code>defer_build</code> for big codebases.</p></div>
+  </div>
+  <h3>Anti-patterns to avoid</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Anti-pattern</th><th>Why it hurts</th><th>Do this instead</th></tr></thead>
+    <tbody>
+      <tr><td><code>x: Optional[int]</code> expecting "not required"</td><td>Still required in v2</td><td><code>x: int | None = None</code></td></tr>
+      <tr><td><code>api_key: str</code></td><td>Leaks in logs, reprs, dumps</td><td><code>api_key: SecretStr</code></td></tr>
+      <tr><td><code>model_construct()</code> on request data</td><td>No validation at all</td><td><code>model_validate()</code></td></tr>
+      <tr><td><code>model_copy(update=user_input)</code></td><td>Update is not validated</td><td><code>validate_assignment</code> or re-validate</td></tr>
+      <tr><td>One model for input, DB and output</td><td>Clients set <code>id</code>; responses leak hashes</td><td>Create / Update / Out models</td></tr>
+      <tr><td><code>TypeAdapter(...)</code> inside a request handler</td><td>Rebuilds the schema every call</td><td>Create once at module level</td></tr>
+      <tr><td>Checking <code>"must contain @" in str(e)</code></td><td>Messages change between versions</td><td>Check <code>err["type"]</code> and <code>err["loc"]</code></td></tr>
+      <tr><td><code>datetime.now()</code> as a default</td><td>Evaluated once at import</td><td><code>Field(default_factory=...)</code></td></tr>
+      <tr><td><code>Any</code> / <code>dict</code> fields at the boundary</td><td>Nothing inside is validated</td><td>A nested model or <code>TypedDict</code></td></tr>
+      <tr><td>Trusting LLM JSON without your own validation</td><td>API checks types only, not your rules</td><td>Domain model + retry with errors</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="ch prose" id="cheat">
+  <span class="chno">Chapter 26 · Mastery</span>
+  <h2>Cheat sheet</h2>
+  <div class="code"><div class="cap"><span>models and fields</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Annotated, Literal
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
+
+class M(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True, hide_input_in_errors=True)
+    a: int                                   # required
+    b: int = 0                               # optional with default
+    c: int | None = None                     # optional, nullable
+    d: str = Field(min_length=1, max_length=50, pattern=r"^\w+$", description="...")
+    e: float = Field(gt=0, le=100)
+    f: list[str] = Field(default_factory=list)
+    g: Literal["x", "y"] = "x"
+    key: SecretStr                           # hidden; .get_secret_value() to read
+PosInt = Annotated[int, Field(gt=0)]         # reusable constrained type</code></pre></div>
+  <div class="code"><div class="cap"><span>validate / dump</span><button type="button">Copy</button></div><pre><code class="language-python">M(a=1, key="k")                    # kwargs
+M.model_validate(d)                # dict  (strict=, context=, from_attributes=)
+M.model_validate_json(raw)         # JSON str/bytes, fastest
+m.model_dump()                     # dict  (mode="json", include=, exclude=, by_alias=,
+                                   #        exclude_unset=, exclude_none=, exclude_defaults=)
+m.model_dump_json(indent=2)        # JSON str
+m.model_copy(update={...})         # NOT validated
+M.model_json_schema()              # JSON Schema
+M.model_fields / m.model_fields_set
+TypeAdapter(list[M]).validate_json(raw)</code></pre></div>
+  <div class="code"><div class="cap"><span>validators and serializers</span><button type="button">Copy</button></div><pre><code class="language-python">@field_validator("x")                      # mode="after" | "before" | "wrap" | "plain"
+@classmethod
+def check(cls, v, info: ValidationInfo): ...  # raise ValueError to reject, return v to accept
+
+@model_validator(mode="after")             # cross-field; returns self
+def rules(self): ...
+
+@field_serializer("x", when_used="json")   # change output only
+def out(self, v): ...
+
+@computed_field
+@property
+def total(self) -> float: ...
+
+Annotated[int, AfterValidator(fn)] · BeforeValidator · PlainSerializer(fn, return_type=...)</code></pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Need</th><th>Reach for</th></tr></thead>
+    <tbody>
+      <tr><td>Reject unknown keys</td><td><code>extra="forbid"</code></td></tr>
+      <tr><td>No surprising conversions</td><td><code>strict=True</code> / <code>StrictInt</code></td></tr>
+      <tr><td>Immutable, hashable</td><td><code>frozen=True</code></td></tr>
+      <tr><td>camelCase JSON</td><td><code>alias_generator=to_camel, validate_by_name=True</code> + <code>by_alias=True</code></td></tr>
+      <tr><td>Build from ORM row</td><td><code>from_attributes=True</code></td></tr>
+      <tr><td>One of several shapes</td><td><code>Annotated[A | B, Field(discriminator="kind")]</code></td></tr>
+      <tr><td>Top-level list</td><td><code>RootModel[list[T]]</code> or <code>TypeAdapter</code></td></tr>
+      <tr><td>Config from env</td><td><code>pydantic_settings.BaseSettings</code></td></tr>
+      <tr><td>Password / API key</td><td><code>SecretStr</code> + <code>hide_input_in_errors</code></td></tr>
+      <tr><td>Regex on a secret</td><td><code>Secret[Annotated[str, StringConstraints(pattern=...)]]</code></td></tr>
+      <tr><td>LLM structured output</td><td><code>client.messages.parse(..., output_format=Model)</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="ch prose" id="roadmap">
+  <span class="chno">Chapter 27 · Mastery</span>
+  <h2>Learning roadmap and exercises</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Week</th><th>Goal</th><th>Chapters</th><th>Exercise (done when…)</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1</strong></td><td>Models, types, lax vs strict</td><td>1–5</td><td>Model a <code>Patient</code> with 8 fields covering every row of the required/optional table; predict then check the result of 10 bad inputs.</td></tr>
+      <tr><td><strong>2</strong></td><td>Nesting, validators, errors</td><td>6–8</td><td>A <code>Booking</code> with nested guests, a discriminated <code>payment</code> union and a check-out-after-check-in rule; a function that turns errors into <code>{field, code, message}</code>.</td></tr>
+      <tr><td><strong>3</strong></td><td>Output and config</td><td>9–12</td><td>Expose the booking as a camelCase API; a PATCH helper using <code>exclude_unset</code>; a frozen <code>Money</code> type.</td></tr>
+      <tr><td><strong>4</strong></td><td>Secrets and settings</td><td>16, 18</td><td>A <code>Settings</code> class with every credential as <code>SecretStr</code>; a test proving no secret appears in <code>repr</code>, dumps or error messages.</td></tr>
+      <tr><td><strong>5</strong></td><td>Adapters, generics, schema</td><td>13–15, 17</td><td>Generic <code>Page[T]</code>; validate a 10,000-item JSON file with one <code>TypeAdapter</code> and time it against a loop.</td></tr>
+      <tr><td><strong>6</strong></td><td>FastAPI and LLMs</td><td>19–20</td><td>Rebuild your FastAPI Patient API with Create/Update/Out models; add one Claude structured-output endpoint.</td></tr>
+      <tr><td><strong>7</strong></td><td>Capstone</td><td>21–24</td><td>The invoice service runs, tests pass, and one stretch goal is done.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Self-check questions</h3>
+  <ol>
+    <li>Is <code>x: Optional[int]</code> required? Why?</li>
+    <li>Why does <code>int</code> accept <code>"42"</code> and <code>4.0</code> but reject <code>4.5</code>?</li>
+    <li>When would you choose a <code>before</code> validator over an <code>after</code> one?</li>
+    <li>What two methods skip validation, and how do you change a field safely?</li>
+    <li>Why are discriminated unions faster and give better errors than plain unions?</li>
+    <li>What does <code>exclude_unset=True</code> do, and why does PATCH need it?</li>
+    <li>Name three places a plain-<code>str</code> password leaks that <code>SecretStr</code> masks.</li>
+    <li>With <code>hide_input_in_errors=True</code>, where can the raw secret still appear?</li>
+    <li>What happens to a <code>SecretStr</code> after <code>model_dump_json()</code> then <code>model_validate_json()</code>?</li>
+    <li>Which JSON Schema constraints does Claude structured output not support, and where do those rules go instead?</li>
+  </ol>
+</section>
+
+<section class="ch prose" id="resources">
+  <span class="chno">Chapter 28 · Mastery</span>
+  <h2>Official docs and the best resources to learn</h2>
+  <h3>Official documentation (start here)</h3>
+  <div class="res">
+    <div class="card"><a href="https://docs.pydantic.dev/latest/" target="_blank" rel="noopener">Pydantic docs</a><div class="why">The official guide. Read Concepts → Models, Fields, Validators, Serialization in that order.</div></div>
+    <div class="card"><a href="https://docs.pydantic.dev/latest/concepts/types/" target="_blank" rel="noopener">Types</a> · <a href="https://docs.pydantic.dev/latest/api/types/" target="_blank" rel="noopener">pydantic.types API</a><div class="why">Every built-in type, including <code>SecretStr</code>, <code>Secret[T]</code> and the constrained aliases.</div></div>
+    <div class="card"><a href="https://docs.pydantic.dev/latest/concepts/conversion_table/" target="_blank" rel="noopener">Conversion table</a><div class="why">Exactly which inputs each type accepts in lax and strict mode, from Python and from JSON.</div></div>
+    <div class="card"><a href="https://docs.pydantic.dev/latest/errors/validation_errors/" target="_blank" rel="noopener">Validation error reference</a><div class="why">Every error <code>type</code> with an example; the target of the <code>url</code> in each error.</div></div>
+    <div class="card"><a href="https://docs.pydantic.dev/latest/concepts/pydantic_settings/" target="_blank" rel="noopener">Settings management</a><div class="why"><code>BaseSettings</code>, sources, priority, secrets directories, CLI.</div></div>
+    <div class="card"><a href="https://docs.pydantic.dev/latest/migration/" target="_blank" rel="noopener">Migration guide v1 → v2</a><div class="why">Complete list of renamed methods and behaviour changes.</div></div>
+    <div class="card"><a href="https://docs.pydantic.dev/latest/concepts/performance/" target="_blank" rel="noopener">Performance tips</a><div class="why">The official list behind Chapter 21.</div></div>
+    <div class="card"><a href="https://fastapi.tiangolo.com/tutorial/body/" target="_blank" rel="noopener">FastAPI: Request body</a> · <a href="https://fastapi.tiangolo.com/tutorial/extra-models/" target="_blank" rel="noopener">Extra models</a><div class="why">How FastAPI uses Pydantic models, and the input/output model pattern.</div></div>
+    <div class="card"><a href="https://platform.claude.com/docs/en/build-with-claude/structured-outputs" target="_blank" rel="noopener">Claude structured outputs</a><div class="why"><code>messages.parse()</code>, <code>output_config.format</code>, strict tools and schema limits.</div></div>
+    <div class="card"><a href="https://ai.pydantic.dev/" target="_blank" rel="noopener">PydanticAI</a><div class="why">The Pydantic team's agent framework: typed outputs, tools and dependency injection.</div></div>
+  </div>
+  <h3>Practice and video</h3>
+  <div class="res">
+    <div class="card"><a href="https://github.com/pydantic/pydantic" target="_blank" rel="noopener">pydantic/pydantic on GitHub</a><div class="why">Read the tests folder for real edge cases; release notes explain every change.</div></div>
+    <div class="card"><a href="https://www.youtube.com/@ArjanCodes" target="_blank" rel="noopener">ArjanCodes (YouTube)</a><div class="why">Clear design-focused videos on Pydantic, dataclasses and validation.</div></div>
+    <div class="card"><a href="https://realpython.com/python-pydantic/" target="_blank" rel="noopener">Real Python: Pydantic</a><div class="why">A long hands-on tutorial covering models, validators and settings.</div></div>
+    <div class="card"><a href="https://python.useinstructor.com/" target="_blank" rel="noopener">Instructor docs</a><div class="why">Many worked examples of LLM extraction with Pydantic models and retries.</div></div>
+  </div>
+  <h3>Tools worth installing</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Tool</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>pydantic-settings</code></td><td>Config from env, .env, secrets and CLI</td></tr>
+      <tr><td><code>pydantic-extra-types</code></td><td>Phone numbers, countries, currencies, colours, ULIDs</td></tr>
+      <tr><td><code>bump-pydantic</code></td><td>Automatic v1 to v2 code rewrites</td></tr>
+      <tr><td><code>datamodel-code-generator</code></td><td>Generate models from JSON Schema, OpenAPI or sample JSON</td></tr>
+      <tr><td>mypy + <code>pydantic.mypy</code> plugin, or Pyright</td><td>Static checking that understands models and aliases</td></tr>
+      <tr><td><code>hypothesis</code></td><td>Property-based tests from your types</td></tr>
+      <tr><td><code>logfire</code></td><td>Pydantic's observability tool; can trace validation</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note tip"><b>Suggested order</b><p>This guide's Parts I–II with every snippet run → official Concepts pages → the conversion table → Part III–IV here → rebuild your FastAPI project → the capstone → PydanticAI or Instructor.</p></div>
+</section>
+
+<section class="ch prose" id="glossary">
+  <span class="chno">Chapter 29 · Mastery</span>
+  <h2>Glossary</h2>
+  <div class="tbl"><table>
+    <tbody>
+      <tr><td><strong>Alias</strong></td><td>External name for a field used when reading and/or writing data.</td></tr>
+      <tr><td><strong>Annotated</strong></td><td><code>typing.Annotated[T, ...]</code>: a type plus metadata (constraints, validators, serializers).</td></tr>
+      <tr><td><strong>BaseModel</strong></td><td>The base class for Pydantic models.</td></tr>
+      <tr><td><strong>BaseSettings</strong></td><td>Model that loads values from env vars and files (<code>pydantic-settings</code>).</td></tr>
+      <tr><td><strong>Coercion</strong></td><td>Converting input to the field type, e.g. <code>"42"</code> to <code>42</code>.</td></tr>
+      <tr><td><strong>Computed field</strong></td><td>A property included in dumps and the schema.</td></tr>
+      <tr><td><strong>ConfigDict</strong></td><td>Model-wide settings in <code>model_config</code>.</td></tr>
+      <tr><td><strong>Constraint</strong></td><td>A rule on a value (<code>gt</code>, <code>max_length</code>, <code>pattern</code>) checked in Rust.</td></tr>
+      <tr><td><strong>Core schema</strong></td><td>Internal tree that pydantic-core compiles into a validator and serializer.</td></tr>
+      <tr><td><strong>Discriminated union</strong></td><td>Union of models chosen by a tag field.</td></tr>
+      <tr><td><strong>Field</strong></td><td>A typed attribute of a model; <code>Field()</code> adds defaults, constraints and metadata.</td></tr>
+      <tr><td><strong>JSON Schema</strong></td><td>Standard JSON description of data shape; generated by <code>model_json_schema()</code>.</td></tr>
+      <tr><td><strong>Lax mode</strong></td><td>Default mode: safe conversions allowed.</td></tr>
+      <tr><td><strong>pydantic-core</strong></td><td>The Rust engine that does validation and serialization.</td></tr>
+      <tr><td><strong>Private attribute</strong></td><td><code>_name</code> attribute: not validated, dumped or in the schema.</td></tr>
+      <tr><td><strong>RootModel</strong></td><td>Model whose top level is a single value such as a list.</td></tr>
+      <tr><td><strong>Secret / SecretStr / SecretBytes</strong></td><td>Wrappers that mask a value in repr, logs and dumps until <code>.get_secret_value()</code>.</td></tr>
+      <tr><td><strong>Serialization</strong></td><td>Turning a model into a dict or JSON.</td></tr>
+      <tr><td><strong>Strict mode</strong></td><td>Only the exact type is accepted.</td></tr>
+      <tr><td><strong>TypeAdapter</strong></td><td>Validation and serialization for any type, not just models.</td></tr>
+      <tr><td><strong>ValidationError</strong></td><td>Exception listing every validation failure with type, loc, msg and input.</td></tr>
+      <tr><td><strong>Validator</strong></td><td>Your function run during validation (before, after, wrap, plain; field or model level).</td></tr>
+    </tbody>
+  </table></div>
+  <p class="foot">Written 24 November 2026 for Pydantic 2.14.4 (pydantic-core 2.50.5) on Python 3.12. Outputs were captured by running the examples on that version; benchmark numbers are from one Windows machine and are illustrative. Claude API examples use <code>claude-opus-5-5</code> and the Anthropic Python SDK's <code>messages.parse()</code>. pydantic-settings, FastAPI and LLM framework snippets were not run here: check the linked official docs if something differs.</p>
+</section>
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script>
+// Copy buttons
+document.querySelectorAll(".code button").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var code = btn.closest(".code").querySelector("code");
+    var text = code.innerText;
+    function done(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+    function fallback(){
+      var r = document.createRange(); r.selectNodeContents(code);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "Selected: press Ctrl+C";
+    }
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch(e){ fallback(); }
+  });
+});
+// Highlight the current chapter in the rail
+var links = Array.prototype.slice.call(document.querySelectorAll(".rail a"));
+var map = {};
+links.forEach(function(a){ map[a.getAttribute("href").slice(1)] = a; });
+if ("IntersectionObserver" in window){
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting){
+        links.forEach(function(a){ a.classList.remove("on"); });
+        var a = map[e.target.id]; if (a) a.classList.add("on");
+      }
+    });
+  }, {rootMargin:"-20% 0px -70% 0px"});
+  document.querySelectorAll("section.ch").forEach(function(s){ io.observe(s); });
+}
+// Collapse contents on phones
+if (window.matchMedia("(max-width:900px)").matches){ document.getElementById("toc").removeAttribute("open"); }
+</script>
+</body>
+</html>

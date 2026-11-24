@@ -1,0 +1,1008 @@
+<title>MCP Field Guide</title>
+<meta name="description" content="A beginner-friendly study guide to the Model Context Protocol: what it is, how it works, building and testing a server, connecting it to Claude and LangChain, and running it safely.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sticky chapter rail on the left, a single reading column on the right; diagrams and code may break wider inside their own scrollers. */
+:root{
+  --paper:#f5f7f6; --sheet:#ffffff; --ink:#15211f; --ink-2:#4a5a57; --rule:#d9e1de;
+  --accent:#0d6b58; --accent-soft:#e2f1ec; --graph:#4548a8; --graph-soft:#e8e9f8;
+  --warn:#9a5b00; --warn-soft:#fbf0dc; --bad:#a3312b; --bad-soft:#f9e5e3;
+  --code-bg:#0f1b19; --code-ink:#dbe7e3; --code-com:#7d958f; --code-str:#9fdcae; --code-kw:#f2b874; --code-fn:#8fc7ff; --code-num:#e9a3c9;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1413; --sheet:#151d1c; --ink:#e3ebe8; --ink-2:#9db0ab; --rule:#2a3836;
+    --accent:#5cc9ac; --accent-soft:#16302a; --graph:#9fa2ff; --graph-soft:#1f2140;
+    --warn:#f0b75a; --warn-soft:#33270f; --bad:#ff8f86; --bad-soft:#3a1b19;
+    --code-bg:#0a100f; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1413; --sheet:#151d1c; --ink:#e3ebe8; --ink-2:#9db0ab; --rule:#2a3836;
+  --accent:#5cc9ac; --accent-soft:#16302a; --graph:#9fa2ff; --graph-soft:#1f2140;
+  --warn:#f0b75a; --warn-soft:#33270f; --bad:#ff8f86; --bad-soft:#3a1b19;
+  --code-bg:#0a100f; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65;margin:0}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.shell{display:grid;grid-template-columns:260px minmax(0,1fr);gap:48px;max-width:1240px;margin:0 auto;padding-inline:24px;padding-block:32px 96px}
+@media (max-width:900px){.shell{grid-template-columns:minmax(0,1fr);gap:16px;padding-inline:16px}}
+
+/* rail */
+.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;font-size:13.5px;padding-right:8px}
+.rail details{border:0}
+.rail summary{font-family:var(--display);font-weight:700;font-size:15px;cursor:pointer;list-style:none;padding-block:4px 10px;color:var(--ink)}
+.rail summary::-webkit-details-marker{display:none}
+.rail ol{list-style:none;margin:0;padding:0;display:grid;gap:1px}
+.rail .part{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);margin-top:14px;padding-left:10px}
+.rail a{display:block;text-decoration:none;color:var(--ink-2);padding:3px 10px;border-left:2px solid transparent;border-radius:0 4px 4px 0}
+.rail a:hover{color:var(--ink);background:var(--accent-soft)}
+.rail a.on{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft);font-weight:500}
+@media (max-width:900px){.rail{position:static;max-height:none;background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:10px 14px}}
+
+/* reading column */
+main{min-width:0}
+.prose{max-width:760px}
+header.cover{padding-block:8px 32px;border-bottom:1px solid var(--rule);margin-bottom:24px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.15;color:var(--ink)}
+h1{font-size:clamp(2.2rem,5vw,3.4rem);margin:.3em 0 .3em;letter-spacing:-.015em}
+h2{font-size:1.85rem;margin:0 0 .5em;letter-spacing:-.01em}
+h3{font-size:1.25rem;margin:1.8em 0 .5em}
+h4{font-size:1.02rem;margin:1.4em 0 .4em;font-family:var(--body);font-weight:600}
+.lede{font-size:1.15rem;color:var(--ink-2);max-width:62ch}
+section.ch{padding-block:44px 8px;border-top:1px solid var(--rule);scroll-margin-top:16px}
+section.ch:first-of-type{border-top:0}
+.chno{font-family:var(--mono);font-size:12px;color:var(--ink-2);letter-spacing:.06em;display:block;margin-bottom:6px}
+p,li{max-width:68ch}
+ul,ol{padding-left:1.3em}
+li{margin-block:.25em}
+code{font-family:var(--mono);font-size:.86em;background:var(--accent-soft);color:var(--ink);padding:.1em .35em;border-radius:4px}
+strong{font-weight:600}
+
+/* definition block */
+.define{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:20px 24px;margin:20px 0}
+.define .term{font-family:var(--display);font-size:1.4rem;font-weight:700}
+.define .pos{font-family:var(--mono);font-size:12px;color:var(--ink-2);margin-left:8px}
+.define p{margin:.5em 0 0;font-size:1.06rem}
+
+/* callouts */
+.note{border-radius:8px;padding:12px 16px;margin:18px 0;font-size:.96rem}
+.note b{display:block;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.note.tip{background:var(--accent-soft)} .note.tip b{color:var(--accent)}
+.note.warn{background:var(--warn-soft)} .note.warn b{color:var(--warn)}
+.note.graph{background:var(--graph-soft)} .note.graph b{color:var(--graph)}
+.note p{margin:.3em 0}
+
+/* code */
+.code{position:relative;margin:16px 0 20px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 12px;font-family:var(--mono);font-size:11.5px;color:var(--code-com);border-bottom:1px solid #ffffff14}
+.code button{font-family:var(--mono);font-size:11px;background:transparent;color:var(--code-ink);border:1px solid #ffffff2a;border-radius:5px;padding:2px 8px;cursor:pointer}
+.code button:hover{background:#ffffff14}
+.code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6;color:var(--code-ink);tab-size:4}
+.code pre code{background:none;padding:0;color:inherit;font-size:inherit}
+.token.comment{color:var(--code-com);font-style:italic}
+.token.string,.token.triple-quoted-string{color:var(--code-str)}
+.token.keyword,.token.boolean,.token.builtin{color:var(--code-kw)}
+.token.function,.token.decorator,.token.class-name{color:var(--code-fn)}
+.token.number{color:var(--code-num)}
+.token.operator,.token.punctuation{color:#b7c6c2}
+.output{font-family:var(--mono);font-size:12.5px;background:var(--sheet);border:1px dashed var(--rule);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink-2);margin:-8px 0 20px}
+
+/* tables */
+.tbl{overflow-x:auto;margin:16px 0 22px;border:1px solid var(--rule);border-radius:10px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);font-weight:600;background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td code{white-space:nowrap}
+
+/* diagrams */
+figure{margin:22px 0 26px}
+.dia{overflow-x:auto;background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:14px}
+.dia svg{display:block;min-width:640px;width:100%;height:auto}
+figcaption{font-size:13px;color:var(--ink-2);margin-top:8px}
+figcaption b{color:var(--ink);font-weight:600}
+svg .bx{fill:var(--sheet);stroke:var(--rule);stroke-width:1.5}
+svg .bx-a{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg .bx-g{fill:var(--graph-soft);stroke:var(--graph);stroke-width:1.5}
+svg .bx-w{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.5}
+svg .bx-p{fill:var(--paper);stroke:var(--rule);stroke-width:1.5}
+svg .ln{stroke:var(--ink-2);stroke-width:1.6;fill:none}
+svg .ln-a{stroke:var(--accent);stroke-width:1.8;fill:none}
+svg .dash{stroke-dasharray:5 4}
+svg .ah{fill:var(--ink-2)}
+svg .ah-a{fill:var(--accent)}
+svg text{fill:var(--ink);font-family:var(--body);font-size:13px}
+svg .t-b{font-weight:600;font-size:14px}
+svg .t-s{font-size:11.5px;fill:var(--ink-2)}
+svg .t-m{font-family:var(--mono);font-size:12px}
+svg .t-a{fill:var(--accent)} svg .t-g{fill:var(--graph)} svg .t-w{fill:var(--warn)}
+
+/* grids */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:16px 0 22px}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;min-width:0}
+.card h4{margin:0 0 4px}
+.card p{margin:0;font-size:14.5px;color:var(--ink-2)}
+.yes h4{color:var(--accent)} .no h4{color:var(--bad)}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:99px;background:var(--accent-soft);color:var(--accent);vertical-align:middle}
+.pill.g{background:var(--graph-soft);color:var(--graph)}
+.pill.w{background:var(--warn-soft);color:var(--warn)}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps>li{counter-increment:s;position:relative;padding-left:40px;margin-block:12px}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--sheet);font-family:var(--mono);font-size:12.5px;display:grid;place-items:center}
+.check{list-style:none;padding:0}
+.check li{padding-left:26px;position:relative}
+.check li::before{content:"";position:absolute;left:2px;top:.55em;width:12px;height:12px;border:1.6px solid var(--accent);border-radius:3px}
+/* example boxes: examples and flowcharts from the reference guide */
+.example{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:0 20px 6px;margin:26px 0}
+.example .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;background:var(--accent);color:var(--sheet);padding:3px 10px;border-radius:0 0 6px 6px}
+.example h4{margin:.6em 0 .3em;font-size:1.08rem}
+.example>p{margin:.4em 0 .8em}
+.example figure{margin:14px 0}
+.example .dia{border:0;padding:4px 0;background:transparent}
+@media (max-width:600px){.example{padding-inline:12px}}
+.rail .ex-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle}
+.foot{margin-top:56px;padding-top:20px;border-top:1px solid var(--rule);font-size:13.5px;color:var(--ink-2)}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-a"/></marker>
+  </defs>
+</svg>
+
+<div class="shell">
+<nav class="rail" aria-label="Chapters">
+  <details id="toc" open>
+    <summary>Contents</summary>
+    <ol>
+      <li class="part">Part I · Foundations</li>
+      <li><a href="#what">1. What is MCP<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#problem">2. The problem it solves<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#where">3. Where to use it</a></li>
+      <li><a href="#arch">4. Host, client, server<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li class="part">Part II · How it works</li>
+      <li><a href="#primitives">5. Tools, resources, prompts<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#client">6. Asking the user for input<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#transports">7. Transports: stdio and HTTP<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#flow">8. How messages flow<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li class="part">Part III · Build a server</li>
+      <li><a href="#setup">9. Install and set up</a></li>
+      <li><a href="#server">10. Your first server<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#inspector">11. Test it<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li class="part">Part IV · Use servers</li>
+      <li><a href="#connect">12. Claude Desktop and Claude Code<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#langchain">13. From LangChain<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#api">14. From the Claude API<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#popular">15. Ready-made servers</a></li>
+      <li class="part">Part V · Production</li>
+      <li><a href="#remote">16. Remote servers<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#security">17. Security and sign-in<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#mistakes">18. Common mistakes</a></li>
+      <li class="part">Part VI · Mastery</li>
+      <li><a href="#cheat">19. Cheat sheet</a></li>
+      <li><a href="#roadmap">20. Learning path</a></li>
+      <li><a href="#glossary">21. Glossary</a></li>
+    </ol>
+  </details>
+</nav>
+
+<main>
+<header class="cover prose">
+  <div class="eyebrow">Study notes · Model Context Protocol · spec 2026-07-28</div>
+  <h1>MCP Field Guide</h1>
+  <p class="lede">One document that takes you from "what is MCP?" to building your own MCP server, plugging it into Claude and LangChain, and running it safely. Every chapter has a plain explanation, and most have an example you can follow.</p>
+  <div class="note tip"><b>How to read this</b><p>Parts I and II explain the ideas: read them in order. Part III builds one small server, step by step. Parts IV and V show how to use and run it. Chapters marked with a green dot <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent)"></span> in the contents have <strong>Example</strong> boxes.</p><p>The examples use one running example: a <strong>Plant TAT server</strong> that lets an AI look up truck turnaround times (TAT) at a factory. The numbers are made up so you can run it anywhere.</p></div>
+</header>
+
+<!-- ================= PART I ================= -->
+<section class="ch prose" id="what">
+  <span class="chno">Chapter 1 · Foundations</span>
+  <h2>What is MCP?</h2>
+  <div class="define">
+    <span class="term">MCP</span><span class="pos">Model Context Protocol · open standard</span>
+    <p>An open standard that lets AI applications connect to outside tools and data in one common way. You build a connector once, as an <strong>MCP server</strong>, and any AI app that speaks MCP can use it: Claude, ChatGPT, VS Code, Cursor, LangChain agents and many more.</p>
+  </div>
+  <p>Anthropic released MCP in November 2024. It is now an open project with its own specification, official SDKs in many languages, and thousands of servers. The latest version of the specification is dated <strong>2026-07-28</strong>.</p>
+  <p>The usual comparison is <strong>USB-C for AI</strong>. Before USB-C, every device had its own cable. Now one port fits many devices. MCP does the same for AI apps and the systems they need to reach.</p>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Without MCP vs with MCP</h4>
+    <p>Without MCP, every AI app needs its own custom code for every system. With MCP, each system gets one server, and every app plugs into it the same way.</p>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 270" role="img" aria-label="Left: an AI app with three different custom connectors. Right: an AI app with one MCP port connected to three MCP servers.">
+          <text x="20" y="24" class="t-b">Without MCP</text>
+          <rect x="20" y="100" width="120" height="60" rx="8" class="bx-w"/>
+          <text x="80" y="127" text-anchor="middle" class="t-b">AI app</text>
+          <text x="80" y="145" text-anchor="middle" class="t-s">custom code ×3</text>
+          <rect x="220" y="40" width="130" height="40" rx="8" class="bx"/><text x="285" y="65" text-anchor="middle">Vehicle database</text>
+          <rect x="220" y="110" width="130" height="40" rx="8" class="bx"/><text x="285" y="135" text-anchor="middle">GitHub</text>
+          <rect x="220" y="180" width="130" height="40" rx="8" class="bx"/><text x="285" y="205" text-anchor="middle">Slack</text>
+          <path d="M140 115 L218 62" class="ln dash" marker-end="url(#arr)"/>
+          <path d="M140 130 L218 130" class="ln dash" marker-end="url(#arr)"/>
+          <path d="M140 145 L218 198" class="ln dash" marker-end="url(#arr)"/>
+          <text x="185" y="250" text-anchor="middle" class="t-s">each link is different code you maintain</text>
+          <line x1="385" y1="14" x2="385" y2="256" class="ln dash"/>
+          <text x="410" y="24" class="t-b t-a">With MCP</text>
+          <rect x="410" y="100" width="110" height="60" rx="8" class="bx-a"/>
+          <text x="465" y="127" text-anchor="middle" class="t-b t-a">AI app</text>
+          <text x="465" y="145" text-anchor="middle" class="t-s">one MCP port</text>
+          <rect x="580" y="40" width="170" height="40" rx="8" class="bx-g"/><text x="665" y="65" text-anchor="middle">MCP server: vehicles</text>
+          <rect x="580" y="110" width="170" height="40" rx="8" class="bx-g"/><text x="665" y="135" text-anchor="middle">MCP server: GitHub</text>
+          <rect x="580" y="180" width="170" height="40" rx="8" class="bx-g"/><text x="665" y="205" text-anchor="middle">MCP server: Slack</text>
+          <path d="M520 115 L578 62" class="ln-a" marker-end="url(#arrA)"/>
+          <path d="M520 130 L578 130" class="ln-a" marker-end="url(#arrA)"/>
+          <path d="M520 145 L578 198" class="ln-a" marker-end="url(#arrA)"/>
+          <text x="580" y="250" class="t-s">same protocol for every connection</text>
+        </svg>
+      </div>
+    </figure>
+  </div>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Each part, in plain words</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Part</th><th>Think of it as</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>MCP</td><td>A standard plug (USB-C)</td><td>The rules both sides follow</td></tr>
+        <tr><td>Host</td><td>The device you use</td><td>Claude Desktop, Claude Code, your own app</td></tr>
+        <tr><td>Client</td><td>The port inside the device</td><td>One connection from the host to one server</td></tr>
+        <tr><td>Server</td><td>The accessory you plug in</td><td>A Plant TAT server, a GitHub server</td></tr>
+        <tr><td>Tool</td><td>A button the AI can press</td><td><code>get_plant_tat(date)</code></td></tr>
+        <tr><td>Resource</td><td>A document the AI can read</td><td>The plant's TAT targets</td></tr>
+        <tr><td>Prompt</td><td>A ready-made request the user can pick</td><td>"Explain why TAT was high on…"</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note tip"><b>Easy definition</b><p>MCP is a standard way to give an AI app new abilities. Write the connector once, use it in every MCP-compatible app.</p></div>
+  </div>
+</section>
+
+<section class="ch prose" id="problem">
+  <span class="chno">Chapter 2 · Foundations</span>
+  <h2>The problem MCP solves</h2>
+  <p>An AI model on its own only knows what it learned in training. To be useful at work it must reach your systems: databases, files, ticketing tools, chat. Before MCP, each AI app built its own connectors, so the same integration was written again and again.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>From N × M integrations to N + M</h4>
+    <p>Three AI apps and three systems need nine custom integrations. With MCP, each app supports MCP once and each system gets one server: six pieces in total, and adding a fourth app costs one piece, not three.</p>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 260" role="img" aria-label="Left: three apps each wired to three systems, nine links. Right: three apps connect to MCP, MCP connects to three servers, six links.">
+          <text x="20" y="22" class="t-b">Without MCP: 3 × 3 = 9</text>
+          <rect x="20" y="44" width="110" height="36" rx="8" class="bx"/><text x="75" y="67" text-anchor="middle">Claude</text>
+          <rect x="20" y="104" width="110" height="36" rx="8" class="bx"/><text x="75" y="127" text-anchor="middle">VS Code</text>
+          <rect x="20" y="164" width="110" height="36" rx="8" class="bx"/><text x="75" y="187" text-anchor="middle">Your app</text>
+          <rect x="240" y="44" width="110" height="36" rx="8" class="bx-p"/><text x="295" y="67" text-anchor="middle">Vehicle DB</text>
+          <rect x="240" y="104" width="110" height="36" rx="8" class="bx-p"/><text x="295" y="127" text-anchor="middle">GitHub</text>
+          <rect x="240" y="164" width="110" height="36" rx="8" class="bx-p"/><text x="295" y="187" text-anchor="middle">Slack</text>
+          <path d="M130 62 L240 62 M130 62 L240 122 M130 62 L240 182 M130 122 L240 62 M130 122 L240 122 M130 122 L240 182 M130 182 L240 62 M130 182 L240 122 M130 182 L240 182" class="ln dash"/>
+          <text x="185" y="236" text-anchor="middle" class="t-s">9 custom integrations</text>
+          <line x1="385" y1="14" x2="385" y2="246" class="ln dash"/>
+          <text x="405" y="22" class="t-b t-a">With MCP: 3 + 3 = 6</text>
+          <rect x="405" y="44" width="100" height="36" rx="8" class="bx"/><text x="455" y="67" text-anchor="middle">Claude</text>
+          <rect x="405" y="104" width="100" height="36" rx="8" class="bx"/><text x="455" y="127" text-anchor="middle">VS Code</text>
+          <rect x="405" y="164" width="100" height="36" rx="8" class="bx"/><text x="455" y="187" text-anchor="middle">Your app</text>
+          <rect x="545" y="40" width="50" height="164" rx="8" class="bx-a"/>
+          <text x="570" y="127" text-anchor="middle" class="t-b t-a">MCP</text>
+          <rect x="635" y="44" width="115" height="36" rx="8" class="bx-g"/><text x="692" y="67" text-anchor="middle">Vehicle DB</text>
+          <rect x="635" y="104" width="115" height="36" rx="8" class="bx-g"/><text x="692" y="127" text-anchor="middle">GitHub</text>
+          <rect x="635" y="164" width="115" height="36" rx="8" class="bx-g"/><text x="692" y="187" text-anchor="middle">Slack</text>
+          <path d="M505 62 L545 62 M505 122 L545 122 M505 182 L545 182 M595 62 L635 62 M595 122 L635 122 M595 182 L635 182" class="ln-a"/>
+          <text x="577" y="236" text-anchor="middle" class="t-s">6 standard pieces</text>
+        </svg>
+      </div>
+    </figure>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Problem</th><th>Without MCP</th><th>With MCP</th></tr></thead>
+    <tbody>
+      <tr><td>Repeated work</td><td>Every app rebuilds the same connector</td><td>Build one server, reuse it everywhere</td></tr>
+      <tr><td>Switching AI apps</td><td>Rewrite your integrations</td><td>Point the new app at the same servers</td></tr>
+      <tr><td>Discovery</td><td>The app must be told about each function in code</td><td>The app asks the server "what can you do?" at run time</td></tr>
+      <tr><td>Ownership</td><td>The AI team owns every integration</td><td>The team that owns a system can publish its server</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="ch prose" id="where">
+  <span class="chno">Chapter 3 · Foundations</span>
+  <h2>Where to use MCP (and where not to)</h2>
+  <div class="cards">
+    <div class="card yes"><h4>Company data for AI assistants</h4><p>Let Claude or an internal copilot look up orders, vehicles, stock or tickets.</p></div>
+    <div class="card yes"><h4>Developer tools</h4><p>Give coding assistants access to GitHub, databases, logs and docs.</p></div>
+    <div class="card yes"><h4>One integration, many apps</h4><p>The same server works in Claude Desktop, Claude Code, VS Code and your own agents.</p></div>
+    <div class="card yes"><h4>Products offering AI access</h4><p>SaaS companies publish a remote MCP server so customers' AI tools can use their product.</p></div>
+  </div>
+  <h3>When something else fits better</h3>
+  <div class="cards">
+    <div class="card no"><h4>One app, one function</h4><p>If only your own agent needs one small function, a plain tool inside the agent is simpler (see the LangChain guide's Tools chapter).</p></div>
+    <div class="card no"><h4>Fixed data pipelines</h4><p>Nightly reports or ETL jobs don't need an AI to decide anything. Use normal scripts and schedulers.</p></div>
+  </div>
+</section>
+
+<section class="ch prose" id="arch">
+  <span class="chno">Chapter 4 · Foundations</span>
+  <h2>Host, client, server</h2>
+  <p>MCP has three roles. Learn these three words and the rest of MCP is easy to follow.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Role</th><th>What it is</th><th>Examples</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Host</strong></td><td>The AI application the user works in. It contains the LLM and decides what to connect to.</td><td>Claude Desktop, Claude Code, VS Code, your LangChain app</td></tr>
+      <tr><td><strong>Client</strong></td><td>A connector inside the host. Each client talks to exactly one server.</td><td>Created automatically by the host</td></tr>
+      <tr><td><strong>Server</strong></td><td>A program that offers tools, resources and prompts. It does the real work against a system.</td><td>Plant TAT server, GitHub server, filesystem server</td></tr>
+    </tbody>
+  </table></div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>One host, two servers</h4>
+    <p>Claude Desktop (the host) connects to our local Plant TAT server and to a remote GitHub server. It creates one client for each.</p>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 780 260" role="img" aria-label="Host containing an LLM and two MCP clients; client 1 connects to the local Plant TAT server which reads a vehicle database; client 2 connects to a remote GitHub server which calls the GitHub API">
+          <rect x="10" y="14" width="360" height="232" rx="10" class="bx-a"/>
+          <text x="26" y="38" class="t-b t-a">Host</text>
+          <text x="26" y="56" class="t-s">the AI app, e.g. Claude Desktop</text>
+          <rect x="30" y="76" width="130" height="150" rx="8" class="bx"/>
+          <text x="95" y="145" text-anchor="middle" class="t-b">LLM</text>
+          <text x="95" y="165" text-anchor="middle" class="t-s">decides which tool</text>
+          <rect x="190" y="86" width="160" height="50" rx="8" class="bx-g"/>
+          <text x="270" y="108" text-anchor="middle" class="t-b t-g">MCP client 1</text>
+          <text x="270" y="126" text-anchor="middle" class="t-s">talks to server A</text>
+          <rect x="190" y="166" width="160" height="50" rx="8" class="bx-g"/>
+          <text x="270" y="188" text-anchor="middle" class="t-b t-g">MCP client 2</text>
+          <text x="270" y="206" text-anchor="middle" class="t-s">talks to server B</text>
+          <path d="M160 111 L188 111" class="ln" marker-start="url(#arr)" marker-end="url(#arr)"/>
+          <path d="M160 191 L188 191" class="ln" marker-start="url(#arr)" marker-end="url(#arr)"/>
+          <rect x="430" y="86" width="190" height="50" rx="8" class="bx"/>
+          <text x="525" y="108" text-anchor="middle" class="t-b">Server A: Plant TAT</text>
+          <text x="525" y="126" text-anchor="middle" class="t-s">local · stdio</text>
+          <rect x="430" y="166" width="190" height="50" rx="8" class="bx"/>
+          <text x="525" y="188" text-anchor="middle" class="t-b">Server B: GitHub</text>
+          <text x="525" y="206" text-anchor="middle" class="t-s">remote · HTTP</text>
+          <path d="M350 111 L428 111" class="ln-a" marker-start="url(#arrA)" marker-end="url(#arrA)"/>
+          <path d="M350 191 L428 191" class="ln-a" marker-start="url(#arrA)" marker-end="url(#arrA)"/>
+          <text x="389" y="102" text-anchor="middle" class="t-s">MCP</text>
+          <text x="389" y="182" text-anchor="middle" class="t-s">MCP</text>
+          <rect x="660" y="86" width="110" height="50" rx="8" class="bx-p"/><text x="715" y="116" text-anchor="middle">Vehicle DB</text>
+          <rect x="660" y="166" width="110" height="50" rx="8" class="bx-p"/><text x="715" y="196" text-anchor="middle">GitHub API</text>
+          <path d="M620 111 L658 111" class="ln" marker-end="url(#arr)"/>
+          <path d="M620 191 L658 191" class="ln" marker-end="url(#arr)"/>
+        </svg>
+      </div>
+      <figcaption><b>Figure 4.1</b> The LLM never talks to a server directly. It asks the host, and the host's client makes the call.</figcaption>
+    </figure>
+  </div>
+  <div class="note warn"><b>MCP does not include the AI model</b><p>A server has no LLM inside it. It only offers abilities. The host's model decides when to use them. That is why the same server works with Claude, GPT or any other model.</p></div>
+</section>
+
+<!-- ================= PART II ================= -->
+<section class="ch prose" id="primitives">
+  <span class="chno">Chapter 5 · How it works</span>
+  <h2>Tools, resources and prompts</h2>
+  <p>A server can offer three kinds of things. The difference is <strong>who decides to use them</strong>.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Type</th><th>What it is</th><th>Who decides to use it</th><th>Real-world comparison</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Tool</strong></td><td>An action the AI can run, such as "look up TAT" or "create ticket"</td><td>The <strong>model</strong> (the host should let the user approve)</td><td>A button the AI presses</td></tr>
+      <tr><td><strong>Resource</strong></td><td>Read-only data with an address (URI), such as a file or a table</td><td>The <strong>app</strong> (or the user picks it to attach)</td><td>A document handed to the AI</td></tr>
+      <tr><td><strong>Prompt</strong></td><td>A ready-made request template</td><td>The <strong>user</strong> (picks it from a menu or slash command)</td><td>A saved question you reuse</td></tr>
+    </tbody>
+  </table></div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>What the Plant TAT server offers</h4>
+    <div class="cards">
+      <div class="card"><h4><span class="pill">tool</span> get_plant_tat</h4><p>Returns the plant TAT for a date, with the target. The AI calls it when someone asks "how was TAT yesterday?"</p></div>
+      <div class="card"><h4><span class="pill">tool</span> get_stage_delays</h4><p>Returns minutes over target for each stage: loading, documentation, weighbridge, gate.</p></div>
+      <div class="card"><h4><span class="pill g">resource</span> tat://targets</h4><p>The target minutes per stage. The user can attach it so the AI knows the goals.</p></div>
+      <div class="card"><h4><span class="pill w">prompt</span> explain_delay</h4><p>A saved request: "Explain why plant TAT was high on {date}." The user picks it and types a date.</p></div>
+    </div>
+    <p>You will build exactly this server in <a href="#server">Chapter 10</a>.</p>
+  </div>
+  <div class="note tip"><b>Beginners: start with tools</b><p>Most hosts support tools best, and many servers offer only tools. Add resources and prompts once your tools work.</p></div>
+</section>
+
+<section class="ch prose" id="client">
+  <span class="chno">Chapter 6 · How it works</span>
+  <h2>When the server needs to ask the user</h2>
+  <p>Sometimes a server needs more information halfway through a task, or a confirmation. MCP calls this <strong>elicitation</strong>. The server asks; the host shows the question to the user; the answer goes back to the server.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Confirming before sending a delay alert</h4>
+    <p>The AI asks a server to send a delay alert to a transport company, but the server needs a contact person first.</p>
+    <ol class="steps">
+      <li><strong>AI → server:</strong> "Call <code>send_delay_alert</code> for FastFreight."</li>
+      <li><strong>Server → host:</strong> "I need more input: which contact person should receive it?" (the server does not finish yet)</li>
+      <li><strong>Host → user:</strong> shows a small form with the question.</li>
+      <li><strong>User:</strong> types "Ravi Kumar" and confirms, or cancels.</li>
+      <li><strong>Host → server:</strong> repeats the original call, now including the answer. The server sends the alert and returns the result.</li>
+    </ol>
+  </div>
+  <p>In the 2026-07-28 version of MCP, this works as "multi round-trip requests": the server replies "input required", and the client asks again with the answer. SDKs handle this for you.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Client feature</th><th>What it does</th><th>Status in spec 2026-07-28</th></tr></thead>
+    <tbody>
+      <tr><td>Elicitation</td><td>Server asks the user for information or confirmation</td><td><span class="pill">active</span></td></tr>
+      <tr><td>Sampling</td><td>Server asks the host's LLM to write something</td><td><span class="pill w">deprecated</span> call an LLM provider directly instead</td></tr>
+      <tr><td>Roots</td><td>Host tells the server which folders matter</td><td><span class="pill w">deprecated</span> pass folders as tool arguments or config</td></tr>
+    </tbody>
+  </table></div>
+  <p>"Deprecated" means it still works for at least twelve months but new servers should not depend on it. Older tutorials teach sampling and roots as core features; that advice is now out of date.</p>
+</section>
+
+<section class="ch prose" id="transports">
+  <span class="chno">Chapter 7 · How it works</span>
+  <h2>Transports: stdio and HTTP</h2>
+  <p>A transport is how messages travel between client and server. There are two standard ones.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Local vs remote</h4>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 210" role="img" aria-label="stdio: the host starts the server as a program on the same computer and talks through standard input and output. Streamable HTTP: the host sends HTTPS POST requests to a server on another machine.">
+          <text x="20" y="22" class="t-b">stdio (local)</text>
+          <rect x="20" y="36" width="120" height="50" rx="8" class="bx-a"/><text x="80" y="66" text-anchor="middle" class="t-b t-a">Host</text>
+          <path d="M140 61 L358 61" class="ln-a" marker-start="url(#arrA)" marker-end="url(#arrA)"/>
+          <text x="249" y="53" text-anchor="middle" class="t-s">starts it · stdin / stdout</text>
+          <rect x="360" y="36" width="180" height="50" rx="8" class="bx"/><text x="450" y="57" text-anchor="middle" class="t-b">TAT server</text><text x="450" y="75" text-anchor="middle" class="t-s">same computer</text>
+          <text x="570" y="56" class="t-s">private, simplest,</text>
+          <text x="570" y="74" class="t-s">one user</text>
+          <text x="20" y="128" class="t-b">Streamable HTTP (remote)</text>
+          <rect x="20" y="142" width="120" height="50" rx="8" class="bx-a"/><text x="80" y="172" text-anchor="middle" class="t-b t-a">Host</text>
+          <path d="M140 167 L358 167" class="ln-a" marker-start="url(#arrA)" marker-end="url(#arrA)"/>
+          <text x="249" y="159" text-anchor="middle" class="t-s">HTTPS POST to /mcp</text>
+          <rect x="360" y="142" width="180" height="50" rx="8" class="bx-g"/><text x="450" y="163" text-anchor="middle" class="t-b t-g">TAT server</text><text x="450" y="181" text-anchor="middle" class="t-s">another machine / cloud</text>
+          <text x="570" y="162" class="t-s">shared, many users,</text>
+          <text x="570" y="180" class="t-s">needs sign-in</text>
+        </svg>
+      </div>
+    </figure>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>stdio</th><th>Streamable HTTP</th></tr></thead>
+    <tbody>
+      <tr><td>Where the server runs</td><td>On your computer, started by the host</td><td>On a server or in the cloud</td></tr>
+      <tr><td>Who can use it</td><td>Only you</td><td>Anyone you give access to</td></tr>
+      <tr><td>Sign-in</td><td>Not needed (uses your own computer's access)</td><td>Needed: OAuth or an API token (<a href="#security">Ch. 17</a>)</td></tr>
+      <tr><td>Best for</td><td>Learning, personal tools, local files</td><td>Team and company servers, SaaS products</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warn"><b>Old name: SSE</b><p>Older guides mention an "HTTP + SSE" transport. It has been deprecated since 2025 and replaced by Streamable HTTP. Use Streamable HTTP for anything new.</p></div>
+</section>
+
+<section class="ch prose" id="flow">
+  <span class="chno">Chapter 8 · How it works</span>
+  <h2>How messages flow</h2>
+  <p>Client and server exchange small JSON messages in a format called <strong>JSON-RPC</strong>: a request with a method name and an ID, and a response with the same ID. You will rarely write these by hand, because the SDK does it, but seeing them once makes everything clearer.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>"How was plant TAT on 5 October?"</h4>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 320" role="img" aria-label="Sequence: client asks server for its tools; server lists them; client gives tools and the question to the LLM; LLM asks to call get_plant_tat; client calls the tool on the server; server returns the result; client gives the result to the LLM, which writes the answer">
+          <rect x="40" y="10" width="160" height="34" rx="8" class="bx-a"/><text x="120" y="32" text-anchor="middle" class="t-b t-a">LLM</text>
+          <rect x="300" y="10" width="160" height="34" rx="8" class="bx"/><text x="380" y="32" text-anchor="middle" class="t-b">Client (in host)</text>
+          <rect x="560" y="10" width="160" height="34" rx="8" class="bx-g"/><text x="640" y="32" text-anchor="middle" class="t-b t-g">TAT server</text>
+          <line x1="120" y1="44" x2="120" y2="312" class="ln dash"/>
+          <line x1="380" y1="44" x2="380" y2="312" class="ln dash"/>
+          <line x1="640" y1="44" x2="640" y2="312" class="ln dash"/>
+          <path d="M380 76 L638 76" class="ln" marker-end="url(#arr)"/><text x="510" y="69" text-anchor="middle" class="t-s">1 · tools/list</text>
+          <path d="M640 110 L382 110" class="ln" marker-end="url(#arr)"/><text x="510" y="103" text-anchor="middle" class="t-s">2 · two tools, with descriptions</text>
+          <path d="M380 144 L122 144" class="ln" marker-end="url(#arr)"/><text x="250" y="137" text-anchor="middle" class="t-s">3 · question + tool list</text>
+          <path d="M120 178 L378 178" class="ln-a" marker-end="url(#arrA)"/><text x="250" y="171" text-anchor="middle" class="t-s">4 · "call get_plant_tat"</text>
+          <path d="M380 212 L638 212" class="ln" marker-end="url(#arr)"/><text x="510" y="205" text-anchor="middle" class="t-s">5 · tools/call</text>
+          <path d="M640 246 L382 246" class="ln" marker-end="url(#arr)"/><text x="510" y="239" text-anchor="middle" class="t-s">6 · "192 min, target 142"</text>
+          <path d="M380 280 L122 280" class="ln" marker-end="url(#arr)"/><text x="250" y="273" text-anchor="middle" class="t-s">7 · result → LLM writes answer</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 8.1</b> Steps 1–2 happen when the host connects. Steps 4–7 repeat for every tool the LLM wants to use.</figcaption>
+    </figure>
+    <p>Step 5 and step 6 on the wire look like this:</p>
+    <div class="code"><div class="cap"><span>client → server: tools/call</span><button type="button">Copy</button></div><pre><code class="language-json">{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "get_plant_tat",
+    "arguments": { "date": "2026-10-05" }
+  }
+}</code></pre></div>
+    <div class="code"><div class="cap"><span>server → client: result</span><button type="button">Copy</button></div><pre><code class="language-json">{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "resultType": "complete",
+    "content": [
+      { "type": "text", "text": "2026-10-05: plant TAT 192 min, target 142 min." }
+    ],
+    "isError": false
+  }
+}</code></pre></div>
+    <p>Every request also carries a small <code>_meta</code> block (protocol version, client name and capabilities). It is left out above to keep the example short.</p>
+  </div>
+  <div class="note graph"><b>What changed in 2026-07-28</b><p>Earlier versions started every connection with an <code>initialize</code> handshake and kept a session open. The 2026-07-28 version is <strong>stateless</strong>: each request carries its own version and capabilities, so any server copy can answer it. A new <code>server/discover</code> call lets a client ask a server what it supports. Current SDKs talk to both old and new servers automatically.</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Method</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>server/discover</code></td><td>"Which versions and features do you support?"</td></tr>
+      <tr><td><code>tools/list</code> · <code>tools/call</code></td><td>List the tools · run one tool</td></tr>
+      <tr><td><code>resources/list</code> · <code>resources/read</code></td><td>List the data · read one item</td></tr>
+      <tr><td><code>prompts/list</code> · <code>prompts/get</code></td><td>List the templates · fill one in</td></tr>
+    </tbody>
+  </table></div>
+  <p>Errors come in two kinds. A <strong>protocol error</strong> (unknown tool, bad request) is a JSON-RPC <code>error</code>. A <strong>tool error</strong> (wrong date format, database down) is a normal result with <code>"isError": true</code> and a message, so the AI can read it and try again.</p>
+</section>
+
+<!-- ================= PART III ================= -->
+<section class="ch prose" id="setup">
+  <span class="chno">Chapter 9 · Build a server</span>
+  <h2>Install and set up</h2>
+  <ol class="steps">
+    <li><strong>Python 3.10 or newer.</strong> Check with <code>python --version</code>.</li>
+    <li><strong>A project folder and a virtual environment</strong>, so packages stay separate.</li>
+    <li><strong>Install the MCP Python SDK</strong> with its command-line extras.</li>
+    <li><strong>Node.js 22.19 or newer</strong> (optional) to run the MCP Inspector test tool in <a href="#inspector">Chapter 11</a>.</li>
+  </ol>
+  <div class="code"><div class="cap"><span>terminal (Windows PowerShell)</span><button type="button">Copy</button></div><pre><code class="language-bash">mkdir mcp-tat
+cd mcp-tat
+python -m venv .venv
+.venv\Scripts\Activate.ps1          # macOS/Linux: source .venv/bin/activate
+
+pip install -U "mcp[cli]"</code></pre></div>
+  <div class="note warn"><b>Older tutorials use a different name</b><p>The Python SDK version 2 renamed <code>FastMCP</code> to <code>MCPServer</code>. If a tutorial says <code>from mcp.server.fastmcp import FastMCP</code>, it was written for version 1. With the current SDK, use <code>from mcp.server import MCPServer</code>. The decorators (<code>@mcp.tool()</code> and so on) work the same way.</p></div>
+  <p>Official SDKs also exist for TypeScript, Java, Kotlin, C#, Go, Ruby, Rust, Swift and PHP. The ideas in this guide apply to all of them.</p>
+</section>
+
+<section class="ch prose" id="server">
+  <span class="chno">Chapter 10 · Build a server</span>
+  <h2>Your first server</h2>
+  <p>A server is a normal Python file. You write ordinary functions and add a decorator to each one. The SDK turns them into MCP tools, resources and prompts: it reads the function name, the type hints and the docstring, and builds the description the AI sees.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>The Plant TAT server</h4>
+    <p>Two tools, one resource, one prompt. Save it as <code>tat_server.py</code>.</p>
+    <div class="code"><div class="cap"><span>tat_server.py</span><button type="button">Copy</button></div><pre><code class="language-python">from mcp.server import MCPServer
+
+mcp = MCPServer("Plant TAT")
+
+# Sample data. In real life this comes from your database.
+STAGE_MINUTES = {"loading": 81, "documentation": 63, "weighbridge": 34, "gate_entry": 14}
+TARGET_MINUTES = {"loading": 60, "documentation": 48, "weighbridge": 24, "gate_entry": 10}
+
+
+@mcp.tool()
+def get_plant_tat(date: str) -> str:
+    """Get the average plant TAT for a date (YYYY-MM-DD), compared with the target."""
+    actual = sum(STAGE_MINUTES.values())
+    target = sum(TARGET_MINUTES.values())
+    return f"{date}: plant TAT {actual} min, target {target} min."
+
+
+@mcp.tool()
+def get_stage_delays(date: str) -> dict:
+    """Minutes over target for each plant stage on a date (YYYY-MM-DD)."""
+    return {s: STAGE_MINUTES[s] - TARGET_MINUTES[s] for s in STAGE_MINUTES}
+
+
+@mcp.resource("tat://targets")
+def tat_targets() -> str:
+    """The plant's target minutes for each stage."""
+    return str(TARGET_MINUTES)
+
+
+@mcp.prompt()
+def explain_delay(date: str) -> str:
+    """A ready-made request: explain why TAT was high on a date."""
+    return f"Use the TAT tools to explain why plant TAT was high on {date}. Name the worst stage."
+
+
+if __name__ == "__main__":
+    mcp.run()          # default transport: stdio</code></pre></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Line</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>MCPServer("Plant TAT")</code></td><td>Creates the server and gives it a name hosts will show</td></tr>
+        <tr><td><code>@mcp.tool()</code></td><td>Turns the function below into a tool the AI can call</td></tr>
+        <tr><td>The docstring <code>"""Get the average…"""</code></td><td>Becomes the tool description. The AI reads it to decide when to use the tool, so write it clearly</td></tr>
+        <tr><td><code>date: str</code></td><td>Becomes the tool's input: one text field called "date"</td></tr>
+        <tr><td><code>@mcp.resource("tat://targets")</code></td><td>Publishes read-only data at that address</td></tr>
+        <tr><td><code>@mcp.prompt()</code></td><td>Publishes a ready-made request the user can pick</td></tr>
+        <tr><td><code>mcp.run()</code></td><td>Starts the server, talking over stdio</td></tr>
+      </tbody>
+    </table></div>
+    <p>If you run <code>python tat_server.py</code>, nothing seems to happen. That is correct: a stdio server waits silently for a host to talk to it. Stop it with Ctrl+C. The next chapter shows how to test it.</p>
+  </div>
+  <div class="note warn"><b>Never <code>print()</code> in a stdio server</b><p>In a stdio server, the output channel carries the MCP messages. A stray <code>print()</code> mixes ordinary text into them and breaks the connection. Log to stderr instead: <code>print("debug", file=sys.stderr)</code>.</p></div>
+</section>
+
+<section class="ch prose" id="inspector">
+  <span class="chno">Chapter 11 · Build a server</span>
+  <h2>Test it</h2>
+  <p>Test your server before connecting it to an AI. Then, if something goes wrong later, you know the server itself works.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Option A: the MCP Inspector (a test screen in your browser)</h4>
+    <p>The Inspector is the official testing tool. It starts your server, shows its tools, resources and prompts, and lets you run each one by filling in a form. It needs Node.js but no install.</p>
+    <div class="code"><div class="cap"><span>terminal</span><button type="button">Copy</button></div><pre><code class="language-bash"># Opens a browser page connected to your server
+npx @modelcontextprotocol/inspector python tat_server.py
+
+# Or run one tool from the command line, no browser
+npx @modelcontextprotocol/inspector --cli python tat_server.py --method tools/call --tool-name get_plant_tat --tool-arg date=2026-10-05</code></pre></div>
+    <div class="output">{
+  "content": [
+    { "type": "text", "text": "2026-10-05: plant TAT 192 min, target 142 min." }
+  ],
+  "structuredContent": { "result": "2026-10-05: plant TAT 192 min, target 142 min." },
+  "isError": false
+}</div>
+  </div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Option B: a tiny Python client</h4>
+    <p>This script plays the part of a host: it starts the server, asks what tools it has, and calls one. Put it in the same folder.</p>
+    <div class="code"><div class="cap"><span>tat_client.py</span><button type="button">Copy</button></div><pre><code class="language-python">import asyncio, sys
+from mcp import Client, StdioServerParameters
+
+server = StdioServerParameters(command=sys.executable, args=["tat_server.py"])
+
+async def main():
+    async with Client(server) as client:
+        tools = await client.list_tools()
+        print("Tools:", [t.name for t in tools.tools])
+
+        result = await client.call_tool("get_plant_tat", {"date": "2026-10-05"})
+        print("Result:", result.content[0].text)
+
+asyncio.run(main())</code></pre></div>
+    <div class="output">Tools: ['get_plant_tat', 'get_stage_delays']
+Result: 2026-10-05: plant TAT 192 min, target 142 min.</div>
+  </div>
+</section>
+
+<!-- ================= PART IV ================= -->
+<section class="ch prose" id="connect">
+  <span class="chno">Chapter 12 · Use servers</span>
+  <h2>Connect to Claude Desktop and Claude Code</h2>
+  <p>Once the server works, tell a host where to find it. The host then starts it and offers its tools to the model.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Claude Desktop</h4>
+    <p>Open <strong>Settings → Developer → Edit Config</strong>. This opens <code>claude_desktop_config.json</code> (on Windows: <code>%APPDATA%\Claude\claude_desktop_config.json</code>). Add your server, save, and fully restart Claude Desktop.</p>
+    <div class="code"><div class="cap"><span>claude_desktop_config.json</span><button type="button">Copy</button></div><pre><code class="language-json">{
+  "mcpServers": {
+    "plant-tat": {
+      "command": "C:\\Users\\you\\mcp-tat\\.venv\\Scripts\\python.exe",
+      "args": ["C:\\Users\\you\\mcp-tat\\tat_server.py"]
+    }
+  }
+}</code></pre></div>
+    <p>Use full paths: Claude Desktop does not start in your project folder. Pointing at the virtual environment's <code>python.exe</code> makes sure the <code>mcp</code> package is found. Then ask Claude "How was plant TAT on 5 October 2026?" and approve the tool call when it asks.</p>
+  </div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Claude Code</h4>
+    <p>One command adds the server. Everything after <code>--</code> is the command that starts it.</p>
+    <div class="code"><div class="cap"><span>terminal</span><button type="button">Copy</button></div><pre><code class="language-bash"># Local server (stdio)
+claude mcp add --transport stdio plant-tat -- python C:\Users\you\mcp-tat\tat_server.py
+
+# Remote server (HTTP), e.g. Notion
+claude mcp add --transport http notion https://mcp.notion.com/mcp
+
+claude mcp list            # see all servers
+claude mcp remove notion   # remove one
+# Inside Claude Code, type /mcp to check status or sign in</code></pre></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Scope (<code>--scope</code>)</th><th>Who gets the server</th></tr></thead>
+      <tbody>
+        <tr><td><code>local</code> (default)</td><td>Only you, only in this project</td></tr>
+        <tr><td><code>project</code></td><td>Everyone on the project: it is saved in a shared <code>.mcp.json</code> file</td></tr>
+        <tr><td><code>user</code></td><td>Only you, in all your projects</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="note tip"><b>Remote servers in claude.ai</b><p>For remote (HTTP) servers, Claude's apps also offer <strong>Connectors</strong> in settings: paste the server's URL and sign in. No config file needed.</p></div>
+</section>
+
+<section class="ch prose" id="langchain">
+  <span class="chno">Chapter 13 · Use servers</span>
+  <h2>Use MCP servers from LangChain</h2>
+  <p>A LangChain agent can use any MCP server's tools as if they were its own. LangChain 1.4 and later include this as <code>langchain.mcp</code> (beta). This matches Chapter 20 of the LangChain v1 Field Guide.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>A LangChain agent using the Plant TAT server</h4>
+    <div class="code"><div class="cap"><span>tat_agent.py</span><button type="button">Copy</button></div><pre><code class="language-python"># pip install -U "langchain[mcp]" langchain-anthropic
+import asyncio
+from pathlib import Path
+from langchain.agents import create_agent
+from langchain.mcp import MCPAdapter
+
+async def main():
+    async with MCPAdapter(Path("tat_server.py")) as adapter:   # starts the server
+        tools = await adapter.list_tools()      # get_plant_tat, get_stage_delays
+        agent = create_agent("anthropic:claude-sonnet-4-6", tools)
+        result = await agent.ainvoke({"messages": [
+            {"role": "user", "content": "Why was plant TAT high on 2026-10-05?"}
+        ]})
+        print(result["messages"][-1].text)
+
+asyncio.run(main())</code></pre></div>
+    <div class="output"># example output: the model's wording will differ
+Plant TAT on 2026-10-05 was 192 minutes against a 142 minute target. Loading was the
+biggest problem: 21 minutes over target, followed by documentation at 15 minutes over.</div>
+    <p><code>MCPAdapter</code> also accepts a URL for a remote server, or a config with several servers: <code>{"mcpServers": {"tat": {...}, "github": {"url": "..."}}}</code>. With several servers, tool names get the server name in front (for example <code>tat_get_plant_tat</code>).</p>
+  </div>
+</section>
+
+<section class="ch prose" id="api">
+  <span class="chno">Chapter 14 · Use servers</span>
+  <h2>Use MCP servers from the Claude API</h2>
+  <p>If you call Claude through the API, you can pass a remote MCP server in the request. Anthropic's side connects to the server and runs the tools. You don't write any client code.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>The MCP connector</h4>
+    <div class="code"><div class="cap"><span>api_mcp.py</span><button type="button">Copy</button></div><pre><code class="language-python">import anthropic
+
+client = anthropic.Anthropic()
+
+response = client.beta.messages.create(
+    model="claude-opus-5-5",
+    max_tokens=1000,
+    messages=[{"role": "user", "content": "How was plant TAT on 2026-10-05?"}],
+    mcp_servers=[{
+        "type": "url",
+        "url": "https://tat.example.com/mcp",     # must be reachable from the internet
+        "name": "plant-tat",
+        "authorization_token": "YOUR_TOKEN",       # if the server needs sign-in
+    }],
+    tools=[{"type": "mcp_toolset", "mcp_server_name": "plant-tat"}],
+    betas=["mcp-client-2025-11-20"],
+)
+print(response.content[-1].text)</code></pre></div>
+  </div>
+  <div class="note warn"><b>Limits</b><p>This is a beta feature. It only supports <strong>tools</strong> (not resources or prompts), and only <strong>remote HTTP</strong> servers. A local stdio server on your laptop cannot be reached this way: use LangChain or the Python <code>Client</code> instead.</p></div>
+</section>
+
+<section class="ch prose" id="popular">
+  <span class="chno">Chapter 15 · Use servers</span>
+  <h2>Ready-made servers</h2>
+  <p>Before building a server, check whether one exists. The official <strong>MCP Registry</strong> at <a href="https://registry.modelcontextprotocol.io" target="_blank" rel="noopener">registry.modelcontextprotocol.io</a> lists public servers.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Server</th><th>What it gives the AI</th><th>Type</th></tr></thead>
+    <tbody>
+      <tr><td>Filesystem</td><td>Read and write files in folders you choose</td><td>Local (official reference)</td></tr>
+      <tr><td>Git</td><td>Read history, diffs and branches of a repository</td><td>Local (official reference)</td></tr>
+      <tr><td>Fetch</td><td>Read web pages as text</td><td>Local (official reference)</td></tr>
+      <tr><td>GitHub</td><td>Issues, pull requests, code search</td><td>Remote</td></tr>
+      <tr><td>Notion, Atlassian, Linear</td><td>Pages, tickets, projects</td><td>Remote, sign in with OAuth</td></tr>
+      <tr><td>Databases (Postgres, SQLite…)</td><td>Query data</td><td>Local or remote</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warn"><b>Only install servers you trust</b><p>A local server runs as a program on your computer with your permissions. Treat it like any software you install: check who publishes it and read its README.</p></div>
+</section>
+
+<!-- ================= PART V ================= -->
+<section class="ch prose" id="remote">
+  <span class="chno">Chapter 16 · Production</span>
+  <h2>Remote servers</h2>
+  <p>A local server serves one person. To share the Plant TAT server with your whole team, or with Claude through the API, run it as a remote server over Streamable HTTP.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Turn the Plant TAT server into a web service</h4>
+    <p>Change only the last line of <code>tat_server.py</code>:</p>
+    <div class="code"><div class="cap"><span>tat_server.py (last lines)</span><button type="button">Copy</button></div><pre><code class="language-python">if __name__ == "__main__":
+    mcp.run(transport="streamable-http", host="127.0.0.1", port=8000)</code></pre></div>
+    <p>The server now answers at <code>http://127.0.0.1:8000/mcp</code>. A client connects with just the URL:</p>
+    <div class="code"><div class="cap"><span>connect by URL</span><button type="button">Copy</button></div><pre><code class="language-python">async with Client("http://127.0.0.1:8000/mcp") as client:
+    result = await client.call_tool("get_plant_tat", {"date": "2026-10-05"})</code></pre></div>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 200" role="img" aria-label="Claude, a LangChain agent and a teammate's Claude Code all connect over HTTPS with sign-in to one remote TAT server, which reads the vehicle database">
+          <rect x="20" y="20" width="170" height="40" rx="8" class="bx"/><text x="105" y="45" text-anchor="middle">Claude (API / apps)</text>
+          <rect x="20" y="80" width="170" height="40" rx="8" class="bx"/><text x="105" y="105" text-anchor="middle">LangChain agent</text>
+          <rect x="20" y="140" width="170" height="40" rx="8" class="bx"/><text x="105" y="165" text-anchor="middle">Teammate's Claude Code</text>
+          <path d="M190 40 L348 92 M190 100 L348 100 M190 160 L348 108" class="ln-a"/>
+          <text x="270" y="64" text-anchor="middle" class="t-s">HTTPS + sign-in</text>
+          <rect x="350" y="70" width="200" height="60" rx="8" class="bx-g"/>
+          <text x="450" y="95" text-anchor="middle" class="t-b t-g">Remote TAT server</text>
+          <text x="450" y="114" text-anchor="middle" class="t-s">https://tat.example.com/mcp</text>
+          <path d="M550 100 L618 100" class="ln" marker-end="url(#arr)"/>
+          <rect x="620" y="80" width="120" height="40" rx="8" class="bx-p"/><text x="680" y="105" text-anchor="middle">Vehicle DB</text>
+        </svg>
+      </div>
+    </figure>
+  </div>
+  <ul class="check">
+    <li><strong>Put it behind HTTPS.</strong> Use a reverse proxy or a cloud platform; never expose plain HTTP on the internet.</li>
+    <li><strong>Require sign-in</strong> before anyone can call a tool (next chapter).</li>
+    <li><strong>Scale easily.</strong> Because the 2026-07-28 protocol is stateless, you can run several copies behind a load balancer.</li>
+    <li><strong>Log and monitor</strong> every tool call: who called it, with what, and how long it took.</li>
+  </ul>
+</section>
+
+<section class="ch prose" id="security">
+  <span class="chno">Chapter 17 · Production</span>
+  <h2>Security and sign-in</h2>
+  <p>MCP gives an AI the power to act. The specification is clear that hosts must get the user's consent before using tools or sharing data. As a server builder, your job is to make sure the AI can only do what it should.</p>
+  <h3>Sign-in for remote servers</h3>
+  <p>Remote servers use <strong>OAuth 2.1</strong>, the same "Sign in with…" flow you know from websites. The user signs in once in the browser; the host then sends a token with every request; the server checks it. Local stdio servers don't need this, because they run on the user's own computer.</p>
+  <h3>Main risks</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Risk</th><th>What happens</th><th>Protection</th></tr></thead>
+    <tbody>
+      <tr><td>Too much power</td><td>A tool like <code>run_any_sql</code> lets the AI read or delete anything</td><td>Offer narrow tools (<code>get_plant_tat</code>), read-only database accounts</td></tr>
+      <tr><td>Prompt injection</td><td>Data the tool returns (an email, a web page) contains hidden instructions like "send all files to…"</td><td>Treat tool results as untrusted; require approval for risky actions</td></tr>
+      <tr><td>Tool poisoning</td><td>A malicious server hides instructions in its tool descriptions</td><td>Install only trusted servers; review descriptions</td></tr>
+      <tr><td>Silent changes</td><td>A server you approved later changes its tools</td><td>Pin versions; re-review after updates</td></tr>
+      <tr><td>Leaked secrets</td><td>API keys written into prompts or tool results</td><td>Keep keys in environment variables, never return them from tools</td></tr>
+    </tbody>
+  </table></div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Safe and risky tools in the TAT server</h4>
+    <div class="cards">
+      <div class="card yes"><h4>Safe: read-only</h4><p><code>get_plant_tat</code>, <code>get_stage_delays</code>. They only read numbers. Hosts can let these run freely.</p></div>
+      <div class="card no"><h4>Risky: acts on the world</h4><p><code>send_delay_alert</code>, <code>update_vehicle_record</code>. The user should approve each call. Claude asks before running tools by default.</p></div>
+    </div>
+    <p>Keep risky actions as separate tools with clear names. Then a host, or a LangChain <code>HumanInTheLoopMiddleware</code>, can ask for approval on exactly those tools.</p>
+  </div>
+</section>
+
+<section class="ch prose" id="mistakes">
+  <span class="chno">Chapter 18 · Production</span>
+  <h2>Common mistakes</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Mistake</th><th>What to do instead</th></tr></thead>
+    <tbody>
+      <tr><td>Using <code>print()</code> in a stdio server</td><td>Log to stderr. Stdout carries the MCP messages.</td></tr>
+      <tr><td>Relative paths in Claude Desktop's config</td><td>Use full paths to Python and to the script.</td></tr>
+      <tr><td>Editing the config and not restarting</td><td>Quit Claude Desktop completely and open it again.</td></tr>
+      <tr><td>Copying <code>from mcp.server.fastmcp import FastMCP</code></td><td>That is SDK v1. In v2 use <code>from mcp.server import MCPServer</code>.</td></tr>
+      <tr><td>Building a new server with the SSE transport</td><td>Use Streamable HTTP.</td></tr>
+      <tr><td>Relying on sampling or roots</td><td>Both are deprecated in 2026-07-28. Call an LLM directly; pass folders as arguments.</td></tr>
+      <tr><td>Vague tool docstrings</td><td>Say what the tool does, when to use it, and the format of each input.</td></tr>
+      <tr><td>One giant "do anything" tool</td><td>Several small, specific tools. Easier for the AI, safer for you.</td></tr>
+      <tr><td>Thinking MCP includes an AI model</td><td>Servers only offer abilities. The host brings the model.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= PART VI ================= -->
+<section class="ch prose" id="cheat">
+  <span class="chno">Chapter 19 · Mastery</span>
+  <h2>Cheat sheet</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>I want to…</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td>Install the Python SDK</td><td><code>pip install -U "mcp[cli]"</code></td></tr>
+      <tr><td>Create a server</td><td><code>from mcp.server import MCPServer</code> · <code>mcp = MCPServer("Name")</code></td></tr>
+      <tr><td>Add an action</td><td><code>@mcp.tool()</code> + docstring + type hints</td></tr>
+      <tr><td>Add read-only data</td><td><code>@mcp.resource("scheme://address")</code></td></tr>
+      <tr><td>Add a ready-made request</td><td><code>@mcp.prompt()</code></td></tr>
+      <tr><td>Run locally</td><td><code>mcp.run()</code> (stdio)</td></tr>
+      <tr><td>Run as a web service</td><td><code>mcp.run(transport="streamable-http", host=..., port=...)</code></td></tr>
+      <tr><td>Test it</td><td><code>npx @modelcontextprotocol/inspector python server.py</code></td></tr>
+      <tr><td>Call it from Python</td><td><code>async with Client(StdioServerParameters(...)) as c: await c.call_tool(...)</code></td></tr>
+      <tr><td>Add to Claude Code</td><td><code>claude mcp add --transport stdio name -- python server.py</code></td></tr>
+      <tr><td>Add to Claude Desktop</td><td><code>claude_desktop_config.json</code> → <code>"mcpServers"</code></td></tr>
+      <tr><td>Use in LangChain</td><td><code>async with MCPAdapter(...) as a: tools = await a.list_tools()</code></td></tr>
+      <tr><td>Use from the Claude API</td><td><code>mcp_servers=[...]</code> + <code>mcp_toolset</code> + beta <code>mcp-client-2025-11-20</code></td></tr>
+    </tbody>
+  </table></div>
+  <h3>Remember it as</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Term</th><th>Remember it as</th></tr></thead>
+    <tbody>
+      <tr><td>MCP</td><td>USB-C for AI apps</td></tr>
+      <tr><td>Host</td><td>The AI app you use</td></tr>
+      <tr><td>Client</td><td>One connection inside the host</td></tr>
+      <tr><td>Server</td><td>The plug-in that offers abilities</td></tr>
+      <tr><td>Tool</td><td>Action: the model decides</td></tr>
+      <tr><td>Resource</td><td>Data: the app decides</td></tr>
+      <tr><td>Prompt</td><td>Template: the user decides</td></tr>
+      <tr><td>stdio</td><td>Local, one user</td></tr>
+      <tr><td>Streamable HTTP</td><td>Remote, many users, needs sign-in</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="ch prose" id="roadmap">
+  <span class="chno">Chapter 20 · Mastery</span>
+  <h2>Learning path</h2>
+  <ol class="steps">
+    <li><strong>Understand the idea.</strong> USB-C analogy, N + M, host / client / server. <a href="#what">Ch. 1–4</a></li>
+    <li><strong>Learn the three building blocks.</strong> Tools, resources, prompts. <a href="#primitives">Ch. 5</a></li>
+    <li><strong>Use a ready-made server.</strong> Add the Filesystem server to Claude Desktop and ask about a folder. <a href="#connect">Ch. 12</a>, <a href="#popular">15</a></li>
+    <li><strong>Build the Plant TAT server.</strong> <a href="#server">Ch. 10</a></li>
+    <li><strong>Test it</strong> with the Inspector and the Python client. <a href="#inspector">Ch. 11</a></li>
+    <li><strong>Connect it</strong> to Claude Desktop or Claude Code and ask a real question. <a href="#connect">Ch. 12</a></li>
+    <li><strong>Use it from an agent</strong> with LangChain. <a href="#langchain">Ch. 13</a></li>
+    <li><strong>Swap the sample data</strong> for real queries against your own database.</li>
+    <li><strong>Go remote and secure</strong>: Streamable HTTP, HTTPS, sign-in, approvals. <a href="#remote">Ch. 16–17</a></li>
+  </ol>
+  <div class="note graph"><b>Final takeaway</b><p>Build a capability once as an MCP server, and every MCP-compatible AI app can use it. Start local with stdio and a few small, read-only tools. Go remote, with sign-in and approvals, when other people need it.</p></div>
+  <h3>Official resources</h3>
+  <ul>
+    <li>MCP website and docs: <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">modelcontextprotocol.io</a></li>
+    <li>Specification 2026-07-28: <a href="https://modelcontextprotocol.io/specification/2026-07-28" target="_blank" rel="noopener">modelcontextprotocol.io/specification/2026-07-28</a></li>
+    <li>Python SDK docs: <a href="https://py.sdk.modelcontextprotocol.io" target="_blank" rel="noopener">py.sdk.modelcontextprotocol.io</a></li>
+    <li>MCP Registry: <a href="https://registry.modelcontextprotocol.io" target="_blank" rel="noopener">registry.modelcontextprotocol.io</a></li>
+    <li>Claude Code and MCP: <a href="https://code.claude.com/docs/en/mcp" target="_blank" rel="noopener">code.claude.com/docs/en/mcp</a></li>
+  </ul>
+</section>
+
+<section class="ch prose" id="glossary">
+  <span class="chno">Chapter 21 · Mastery</span>
+  <h2>Glossary</h2>
+  <div class="tbl"><table>
+    <tbody>
+      <tr><td><strong>Client</strong></td><td>The connector inside a host that talks to one server.</td></tr>
+      <tr><td><strong>Elicitation</strong></td><td>A server asking the user, through the host, for more information or a confirmation.</td></tr>
+      <tr><td><strong>Host</strong></td><td>The AI application the user works in, such as Claude Desktop or Claude Code.</td></tr>
+      <tr><td><strong>Inspector</strong></td><td>The official tool for testing MCP servers in a browser or terminal.</td></tr>
+      <tr><td><strong>JSON-RPC</strong></td><td>The simple request/response message format MCP uses.</td></tr>
+      <tr><td><strong>OAuth</strong></td><td>The standard "sign in with…" method remote servers use to check who is calling.</td></tr>
+      <tr><td><strong>Prompt</strong></td><td>A ready-made request template a server offers to users.</td></tr>
+      <tr><td><strong>Resource</strong></td><td>Read-only data a server offers at an address (URI).</td></tr>
+      <tr><td><strong>SDK</strong></td><td>A code library that handles the protocol for you, such as the <code>mcp</code> Python package.</td></tr>
+      <tr><td><strong>Server</strong></td><td>A program that offers tools, resources and prompts over MCP.</td></tr>
+      <tr><td><strong>stdio</strong></td><td>Local transport: the host starts the server and talks through its input and output.</td></tr>
+      <tr><td><strong>Streamable HTTP</strong></td><td>Remote transport: the host sends HTTPS requests to the server's <code>/mcp</code> address.</td></tr>
+      <tr><td><strong>TAT</strong></td><td>Turnaround time: how long a vehicle spends inside the plant. Used in this guide's examples.</td></tr>
+      <tr><td><strong>Tool</strong></td><td>An action a server offers, which the model can decide to call.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="foot">Checked against modelcontextprotocol.io (specification 2026-07-28), the MCP Python SDK 2.3 docs, the Claude Code MCP docs and the Claude API MCP connector docs on 6 October 2026. The server, Python client, Inspector CLI command, HTTP transport and LangChain <code>MCPAdapter</code> examples were run with <code>mcp</code> 2.3.0 and <code>langchain</code> 1.4.3. Example outputs from AI models are illustrative.</p>
+</section>
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script>
+// Copy buttons
+document.querySelectorAll(".code button").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var code = btn.closest(".code").querySelector("code");
+    var text = code.innerText;
+    function done(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+    function fallback(){
+      var r = document.createRange(); r.selectNodeContents(code);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "Selected: press Ctrl+C";
+    }
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch(e){ fallback(); }
+  });
+});
+// Highlight the current chapter in the rail
+var links = Array.prototype.slice.call(document.querySelectorAll(".rail a"));
+var map = {};
+links.forEach(function(a){ map[a.getAttribute("href").slice(1)] = a; });
+if ("IntersectionObserver" in window){
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting){
+        links.forEach(function(a){ a.classList.remove("on"); });
+        var a = map[e.target.id]; if (a) a.classList.add("on");
+      }
+    });
+  }, {rootMargin:"-20% 0px -70% 0px"});
+  document.querySelectorAll("section.ch").forEach(function(s){ io.observe(s); });
+}
+// Collapse contents on phones
+if (window.matchMedia("(max-width:900px)").matches){ document.getElementById("toc").removeAttribute("open"); }
+</script>

@@ -1,0 +1,2533 @@
+<title>LangChain v1 Field Guide</title>
+<meta name="description" content="A complete study guide to LangChain v1: from what it is to production agents with middleware, memory, RAG, MCP and LangGraph.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sticky chapter rail on the left, a single reading column on the right; diagrams and code may break wider inside their own scrollers. */
+:root{
+  --paper:#f5f7f6; --sheet:#ffffff; --ink:#15211f; --ink-2:#4a5a57; --rule:#d9e1de;
+  --accent:#0d6b58; --accent-soft:#e2f1ec; --graph:#4548a8; --graph-soft:#e8e9f8;
+  --warn:#9a5b00; --warn-soft:#fbf0dc; --bad:#a3312b; --bad-soft:#f9e5e3;
+  --code-bg:#0f1b19; --code-ink:#dbe7e3; --code-com:#7d958f; --code-str:#9fdcae; --code-kw:#f2b874; --code-fn:#8fc7ff; --code-num:#e9a3c9;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1413; --sheet:#151d1c; --ink:#e3ebe8; --ink-2:#9db0ab; --rule:#2a3836;
+    --accent:#5cc9ac; --accent-soft:#16302a; --graph:#9fa2ff; --graph-soft:#1f2140;
+    --warn:#f0b75a; --warn-soft:#33270f; --bad:#ff8f86; --bad-soft:#3a1b19;
+    --code-bg:#0a100f; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1413; --sheet:#151d1c; --ink:#e3ebe8; --ink-2:#9db0ab; --rule:#2a3836;
+  --accent:#5cc9ac; --accent-soft:#16302a; --graph:#9fa2ff; --graph-soft:#1f2140;
+  --warn:#f0b75a; --warn-soft:#33270f; --bad:#ff8f86; --bad-soft:#3a1b19;
+  --code-bg:#0a100f; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65;margin:0}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.shell{display:grid;grid-template-columns:260px minmax(0,1fr);gap:48px;max-width:1240px;margin:0 auto;padding-inline:24px;padding-block:32px 96px}
+@media (max-width:900px){.shell{grid-template-columns:minmax(0,1fr);gap:16px;padding-inline:16px}}
+
+/* rail */
+.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;font-size:13.5px;padding-right:8px}
+.rail details{border:0}
+.rail summary{font-family:var(--display);font-weight:700;font-size:15px;cursor:pointer;list-style:none;padding-block:4px 10px;color:var(--ink)}
+.rail summary::-webkit-details-marker{display:none}
+.rail ol{list-style:none;margin:0;padding:0;display:grid;gap:1px}
+.rail .part{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);margin-top:14px;padding-left:10px}
+.rail a{display:block;text-decoration:none;color:var(--ink-2);padding:3px 10px;border-left:2px solid transparent;border-radius:0 4px 4px 0}
+.rail a:hover{color:var(--ink);background:var(--accent-soft)}
+.rail a.on{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft);font-weight:500}
+@media (max-width:900px){.rail{position:static;max-height:none;background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:10px 14px}}
+
+/* reading column */
+main{min-width:0}
+.prose{max-width:760px}
+header.cover{padding-block:8px 32px;border-bottom:1px solid var(--rule);margin-bottom:24px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.15;color:var(--ink)}
+h1{font-size:clamp(2.2rem,5vw,3.4rem);margin:.3em 0 .3em;letter-spacing:-.015em}
+h2{font-size:1.85rem;margin:0 0 .5em;letter-spacing:-.01em}
+h3{font-size:1.25rem;margin:1.8em 0 .5em}
+h4{font-size:1.02rem;margin:1.4em 0 .4em;font-family:var(--body);font-weight:600}
+.lede{font-size:1.15rem;color:var(--ink-2);max-width:62ch}
+section.ch{padding-block:44px 8px;border-top:1px solid var(--rule);scroll-margin-top:16px}
+section.ch:first-of-type{border-top:0}
+.chno{font-family:var(--mono);font-size:12px;color:var(--ink-2);letter-spacing:.06em;display:block;margin-bottom:6px}
+p,li{max-width:68ch}
+ul,ol{padding-left:1.3em}
+li{margin-block:.25em}
+code{font-family:var(--mono);font-size:.86em;background:var(--accent-soft);color:var(--ink);padding:.1em .35em;border-radius:4px}
+strong{font-weight:600}
+
+/* definition block */
+.define{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:20px 24px;margin:20px 0}
+.define .term{font-family:var(--display);font-size:1.4rem;font-weight:700}
+.define .pos{font-family:var(--mono);font-size:12px;color:var(--ink-2);margin-left:8px}
+.define p{margin:.5em 0 0;font-size:1.06rem}
+
+/* callouts */
+.note{border-radius:8px;padding:12px 16px;margin:18px 0;font-size:.96rem}
+.note b{display:block;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.note.tip{background:var(--accent-soft)} .note.tip b{color:var(--accent)}
+.note.warn{background:var(--warn-soft)} .note.warn b{color:var(--warn)}
+.note.graph{background:var(--graph-soft)} .note.graph b{color:var(--graph)}
+.note p{margin:.3em 0}
+
+/* code */
+.code{position:relative;margin:16px 0 20px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 12px;font-family:var(--mono);font-size:11.5px;color:var(--code-com);border-bottom:1px solid #ffffff14}
+.code button{font-family:var(--mono);font-size:11px;background:transparent;color:var(--code-ink);border:1px solid #ffffff2a;border-radius:5px;padding:2px 8px;cursor:pointer}
+.code button:hover{background:#ffffff14}
+.code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6;color:var(--code-ink);tab-size:4}
+.code pre code{background:none;padding:0;color:inherit;font-size:inherit}
+.token.comment{color:var(--code-com);font-style:italic}
+.token.string,.token.triple-quoted-string{color:var(--code-str)}
+.token.keyword,.token.boolean,.token.builtin{color:var(--code-kw)}
+.token.function,.token.decorator,.token.class-name{color:var(--code-fn)}
+.token.number{color:var(--code-num)}
+.token.operator,.token.punctuation{color:#b7c6c2}
+.output{font-family:var(--mono);font-size:12.5px;background:var(--sheet);border:1px dashed var(--rule);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink-2);margin:-8px 0 20px}
+
+/* tables */
+.tbl{overflow-x:auto;margin:16px 0 22px;border:1px solid var(--rule);border-radius:10px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);font-weight:600;background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td code{white-space:nowrap}
+
+/* diagrams */
+figure{margin:22px 0 26px}
+.dia{overflow-x:auto;background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:14px}
+.dia svg{display:block;min-width:640px;width:100%;height:auto}
+figcaption{font-size:13px;color:var(--ink-2);margin-top:8px}
+figcaption b{color:var(--ink);font-weight:600}
+svg .bx{fill:var(--sheet);stroke:var(--rule);stroke-width:1.5}
+svg .bx-a{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg .bx-g{fill:var(--graph-soft);stroke:var(--graph);stroke-width:1.5}
+svg .bx-w{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.5}
+svg .bx-p{fill:var(--paper);stroke:var(--rule);stroke-width:1.5}
+svg .ln{stroke:var(--ink-2);stroke-width:1.6;fill:none}
+svg .ln-a{stroke:var(--accent);stroke-width:1.8;fill:none}
+svg .dash{stroke-dasharray:5 4}
+svg .ah{fill:var(--ink-2)}
+svg .ah-a{fill:var(--accent)}
+svg text{fill:var(--ink);font-family:var(--body);font-size:13px}
+svg .t-b{font-weight:600;font-size:14px}
+svg .t-s{font-size:11.5px;fill:var(--ink-2)}
+svg .t-m{font-family:var(--mono);font-size:12px}
+svg .t-a{fill:var(--accent)} svg .t-g{fill:var(--graph)} svg .t-w{fill:var(--warn)}
+
+/* grids */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:16px 0 22px}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;min-width:0}
+.card h4{margin:0 0 4px}
+.card p{margin:0;font-size:14.5px;color:var(--ink-2)}
+.yes h4{color:var(--accent)} .no h4{color:var(--bad)}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:99px;background:var(--accent-soft);color:var(--accent);vertical-align:middle}
+.pill.g{background:var(--graph-soft);color:var(--graph)}
+.pill.w{background:var(--warn-soft);color:var(--warn)}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps>li{counter-increment:s;position:relative;padding-left:40px;margin-block:12px}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--sheet);font-family:var(--mono);font-size:12.5px;display:grid;place-items:center}
+.check{list-style:none;padding:0}
+.check li{padding-left:26px;position:relative}
+.check li::before{content:"";position:absolute;left:2px;top:.55em;width:12px;height:12px;border:1.6px solid var(--accent);border-radius:3px}
+/* example boxes: examples and flowcharts from the reference guide */
+.example{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:0 20px 6px;margin:26px 0}
+.example .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;background:var(--accent);color:var(--sheet);padding:3px 10px;border-radius:0 0 6px 6px}
+.example h4{margin:.6em 0 .3em;font-size:1.08rem}
+.example>p{margin:.4em 0 .8em}
+.example figure{margin:14px 0}
+.example .dia{border:0;padding:4px 0;background:transparent}
+@media (max-width:600px){.example{padding-inline:12px}}
+.rail .ex-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle}
+.foot{margin-top:56px;padding-top:20px;border-top:1px solid var(--rule);font-size:13.5px;color:var(--ink-2)}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-a"/></marker>
+  </defs>
+</svg>
+
+<div class="shell">
+<nav class="rail" aria-label="Chapters">
+  <details id="toc" open>
+    <summary>Contents</summary>
+    <ol>
+      <li class="part">Part I · Foundations</li>
+      <li><a href="#what">1. What is LangChain v1<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#problem">2. The problem it solves</a></li>
+      <li><a href="#where">3. Where to use it</a></li>
+      <li><a href="#ecosystem">4. The ecosystem map<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#setup">5. Install and set up<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li class="part">Part II · Building blocks</li>
+      <li><a href="#models">6. Chat models</a></li>
+      <li><a href="#messages">7. Messages and content blocks<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#prompts">8. Prompts and LCEL</a></li>
+      <li><a href="#tools">9. Tools<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li class="part">Part III · Agents</li>
+      <li><a href="#agents">10. create_agent<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#structured">11. Structured output</a></li>
+      <li><a href="#memory">12. Short-term memory<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#longterm">13. Long-term memory</a></li>
+      <li><a href="#context">14. Runtime context</a></li>
+      <li><a href="#streaming">15. Streaming</a></li>
+      <li class="part">Part IV · Control</li>
+      <li><a href="#middleware">16. Middleware<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#hitl">17. Human in the loop</a></li>
+      <li><a href="#guardrails">18. Guardrails</a></li>
+      <li class="part">Part V · Knowledge and scale</li>
+      <li><a href="#rag">19. RAG</a></li>
+      <li><a href="#mcp">20. MCP tools</a></li>
+      <li><a href="#multi">21. Multi-agent systems</a></li>
+      <li><a href="#langgraph">22. Dropping to LangGraph<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#deep">23. Deep Agents</a></li>
+      <li class="part">Part VI · Production</li>
+      <li><a href="#langsmith">24. LangSmith</a></li>
+      <li><a href="#testing">25. Testing</a></li>
+      <li><a href="#deploy">26. Deployment</a></li>
+      <li><a href="#migrate">27. Migrating from v0</a></li>
+      <li><a href="#practices">28. Best practices<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li class="part">Part VII · Mastery</li>
+      <li><a href="#capstone">29. Capstone project</a></li>
+      <li><a href="#cheat">30. Cheat sheet<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#roadmap">31. Roadmap and exercises<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#glossary">32. Glossary</a></li>
+    </ol>
+  </details>
+</nav>
+
+<main>
+<header class="cover prose">
+  <div class="eyebrow">Senior developer notes · LangChain 1.x (Python)</div>
+  <h1>LangChain v1 Field Guide</h1>
+  <p class="lede">One document that takes you from "what is LangChain?" to building, controlling, testing and shipping production agents with LangChain v1. Every chapter has a plain explanation, a diagram where it helps, and runnable code.</p>
+  <div class="note tip"><b>How to read this</b><p>Parts I–III are the core: read them in order. Parts IV–VI can be read as needed. Part VII ties everything together in one project. Code targets <code>langchain&gt;=1.0</code> on Python 3.10+. Model names are examples; swap in whichever provider and model you use.</p><p>Chapters marked with a green dot <span class="ex-dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent)"></span> in the contents have <strong>Example</strong> boxes: simple flowcharts and code that show the idea in action. New to LangChain? Follow the <a href="#roadmap">recommended learning order</a>.</p></div>
+</header>
+
+<!-- ================= PART I ================= -->
+<section class="ch prose" id="what">
+  <span class="chno">Chapter 1 · Foundations</span>
+  <h2>What is LangChain v1?</h2>
+  <div class="define">
+    <span class="term">LangChain</span><span class="pos">noun · open-source framework</span>
+    <p>An open-source framework for building applications and <strong>agents</strong> powered by large language models (LLMs). It gives you one standard interface to any model provider, a library of integrations (tools, vector stores, loaders), and a ready-made agent you can customise. In <strong>v1</strong>, the centre of LangChain is <code>create_agent</code>: a production-ready agent loop built on the LangGraph runtime and customised through <strong>middleware</strong>.</p>
+  </div>
+  <p>LangChain 1.0 was released in October 2025 as the first stable major version. The team kept the parts developers actually used, removed or relocated the rest, and committed to no breaking changes until 2.0. The short version of what changed:</p>
+  <ul>
+    <li><strong>One way to build agents.</strong> <code>from langchain.agents import create_agent</code> replaces LangGraph's <code>create_react_agent</code>. The older <code>AgentExecutor</code> and <code>initialize_agent</code> now live in <code>langchain-classic</code>.</li>
+    <li><strong>Middleware</strong> lets you hook into every step of the agent loop (before the model call, around tool calls, after the agent finishes) for summarisation, human approval, PII redaction, retries and more.</li>
+    <li><strong>Built on LangGraph.</strong> Every agent gets persistence, streaming, human-in-the-loop and time travel for free, because it runs as a LangGraph graph.</li>
+    <li><strong>Standard content blocks.</strong> <code>message.content_blocks</code> gives the same shape for text, reasoning, tool calls and images across supported providers (OpenAI, Anthropic, Google GenAI, AWS and Ollama, with more being added). Citations appear as <code>annotations</code> on text blocks.</li>
+    <li><strong>A slimmer package.</strong> The <code>langchain</code> namespace now holds only agents, models, messages, tools and embeddings. Old chains, retrievers and the hub moved to <code>langchain-classic</code>.</li>
+  </ul>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Legacy LangChain vs LangChain v1</h4>
+    <p>The common agent path is now much shorter. You call <code>create_agent()</code>, and LangGraph runs the loop for you.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Legacy (more explicit)</th><th>LangChain v1</th></tr></thead>
+      <tbody>
+        <tr><td>LLM</td><td>Model</td></tr>
+        <tr><td>Agent setup</td><td><code>create_agent()</code></td></tr>
+        <tr><td>Agent</td><td>Agent + tools</td></tr>
+        <tr><td>Executor (<code>AgentExecutor</code>)</td><td>LangGraph runtime</td></tr>
+        <tr><td>Tool loop</td><td>Tool loop</td></tr>
+        <tr><td>Response</td><td>Response</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p>Think of LangChain v1 as three layers you can choose between depending on how much control you need: <strong>LangChain</strong> (quick, high-level agents), <strong>LangGraph</strong> (custom workflows and full control) and <strong>Deep Agents</strong> (long-running agents with planning and sub-agents, built on LangChain).</p>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Without LangChain vs with LangChain</h4>
+    <p>An LLM on its own follows <strong>User → LLM → Answer</strong>. LangChain adds an application layer around the LLM, so it can decide when to use tools, fetch information, call APIs, do calculations and complete multi-step tasks.</p>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 300" role="img" aria-label="Left: user to LLM to answer. Right: user to LangChain agent, which uses the LLM and tools; tools reach a database and an API, and the result is the final answer">
+          <text x="20" y="24" class="t-b">Without LangChain</text>
+          <rect x="60" y="44" width="140" height="36" rx="8" class="bx"/><text x="130" y="67" text-anchor="middle" class="t-b">User</text>
+          <rect x="60" y="120" width="140" height="36" rx="8" class="bx-w"/><text x="130" y="143" text-anchor="middle" class="t-b">LLM</text>
+          <rect x="60" y="196" width="140" height="36" rx="8" class="bx"/><text x="130" y="219" text-anchor="middle" class="t-b">Answer</text>
+          <path d="M130 80 L130 118" class="ln" marker-end="url(#arr)"/>
+          <path d="M130 156 L130 194" class="ln" marker-end="url(#arr)"/>
+          <text x="130" y="262" text-anchor="middle" class="t-s">answers only from training data</text>
+          <line x1="270" y1="14" x2="270" y2="286" class="ln dash"/>
+          <text x="300" y="24" class="t-b t-a">With LangChain</text>
+          <rect x="470" y="40" width="120" height="36" rx="8" class="bx"/><text x="530" y="63" text-anchor="middle" class="t-b">User</text>
+          <rect x="420" y="100" width="220" height="40" rx="8" class="bx-a"/><text x="530" y="125" text-anchor="middle" class="t-b t-a">LangChain agent / logic</text>
+          <rect x="320" y="170" width="140" height="40" rx="8" class="bx"/><text x="390" y="195" text-anchor="middle"><tspan class="t-b">LLM</tspan> · brain</text>
+          <rect x="600" y="170" width="140" height="40" rx="8" class="bx-g"/><text x="670" y="195" text-anchor="middle"><tspan class="t-b">Tools</tspan> · actions</text>
+          <rect x="560" y="244" width="90" height="36" rx="8" class="bx-p"/><text x="605" y="267" text-anchor="middle">Database</text>
+          <rect x="660" y="244" width="90" height="36" rx="8" class="bx-p"/><text x="705" y="267" text-anchor="middle">API / search</text>
+          <rect x="320" y="244" width="140" height="36" rx="8" class="bx"/><text x="390" y="267" text-anchor="middle" class="t-b">Final answer</text>
+          <path d="M530 76 L530 98" class="ln" marker-end="url(#arr)"/>
+          <path d="M480 140 L410 168" class="ln" marker-end="url(#arr)"/>
+          <path d="M580 140 L650 168" class="ln" marker-end="url(#arr)"/>
+          <path d="M650 210 L615 242" class="ln" marker-end="url(#arr)"/>
+          <path d="M690 210 L702 242" class="ln" marker-end="url(#arr)"/>
+          <path d="M390 210 L390 242" class="ln-a" marker-end="url(#arrA)"/>
+        </svg>
+      </div>
+    </figure>
+  </div>
+
+  <div class="example">
+    <span class="tag">Real-world example</span>
+    <h4>Logistics TAT Assistant</h4>
+    <p>A user asks: <em>"Why was plant TAT high yesterday?"</em> (TAT = turnaround time, how long a vehicle spends in the plant.) The LLM does not know the company's vehicle records. A LangChain agent can investigate using controlled tools:</p>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 780 250" role="img" aria-label="User asks why TAT was high; agent's LLM decides it needs vehicle data; database tool returns vehicle records; TAT calculation tool runs; LLM analyses bottlenecks; answer: loading stage caused 42 percent of the delay">
+          <rect x="10" y="20" width="170" height="56" rx="8" class="bx"/>
+          <text x="95" y="44" text-anchor="middle" class="t-b">User</text>
+          <text x="95" y="63" text-anchor="middle" class="t-s">"Why was TAT high?"</text>
+          <rect x="210" y="20" width="160" height="56" rx="8" class="bx-a"/>
+          <text x="290" y="44" text-anchor="middle" class="t-b t-a">LangChain agent</text>
+          <text x="290" y="63" text-anchor="middle" class="t-s">LLM decides</text>
+          <rect x="400" y="20" width="160" height="56" rx="8" class="bx-g"/>
+          <text x="480" y="44" text-anchor="middle" class="t-b t-g">Database tool</text>
+          <text x="480" y="63" text-anchor="middle" class="t-s">→ vehicle records</text>
+          <rect x="590" y="20" width="180" height="56" rx="8" class="bx-g"/>
+          <text x="680" y="44" text-anchor="middle" class="t-b t-g">TAT calculation tool</text>
+          <text x="680" y="63" text-anchor="middle" class="t-s">time per stage</text>
+          <path d="M180 48 L208 48" class="ln" marker-end="url(#arr)"/>
+          <path d="M370 48 L398 48" class="ln" marker-end="url(#arr)"/>
+          <text x="384" y="96" text-anchor="middle" class="t-s">"need vehicle data"</text>
+          <path d="M560 48 L588 48" class="ln" marker-end="url(#arr)"/>
+          <path d="M680 76 L680 148" class="ln" marker-end="url(#arr)"/>
+          <rect x="590" y="150" width="180" height="56" rx="8" class="bx-a"/>
+          <text x="680" y="174" text-anchor="middle" class="t-b t-a">LLM analyses</text>
+          <text x="680" y="193" text-anchor="middle" class="t-s">finds the bottlenecks</text>
+          <path d="M590 178 L542 178" class="ln-a" marker-end="url(#arrA)"/>
+          <rect x="210" y="150" width="330" height="56" rx="8" class="bx"/>
+          <text x="375" y="174" text-anchor="middle" class="t-b">Final answer</text>
+          <text x="375" y="193" text-anchor="middle" class="t-s">"Loading stage caused 42% of the delay."</text>
+        </svg>
+      </div>
+    </figure>
+    <p>The code for this agent is in <a href="#agents">Chapter 10</a>.</p>
+  </div>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Each part, in plain words</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Component</th><th>Think of it as</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>LLM</td><td>Brain</td><td>Groq / OpenAI / Anthropic</td></tr>
+        <tr><td>Tool</td><td>Hands / action</td><td>SQL query, API call, Python function</td></tr>
+        <tr><td>Agent</td><td>Decision maker</td><td>Chooses which tool to use</td></tr>
+        <tr><td>Messages</td><td>Communication</td><td>User request / response</td></tr>
+        <tr><td>Middleware</td><td>Supervisor</td><td>Security / logging / approval</td></tr>
+        <tr><td>State</td><td>Working notebook</td><td>Current analysis</td></tr>
+        <tr><td>LangGraph</td><td>Workflow engine</td><td>Complex stateful workflow</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note tip"><b>Easy definition</b><p>LangChain connects an LLM to tools, data, APIs and application logic so it can perform useful multi-step tasks rather than only generate text.</p></div>
+  </div>
+</section>
+
+<section class="ch prose" id="problem">
+  <span class="chno">Chapter 2 · Foundations</span>
+  <h2>The problem LangChain solves</h2>
+  <p>Calling an LLM once is easy. Building a reliable application around it is not. As soon as you go past a single prompt you hit the same set of problems every team hits:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Problem</th><th>Without a framework</th><th>LangChain v1 answer</th></tr></thead>
+    <tbody>
+      <tr><td>Provider lock-in</td><td>Each SDK (OpenAI, Anthropic, Google, Ollama) has its own request and response format. Switching means rewriting.</td><td><code>init_chat_model("provider:model")</code> with one interface: <code>invoke</code>, <code>stream</code>, <code>batch</code>, <code>bind_tools</code>.</td></tr>
+      <tr><td>Tool calling</td><td>Hand-write JSON schemas, parse tool calls, run functions, feed results back, loop until done.</td><td><code>@tool</code> builds the schema from your function. <code>create_agent</code> runs the loop.</td></tr>
+      <tr><td>Memory</td><td>Store and trim conversation history yourself. Context windows overflow.</td><td>Checkpointers save each thread. <code>SummarizationMiddleware</code> trims old turns.</td></tr>
+      <tr><td>Using your own data</td><td>Write loaders for PDFs, web pages and databases; chunk, embed and search them.</td><td>Hundreds of document loaders, text splitters, embedding models and vector stores behind standard interfaces.</td></tr>
+      <tr><td>Reliable output</td><td>Ask for JSON and hope. Parse, validate, retry.</td><td><code>response_format=MySchema</code> returns a validated Pydantic object.</td></tr>
+      <tr><td>Safety and control</td><td>Agents can send emails or delete data with no checkpoint.</td><td><code>HumanInTheLoopMiddleware</code> pauses for approval; limits and PII middleware enforce policy.</td></tr>
+      <tr><td>Debugging</td><td>Print statements across a multi-step loop.</td><td>LangSmith tracing shows every model call, tool call, token count and latency.</td></tr>
+    </tbody>
+  </table></div>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 760 270" role="img" aria-label="Without LangChain your app talks to every provider separately; with LangChain it talks to one standard interface">
+        <text x="20" y="24" class="t-b">Without LangChain</text>
+        <rect x="20" y="40" width="140" height="190" rx="8" class="bx-w"/>
+        <text x="90" y="125" text-anchor="middle" class="t-b">Your app</text>
+        <text x="90" y="145" text-anchor="middle" class="t-s">custom glue for each</text>
+        <rect x="220" y="40" width="130" height="34" rx="6" class="bx"/><text x="285" y="62" text-anchor="middle">OpenAI SDK</text>
+        <rect x="220" y="92" width="130" height="34" rx="6" class="bx"/><text x="285" y="114" text-anchor="middle">Anthropic SDK</text>
+        <rect x="220" y="144" width="130" height="34" rx="6" class="bx"/><text x="285" y="166" text-anchor="middle">Vector DB client</text>
+        <rect x="220" y="196" width="130" height="34" rx="6" class="bx"/><text x="285" y="218" text-anchor="middle">Own agent loop</text>
+        <path d="M160 70 L218 57" class="ln" marker-end="url(#arr)"/>
+        <path d="M160 105 L218 109" class="ln" marker-end="url(#arr)"/>
+        <path d="M160 160 L218 161" class="ln" marker-end="url(#arr)"/>
+        <path d="M160 200 L218 213" class="ln" marker-end="url(#arr)"/>
+        <line x1="380" y1="20" x2="380" y2="250" class="ln dash"/>
+        <text x="410" y="24" class="t-b t-a">With LangChain v1</text>
+        <rect x="410" y="110" width="90" height="50" rx="8" class="bx"/>
+        <text x="455" y="140" text-anchor="middle" class="t-b">Your app</text>
+        <rect x="530" y="40" width="80" height="190" rx="8" class="bx-a"/>
+        <text x="570" y="122" text-anchor="middle" class="t-b">One</text>
+        <text x="570" y="140" text-anchor="middle" class="t-b">standard</text>
+        <text x="570" y="158" text-anchor="middle" class="t-b">interface</text>
+        <path d="M500 135 L528 135" class="ln-a" marker-end="url(#arrA)"/>
+        <rect x="640" y="40" width="105" height="34" rx="6" class="bx"/><text x="692" y="62" text-anchor="middle">OpenAI</text>
+        <rect x="640" y="92" width="105" height="34" rx="6" class="bx"/><text x="692" y="114" text-anchor="middle">Anthropic</text>
+        <rect x="640" y="144" width="105" height="34" rx="6" class="bx"/><text x="692" y="166" text-anchor="middle">Google / Ollama</text>
+        <rect x="640" y="196" width="105" height="34" rx="6" class="bx"/><text x="692" y="218" text-anchor="middle">Vector stores</text>
+        <path d="M610 70 L638 57" class="ln" marker-end="url(#arr)"/>
+        <path d="M610 110 L638 109" class="ln" marker-end="url(#arr)"/>
+        <path d="M610 160 L638 161" class="ln" marker-end="url(#arr)"/>
+        <path d="M610 200 L638 213" class="ln" marker-end="url(#arr)"/>
+      </svg>
+    </div>
+    <figcaption><b>Figure 2.1</b> LangChain sits between your application and the many providers, so swapping a model or a vector store is a one-line change.</figcaption>
+  </figure>
+  <p>The proof is how little code a working agent takes:</p>
+  <div class="code"><div class="cap"><span>first_agent.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents import create_agent
+
+def get_weather(city: str) -> str:
+    """Get the current weather for a city."""
+    return f"It is always sunny in {city}!"
+
+agent = create_agent(
+    model="anthropic:claude-sonnet-4-6",   # any "provider:model" string
+    tools=[get_weather],
+    system_prompt="You are a helpful assistant.",
+)
+
+result = agent.invoke({"messages": [{"role": "user", "content": "Weather in Pune?"}]})
+print(result["messages"][-1].content)</code></pre></div>
+</section>
+
+<section class="ch prose" id="where">
+  <span class="chno">Chapter 3 · Foundations</span>
+  <h2>Where to use LangChain (and where not to)</h2>
+  <div class="cards">
+    <div class="card yes"><h4>Customer support agents</h4><p>Look up orders, search the help centre, open tickets, hand off to a human for refunds.</p></div>
+    <div class="card yes"><h4>Chat with your documents</h4><p>RAG over PDFs, wikis, Confluence, SharePoint or a database, with cited answers.</p></div>
+    <div class="card yes"><h4>Internal copilots</h4><p>Agents that query SQL, call internal APIs, draft emails and fill forms for employees.</p></div>
+    <div class="card yes"><h4>Data extraction</h4><p>Turn invoices, resumes or contracts into validated structured records.</p></div>
+    <div class="card yes"><h4>Research assistants</h4><p>Search the web, read pages, plan, and write a report (Deep Agents).</p></div>
+    <div class="card yes"><h4>Multi-model products</h4><p>Apps that must switch providers by cost, region or capability, or fall back on outage.</p></div>
+  </div>
+  <h3>When something else fits better</h3>
+  <div class="cards">
+    <div class="card no"><h4>A single prompt, one provider</h4><p>If you only call one model once with a fixed prompt, the provider's SDK is simpler.</p></div>
+    <div class="card no"><h4>Complex, deterministic workflows</h4><p>Branching, parallel steps and loops you design yourself: use LangGraph directly (Chapter 22).</p></div>
+    <div class="card no"><h4>Long autonomous tasks</h4><p>Multi-hour work with planning and a file system: start with Deep Agents (Chapter 23).</p></div>
+  </div>
+  <div class="note tip"><b>Rule of thumb</b><p>The official docs now suggest <strong>Deep Agents</strong> as the batteries-included starting point, <strong><code>create_agent</code></strong> when you want to build and customise the agent harness yourself, and <strong>LangGraph</strong> when you need to mix fixed workflow steps with agent steps. This guide teaches <code>create_agent</code> first because Deep Agents is built on it: once you understand it, Deep Agents is easy to pick up.</p></div>
+</section>
+
+<section class="ch prose" id="ecosystem">
+  <span class="chno">Chapter 4 · Foundations</span>
+  <h2>The ecosystem map</h2>
+  <p>"LangChain" is a family of packages. Knowing which package owns what saves you hours of import errors.</p>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 760 330" role="img" aria-label="Layered stack: Deep Agents on LangChain on LangGraph on langchain-core on integrations, with LangSmith alongside">
+        <rect x="20" y="16" width="540" height="50" rx="8" class="bx-w"/>
+        <text x="36" y="38" class="t-b t-w">Deep Agents</text><text x="36" y="56" class="t-s">deepagents · planning, sub-agents, virtual file system, long tasks</text>
+        <rect x="20" y="76" width="540" height="58" rx="8" class="bx-a"/>
+        <text x="36" y="100" class="t-b t-a">LangChain v1</text><text x="36" y="120" class="t-s">langchain · create_agent · middleware · tools · init_chat_model · messages</text>
+        <rect x="20" y="144" width="540" height="50" rx="8" class="bx-g"/>
+        <text x="36" y="166" class="t-b t-g">LangGraph</text><text x="36" y="184" class="t-s">langgraph · durable runtime: state, checkpoints, streaming, interrupts</text>
+        <rect x="20" y="204" width="540" height="50" rx="8" class="bx"/>
+        <text x="36" y="226" class="t-b">langchain-core</text><text x="36" y="244" class="t-s">base interfaces: Runnables, messages, prompts, documents, vector store API</text>
+        <rect x="20" y="264" width="540" height="50" rx="8" class="bx-p"/>
+        <text x="36" y="286" class="t-b">Integrations</text><text x="36" y="304" class="t-s">langchain-openai · -anthropic · -google-genai · -ollama · -chroma · -community …</text>
+        <rect x="585" y="16" width="155" height="298" rx="8" class="bx"/>
+        <text x="662" y="44" text-anchor="middle" class="t-b">LangSmith</text>
+        <text x="662" y="64" text-anchor="middle" class="t-s">platform, not a library</text>
+        <text x="662" y="110" text-anchor="middle">Tracing</text>
+        <text x="662" y="140" text-anchor="middle">Evaluation</text>
+        <text x="662" y="170" text-anchor="middle">Prompt hub</text>
+        <text x="662" y="200" text-anchor="middle">Monitoring</text>
+        <text x="662" y="230" text-anchor="middle">Deployment</text>
+        <text x="662" y="290" text-anchor="middle" class="t-s">observes every layer</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 4.1</b> Each layer builds on the one below it. You install the top layer you need plus the integration packages for your providers.</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <thead><tr><th>Package</th><th>What it holds</th><th>Install when</th></tr></thead>
+    <tbody>
+      <tr><td><code>langchain</code></td><td><code>create_agent</code>, middleware, <code>init_chat_model</code>, <code>@tool</code>, messages</td><td>Always</td></tr>
+      <tr><td><code>langchain-core</code></td><td>Base abstractions, prompts, Runnables / LCEL, documents</td><td>Comes with <code>langchain</code></td></tr>
+      <tr><td><code>langgraph</code></td><td>Graph runtime, checkpointers, stores, <code>Command</code>, <code>StateGraph</code></td><td>Comes with <code>langchain</code></td></tr>
+      <tr><td><code>langchain-openai</code>, <code>langchain-anthropic</code>, …</td><td>Provider chat models and embeddings</td><td>For each provider you use</td></tr>
+      <tr><td><code>langchain-community</code></td><td>Community loaders, tools and stores</td><td>For loaders such as PDF or web</td></tr>
+      <tr><td><code>langchain-text-splitters</code></td><td>Chunking documents</td><td>RAG</td></tr>
+      <tr><td><code>langchain[mcp]</code></td><td><code>langchain.mcp.MCPAdapter</code>: MCP servers as LangChain tools (replaces <code>langchain-mcp-adapters</code>)</td><td>MCP (needs 1.4+)</td></tr>
+      <tr><td><code>langchain-classic</code></td><td>Legacy chains (<code>LLMChain</code>, <code>ConversationChain</code>), <code>AgentExecutor</code>, <code>langchain.retrievers</code> (e.g. <code>MultiQueryRetriever</code>), indexing API, <code>hub</code>, <code>CacheBackedEmbeddings</code>, community re-exports</td><td>Only for old code</td></tr>
+      <tr><td><code>deepagents</code></td><td><code>create_deep_agent</code></td><td>Long-running agents. Still pre-1.0, so expect API changes between minor versions.</td></tr>
+      <tr><td><code>langsmith</code></td><td>Tracing and evaluation SDK</td><td>Always in production</td></tr>
+    </tbody>
+  </table></div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>A slimmer package</h4>
+    <p>LangChain v1 keeps the main package focused on modern pieces. Legacy APIs and integrations moved to a separate package.</p>
+    <div class="cards">
+      <div class="card yes"><h4><code>langchain</code></h4><p>Modern agent APIs · middleware · core abstractions. Use this for new code.</p></div>
+      <div class="card"><h4><code>langchain-classic</code></h4><p>Legacy APIs and integrations (old chains, <code>AgentExecutor</code>, hub). Only for old code.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="ch prose" id="setup">
+  <span class="chno">Chapter 5 · Foundations</span>
+  <h2>Install and set up</h2>
+  <ol class="steps">
+    <li><strong>Python 3.10 or newer.</strong> LangChain v1 dropped 3.9. Check with <code>python --version</code>.</li>
+    <li><strong>Create a virtual environment</strong> so project packages stay separate.</li>
+    <li><strong>Install the core and one provider.</strong></li>
+    <li><strong>Set API keys</strong> as environment variables, never in code.</li>
+  </ol>
+  <div class="code"><div class="cap"><span>terminal (Windows PowerShell)</span><button type="button">Copy</button></div><pre><code class="language-bash">python -m venv .venv
+.venv\Scripts\Activate.ps1          # macOS/Linux: source .venv/bin/activate
+
+pip install -U langchain langchain-anthropic langchain-openai
+pip install -U "langchain[mcp]" langchain-community langchain-text-splitters
+pip install -U python-dotenv langsmith</code></pre></div>
+  <div class="code"><div class="cap"><span>.env</span><button type="button">Copy</button></div><pre><code class="language-bash">ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=lsv2_...
+LANGSMITH_PROJECT=langchain-v1-learning</code></pre></div>
+  <div class="code"><div class="cap"><span>at the top of every script</span><button type="button">Copy</button></div><pre><code class="language-python">from dotenv import load_dotenv
+load_dotenv()   # reads .env into environment variables</code></pre></div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Multiple LLM providers in one <code>.env</code></h4>
+    <p>Keep one key per provider in <code>.env</code>. Each provider's package finds its own key automatically.</p>
+    <div class="code"><div class="cap"><span>.env</span><button type="button">Copy</button></div><pre><code class="language-bash">GROQ_API_KEY=...
+OPENAI_API_KEY=...
+ANTHROPIC_API_KEY=...</code></pre></div>
+    <div class="code"><div class="cap"><span>using the Groq key</span><button type="button">Copy</button></div><pre><code class="language-python"># pip install langchain-groq
+from langchain_groq import ChatGroq
+
+model = ChatGroq(
+    model="openai/gpt-oss-120b",
+    temperature=0,
+)   # reads GROQ_API_KEY from the environment</code></pre></div>
+    <div class="note warn"><b>Remember</b><p>API keys authenticate providers. They are <strong>not</strong> tools. Three keys let you choose between three LLM providers; they don't give the agent three actions.</p></div>
+  </div>
+  <h3>Recommended project layout</h3>
+  <div class="code"><div class="cap"><span>folder structure</span><button type="button">Copy</button></div><pre><code class="language-bash">my-agent/
+├── .env
+├── pyproject.toml
+├── langgraph.json          # for deployment (Chapter 26)
+├── src/
+│   ├── agent.py            # create_agent(...) lives here
+│   ├── tools.py            # @tool functions
+│   ├── middleware.py       # custom middleware
+│   ├── prompts.py          # system prompts
+│   └── rag/ingest.py       # document indexing
+└── tests/
+    ├── test_tools.py
+    └── test_agent.py</code></pre></div>
+</section>
+
+<!-- ================= PART II ================= -->
+<section class="ch prose" id="models">
+  <span class="chno">Chapter 6 · Building blocks</span>
+  <h2>Chat models</h2>
+  <p>A chat model takes a list of messages and returns an <code>AIMessage</code>. LangChain gives every provider the same interface, so the rest of your code never changes when you switch.</p>
+  <h3>Two ways to create a model</h3>
+  <div class="code"><div class="cap"><span>models.py</span><button type="button">Copy</button></div><pre><code class="language-python"># 1. Universal initialiser: "provider:model"
+from langchain.chat_models import init_chat_model
+
+model = init_chat_model(
+    "anthropic:claude-sonnet-4-6",
+    temperature=0,        # 0 = deterministic, higher = more creative
+    max_tokens=1024,      # cap the answer length
+    timeout=30,           # seconds
+    max_retries=6,        # default; retries 429 / 5xx / network errors with backoff
+)                         # (raise to 10-15 for long-running agents)
+
+# 2. Provider class, when you need provider-specific options
+from langchain_openai import ChatOpenAI
+gpt = ChatOpenAI(model="gpt-5.4-mini", temperature=0)
+
+# Local model, no API key, via Ollama
+local = init_chat_model("ollama:llama3.1")</code></pre></div>
+  <h3>The five methods you will use</h3>
+  <div class="code"><div class="cap"><span>model_methods.py</span><button type="button">Copy</button></div><pre><code class="language-python"># invoke: one request, full answer
+response = model.invoke("Explain RAG in one sentence.")
+print(response.content)          # the text
+print(response.usage_metadata)   # {'input_tokens': 14, 'output_tokens': 31, ...}
+
+# stream: tokens as they arrive (for chat UIs)
+for chunk in model.stream("Write a haiku about graphs."):
+    print(chunk.text, end="", flush=True)
+
+# batch: many independent requests in parallel
+answers = model.batch(["What is 2+2?", "Capital of Japan?"])
+
+# async versions: ainvoke, astream, abatch
+# response = await model.ainvoke("Hello")
+
+# bind_tools / with_structured_output: see Chapters 9 and 11</code></pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Parameter</th><th>Meaning</th><th>Typical value</th></tr></thead>
+    <tbody>
+      <tr><td><code>temperature</code></td><td>Randomness of the answer</td><td>0 for agents and extraction, 0.7 for writing</td></tr>
+      <tr><td><code>max_tokens</code></td><td>Maximum output length</td><td>512–4096</td></tr>
+      <tr><td><code>timeout</code></td><td>Seconds to wait before failing</td><td>30–120</td></tr>
+      <tr><td><code>max_retries</code></td><td>Automatic retries with exponential backoff on 429, 5xx and network errors (not 401/404)</td><td>Default 6; 10–15 for long agent runs</td></tr>
+      <tr><td><code>rate_limiter</code></td><td><code>InMemoryRateLimiter</code> to stay under provider quotas</td><td>As needed</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code"><div class="cap"><span>rate_limit.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.rate_limiters import InMemoryRateLimiter
+
+rate_limiter = InMemoryRateLimiter(
+    requests_per_second=0.1,     # one request every 10 seconds
+    check_every_n_seconds=0.1,
+    max_bucket_size=10,
+)
+model = init_chat_model("gpt-5.5", model_provider="openai", rate_limiter=rate_limiter)
+# Limits the number of requests over time only, not the size of each request.</code></pre></div>
+  <h3>Newer model features in 1.x</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Feature</th><th>What it gives you</th><th>Needs</th></tr></thead>
+    <tbody>
+      <tr><td><code>model.profile</code></td><td>A dictionary of capabilities, e.g. <code>image_inputs</code>, <code>reasoning_output</code> (beta)</td><td><code>langchain&gt;=1.1</code></td></tr>
+      <tr><td><code>reasoning_effort="high"</code></td><td>One standard parameter for how hard reasoning models think</td><td><code>langchain-core&gt;=1.5.2</code> + recent provider package</td></tr>
+      <tr><td>Standard exceptions</td><td><code>ModelRateLimitError</code>, <code>ModelTimeoutError</code>, <code>ContextOverflowError</code> in <code>langchain_core.exceptions</code>, each with <code>is_retryable</code></td><td>Recent <code>langchain-core</code></td></tr>
+      <tr><td><code>batch_as_completed()</code></td><td>Get batch results as each finishes; limit parallel calls with <code>config={"max_concurrency": 5}</code></td><td>All 1.x</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warn"><b>Breaking change in langchain-anthropic</b><p>It no longer defaults <code>max_tokens</code> to 1024. The default is now higher and depends on the model. Set <code>max_tokens</code> yourself if you relied on the old cap.</p></div>
+  <h3>Multimodal input</h3>
+  <div class="code"><div class="cap"><span>vision.py</span><button type="button">Copy</button></div><pre><code class="language-python">message = {
+    "role": "user",
+    "content": [
+        {"type": "text", "text": "What is in this image?"},
+        {"type": "image", "url": "https://example.com/invoice.png"},
+        # or: {"type": "image", "base64": "...", "mime_type": "image/png"}
+    ],
+}
+print(model.invoke([message]).content)</code></pre></div>
+</section>
+
+<section class="ch prose" id="messages">
+  <span class="chno">Chapter 7 · Building blocks</span>
+  <h2>Messages and standard content blocks</h2>
+  <p>Messages are the unit of conversation. There are four types you need to know:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Class</th><th>Role</th><th>Who creates it</th></tr></thead>
+    <tbody>
+      <tr><td><code>SystemMessage</code></td><td>system</td><td>You: instructions and persona</td></tr>
+      <tr><td><code>HumanMessage</code></td><td>user</td><td>The user's input</td></tr>
+      <tr><td><code>AIMessage</code></td><td>assistant</td><td>The model: text and/or <code>tool_calls</code></td></tr>
+      <tr><td><code>ToolMessage</code></td><td>tool</td><td>The agent, after running a tool; links back via <code>tool_call_id</code></td></tr>
+    </tbody>
+  </table></div>
+  <div class="code"><div class="cap"><span>messages.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.messages import SystemMessage, HumanMessage, AIMessage
+
+conversation = [
+    SystemMessage("You are a concise travel assistant."),
+    HumanMessage("Suggest one city in Japan."),
+    AIMessage("Kyoto."),
+    HumanMessage("Why that one?"),
+]
+reply = model.invoke(conversation)
+
+# Dict shorthand works everywhere too:
+reply = model.invoke([{"role": "user", "content": "Hi"}])</code></pre></div>
+  <h3>Standard content blocks (new in v1)</h3>
+  <p>Providers return rich content in different shapes: Anthropic has "thinking" blocks, OpenAI has "reasoning" items, both have tool calls and citations. <code>message.content_blocks</code> normalises them into one list of typed dictionaries, so your UI code handles every provider the same way.</p>
+  <div class="code"><div class="cap"><span>content_blocks.py</span><button type="button">Copy</button></div><pre><code class="language-python">response = model.invoke("What is 17 * 23? Think first.")
+
+for block in response.content_blocks:
+    if block["type"] == "reasoning":
+        print("THINKING:", block.get("reasoning"))
+    elif block["type"] == "text":
+        print("ANSWER:", block["text"])
+    elif block["type"] == "tool_call":
+        print("TOOL:", block["name"], block["args"])
+
+print(response.text)   # v1: .text is a property (it was a method .text() in v0)</code></pre></div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Many providers, one standard shape</h4>
+    <p>Each provider formats its replies differently. Standard content blocks turn them all into the same block types, so your code reads every provider the same way.</p>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 200" role="img" aria-label="Provider A, B and C feed into standard content blocks, which split into text, reasoning and tool call">
+          <rect x="20" y="20" width="160" height="40" rx="8" class="bx"/><text x="100" y="45" text-anchor="middle">Provider A</text>
+          <rect x="20" y="80" width="160" height="40" rx="8" class="bx"/><text x="100" y="105" text-anchor="middle">Provider B</text>
+          <rect x="20" y="140" width="160" height="40" rx="8" class="bx"/><text x="100" y="165" text-anchor="middle">Provider C</text>
+          <path d="M180 40 L268 88" class="ln" marker-end="url(#arr)"/>
+          <path d="M180 100 L268 100" class="ln" marker-end="url(#arr)"/>
+          <path d="M180 160 L268 112" class="ln" marker-end="url(#arr)"/>
+          <rect x="270" y="60" width="220" height="80" rx="10" class="bx-a"/>
+          <text x="380" y="96" text-anchor="middle" class="t-b t-a">Standard content blocks</text>
+          <text x="380" y="117" text-anchor="middle" class="t-m">message.content_blocks</text>
+          <path d="M490 100 L558 40" class="ln" marker-end="url(#arr)"/>
+          <path d="M490 100 L558 100" class="ln" marker-end="url(#arr)"/>
+          <path d="M490 100 L558 160" class="ln" marker-end="url(#arr)"/>
+          <rect x="560" y="20" width="180" height="40" rx="8" class="bx-p"/><text x="650" y="45" text-anchor="middle">text</text>
+          <rect x="560" y="80" width="180" height="40" rx="8" class="bx-p"/><text x="650" y="105" text-anchor="middle">reasoning</text>
+          <rect x="560" y="140" width="180" height="40" rx="8" class="bx-p"/><text x="650" y="165" text-anchor="middle">tool call</text>
+        </svg>
+      </div>
+    </figure>
+    <div class="note graph"><b>Remember</b><p><strong>Content blocks</strong> = how content is represented. <strong>Tools</strong> = what actions the agent can perform. <strong>Provider / model</strong> = which LLM is used. Content blocks are not the way to connect multiple tools or API keys.</p></div>
+  </div>
+  <ul>
+    <li>The old <code>.text()</code> form still works with a deprecation warning and will be removed in v2.</li>
+    <li>Standard blocks are not written into <code>.content</code> by default. To opt in, set the environment variable <code>LC_OUTPUT_VERSION=v1</code> or pass <code>output_version="v1"</code> to <code>init_chat_model</code>.</li>
+    <li><code>ToolMessage</code> has an <code>artifact</code> field for data that should be kept but not sent to the model.</li>
+  </ul>
+  <div class="code"><div class="cap"><span>typed multimodal input</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.messages import HumanMessage
+
+msg = HumanMessage(content_blocks=[
+    {"type": "text", "text": "Describe this image."},
+    {"type": "image", "url": "https://example.com/photo.jpg"},
+    # image blocks also accept "base64" + "mime_type", or a provider "file_id"
+])</code></pre></div>
+</section>
+
+<section class="ch prose" id="prompts">
+  <span class="chno">Chapter 8 · Building blocks</span>
+  <h2>Prompts and LCEL</h2>
+  <p>In v1, most agents only need a <code>system_prompt</code> string. Prompt templates and the LangChain Expression Language (LCEL) still live in <code>langchain_core</code> and remain useful for fixed, non-agent pipelines: summarisers, classifiers, translators.</p>
+  <div class="code"><div class="cap"><span>prompt_template.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You translate text into {language}. Reply with the translation only."),
+    ("user", "{text}"),
+])
+
+# LCEL: the | operator pipes the output of one step into the next
+chain = prompt | model | StrOutputParser()
+
+print(chain.invoke({"language": "Hindi", "text": "Good morning"}))</code></pre></div>
+  <p>Everything joined with <code>|</code> is a <strong>Runnable</strong>, so the chain automatically gets <code>invoke</code>, <code>stream</code>, <code>batch</code> and async versions.</p>
+  <h3>Writing a good system prompt for an agent</h3>
+  <div class="code"><div class="cap"><span>prompts.py</span><button type="button">Copy</button></div><pre><code class="language-python">SUPPORT_PROMPT = """You are Asha, a support agent for AutoPlant.
+
+## Goal
+Resolve the customer's issue in as few turns as possible.
+
+## Tools
+- Use `lookup_order` before answering any question about an order.
+- Use `search_kb` for product and policy questions. Cite the article title.
+- Never promise a refund. Use `escalate_to_human` for refunds.
+
+## Style
+Short paragraphs. Plain language. Ask one clarifying question when unsure.
+"""</code></pre></div>
+  <div class="note tip"><b>Prompt checklist</b><p>Role, goal, when to use each tool, what never to do, output style. Put rules about tools in the prompt and in each tool's docstring.</p></div>
+</section>
+
+<section class="ch prose" id="tools">
+  <span class="chno">Chapter 9 · Building blocks</span>
+  <h2>Tools</h2>
+  <p>A tool is a Python function the model can ask to run. The model never runs code itself: it returns a <em>tool call</em> (name + arguments), your agent runs the function, and the result goes back to the model as a <code>ToolMessage</code>.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>What a tool is, and what it is not</h4>
+    <p>A tool is a callable operation the agent is allowed to request: a Python function, a database operation, an API wrapper, a calculator, a search function, or a controlled business action. It is easy to confuse with these other things:</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Thing</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Tool</strong></td><td>An action the agent can invoke</td></tr>
+        <tr><td>API key</td><td>An authentication credential (a password for a provider)</td></tr>
+        <tr><td>Model</td><td>The LLM used for reasoning and generating text</td></tr>
+        <tr><td>Content block</td><td>The standard representation of message / model content</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <h3>Defining tools with <code>@tool</code></h3>
+  <div class="code"><div class="cap"><span>tools.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.tools import tool
+
+@tool
+def search_database(query: str, limit: int = 10) -> str:
+    """Search the customer database for records matching the query.
+
+    Args:
+        query: Search terms, e.g. a name or email.
+        limit: Maximum number of results to return.
+    """
+    return f"Found {limit} results for '{query}'"
+
+# The name, docstring and type hints become the schema the model sees:
+print(search_database.name)          # search_database
+print(search_database.args)          # {'query': {...}, 'limit': {...}}
+print(search_database.invoke({"query": "Ravi"}))</code></pre></div>
+  <div class="note warn"><b>The docstring is the prompt</b><p>The model chooses tools from their name and description alone. Write the docstring as instructions: what it does, when to use it, and what each argument means.</p></div>
+  <h3>Rich argument schemas with Pydantic</h3>
+  <div class="code"><div class="cap"><span>tools_pydantic.py</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Literal
+from pydantic import BaseModel, Field
+
+class WeatherInput(BaseModel):
+    location: str = Field(description="City name or coordinates")
+    units: Literal["celsius", "fahrenheit"] = Field(default="celsius")
+    include_forecast: bool = Field(default=False, description="Add a 5-day forecast")
+
+@tool(args_schema=WeatherInput)
+def get_weather(location: str, units: str = "celsius", include_forecast: bool = False) -> str:
+    """Get current weather and an optional forecast."""
+    temp = 22 if units == "celsius" else 72
+    return f"{location}: {temp}°{units[0].upper()}" + (" | 5-day: sunny" if include_forecast else "")</code></pre></div>
+  <h3>Tools that read state, context and memory: <code>ToolRuntime</code></h3>
+  <p>Add a parameter typed <code>ToolRuntime</code> and LangChain injects it at run time. The model never sees this parameter.</p>
+  <div class="code"><div class="cap"><span>tools_runtime.py</span><button type="button">Copy</button></div><pre><code class="language-python">from dataclasses import dataclass
+from langchain.tools import tool, ToolRuntime
+
+@dataclass
+class Context:
+    user_id: str
+
+@tool
+def get_my_orders(runtime: ToolRuntime[Context]) -> str:
+    """Get the current user's recent orders."""
+    user_id = runtime.context.user_id          # per-request data (Chapter 14)
+    history = runtime.state["messages"]        # the conversation so far
+    store = runtime.store                      # long-term memory (Chapter 13)
+    runtime.stream_writer({"status": "fetching orders"})  # custom stream event
+    return f"Orders for {user_id}: #1042 (shipped), #1051 (processing)"</code></pre></div>
+  <p>Other <code>runtime</code> fields: <code>runtime.config</code>, <code>runtime.tool_call_id</code>, and (with <code>langgraph&gt;=1.1.5</code>) <code>runtime.execution_info</code> (thread ID, run ID, attempt number) and <code>runtime.server_info</code> (assistant, graph and user; <code>None</code> outside LangGraph Server).</p>
+  <div class="note warn"><b>Reserved names</b><p><code>config</code> and <code>runtime</code> cannot be used as your own tool argument names. <code>ToolRuntime</code> replaces the older <code>InjectedState</code>, <code>InjectedStore</code>, <code>InjectedToolCallId</code> and <code>get_runtime()</code>.</p></div>
+  <h3>More <code>@tool</code> options and return types</h3>
+  <div class="code"><div class="cap"><span>tool_options.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.messages import ToolMessage
+from langgraph.types import Command
+
+@tool("web_search")                                   # custom name
+def search(query: str) -> str:
+    """Search the web for information."""
+    return f"Results for {query}"
+
+@tool("calculator", description="Evaluate a maths expression.")  # custom description
+def calc(expression: str) -> str:
+    return str(eval(expression))   # demo only: never eval untrusted input
+
+@tool(return_direct=True)                             # agent stops and returns this output
+def final_quote(product: str) -> str:
+    """Return the official price quote for a product."""
+    return f"{product}: ₹4,999"
+
+@tool
+def set_ticket(ticket_id: str, runtime: ToolRuntime) -> Command:
+    """Attach a support ticket ID to this conversation."""
+    return Command(update={
+        "ticket_id": ticket_id,                       # updates agent state
+        "messages": [ToolMessage(f"Ticket {ticket_id} attached",
+                                 tool_call_id=runtime.tool_call_id)],  # required
+    })</code></pre></div>
+  <p>Tools may also return a <code>dict</code> or a list of multimodal content blocks. A <code>Command</code> return must include a <code>ToolMessage</code> with the matching <code>tool_call_id</code>, otherwise the agent raises a <code>ValueError</code>.</p>
+  <h3>Using tools directly with a model</h3>
+  <div class="code"><div class="cap"><span>bind_tools.py</span><button type="button">Copy</button></div><pre><code class="language-python">model_with_tools = model.bind_tools([get_weather])
+msg = model_with_tools.invoke("Is it raining in Mumbai?")
+print(msg.tool_calls)
+# [{'name': 'get_weather', 'args': {'location': 'Mumbai'}, 'id': 'toolu_01...'}]</code></pre></div>
+  <p>You rarely need this by hand; <code>create_agent</code> does it for you. It is useful for understanding and for single-step tool selection.</p>
+</section>
+
+<!-- ================= PART III ================= -->
+<section class="ch prose" id="agents">
+  <span class="chno">Chapter 10 · Agents</span>
+  <h2><code>create_agent</code>: the heart of v1</h2>
+  <p>An <strong>agent</strong> is a model that decides, step by step, which tools to call until it can answer. This is the ReAct pattern (Reason + Act). <code>create_agent</code> builds that loop as a LangGraph graph.</p>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 760 250" role="img" aria-label="Agent loop: input to model; if tool calls, run tools and return to model; otherwise final answer">
+        <rect x="20" y="105" width="120" height="50" rx="8" class="bx"/>
+        <text x="80" y="128" text-anchor="middle" class="t-b">User input</text>
+        <text x="80" y="145" text-anchor="middle" class="t-s">messages</text>
+        <rect x="190" y="105" width="140" height="50" rx="8" class="bx-a"/>
+        <text x="260" y="128" text-anchor="middle" class="t-b t-a">Model</text>
+        <text x="260" y="145" text-anchor="middle" class="t-s">reason + decide</text>
+        <path d="M140 130 L188 130" class="ln" marker-end="url(#arr)"/>
+        <polygon points="440,95 500,130 440,165 380,130" class="bx-p"/>
+        <text x="440" y="127" text-anchor="middle" class="t-s">tool</text>
+        <text x="440" y="141" text-anchor="middle" class="t-s">calls?</text>
+        <path d="M330 130 L378 130" class="ln" marker-end="url(#arr)"/>
+        <rect x="380" y="10" width="120" height="48" rx="8" class="bx-g"/>
+        <text x="440" y="32" text-anchor="middle" class="t-b t-g">Tools</text>
+        <text x="440" y="49" text-anchor="middle" class="t-s">run, add ToolMessage</text>
+        <path d="M440 95 L440 60" class="ln" marker-end="url(#arr)"/>
+        <text x="448" y="82" class="t-s">yes</text>
+        <path d="M380 34 L260 34 L260 103" class="ln" marker-end="url(#arr)"/>
+        <text x="290" y="28" class="t-s">results go back to the model</text>
+        <path d="M500 130 L568 130" class="ln-a" marker-end="url(#arrA)"/>
+        <text x="520" y="122" class="t-s">no</text>
+        <rect x="570" y="105" width="170" height="50" rx="8" class="bx"/>
+        <text x="655" y="128" text-anchor="middle" class="t-b">Final answer</text>
+        <text x="655" y="145" text-anchor="middle" class="t-s">AIMessage without tool calls</text>
+        <text x="20" y="215" class="t-s">The loop stops when the model replies without tool calls, a structured response is produced, or a limit middleware ends the run.</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 10.1</b> The agent loop. One "turn" can include many model and tool calls.</figcaption>
+  </figure>
+  <h3>Full signature, explained</h3>
+  <div class="code"><div class="cap"><span>agent_full.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents import create_agent
+
+agent = create_agent(
+    model="anthropic:claude-sonnet-4-6",  # string or a model instance
+    tools=[search_database, get_weather], # list of tools (or [] for none)
+    system_prompt=SUPPORT_PROMPT,         # str or SystemMessage
+    response_format=None,                 # schema type, or ToolStrategy / ProviderStrategy (Ch. 11)
+    middleware=[],                        # list of middleware (Ch. 16)
+    checkpointer=None,                    # short-term memory (Ch. 12)
+    store=None,                           # long-term memory (Ch. 13)
+    context_schema=None,                  # type of runtime context (Ch. 14)
+    state_schema=None,                    # extra state fields (Ch. 12)
+    name="support_agent",                 # useful in multi-agent systems
+    # advanced: interrupt_before, interrupt_after, debug, cache, transformers
+)</code></pre></div>
+  <h3>Invoking and reading the result</h3>
+  <div class="code"><div class="cap"><span>run_agent.py</span><button type="button">Copy</button></div><pre><code class="language-python">result = agent.invoke(
+    {"messages": [{"role": "user", "content": "Find customer Ravi and the weather in his city, Pune."}]}
+)
+
+for m in result["messages"]:
+    m.pretty_print()</code></pre></div>
+  <div class="output">================ Human Message ================
+Find customer Ravi and the weather in his city, Pune.
+================== Ai Message ==================
+Tool Calls: search_database(query="Ravi"), get_weather(location="Pune")
+================= Tool Message =================
+Found 10 results for 'Ravi'
+================= Tool Message =================
+Pune: 22°C
+================== Ai Message ==================
+I found Ravi's record. It's currently 22°C in Pune.</div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>One way to build an agent (with Groq)</h4>
+    <p>A complete agent: a model, one tool, a system prompt, and one question.</p>
+    <div class="code"><div class="cap"><span>weather_agent.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents import create_agent
+from langchain_groq import ChatGroq
+
+model = ChatGroq(
+    model="openai/gpt-oss-120b",
+    temperature=0,
+)
+
+def get_weather(city: str) -> str:
+    """Get the weather for a city."""
+    return f"The weather in {city} is sunny."
+
+agent = create_agent(
+    model=model,
+    tools=[get_weather],
+    system_prompt="You are a helpful assistant.",
+)
+
+response = agent.invoke({
+    "messages": [{
+        "role": "user",
+        "content": "What is the weather in New York?"
+    }]
+})
+
+print(response["messages"][-1].content)</code></pre></div>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 -30 760 200" role="img" aria-label="User to agent; the LLM decides to call the tool; the tool result goes back to the agent; then the final answer">
+          <rect x="10" y="40" width="100" height="44" rx="8" class="bx"/><text x="60" y="67" text-anchor="middle" class="t-b">User</text>
+          <rect x="150" y="40" width="120" height="44" rx="8" class="bx-a"/><text x="210" y="67" text-anchor="middle" class="t-b t-a">Agent</text>
+          <rect x="310" y="40" width="140" height="44" rx="8" class="bx"/><text x="380" y="67" text-anchor="middle" class="t-b">LLM decides</text>
+          <rect x="490" y="40" width="120" height="44" rx="8" class="bx-g"/><text x="550" y="60" text-anchor="middle" class="t-b t-g">Tool</text><text x="550" y="76" text-anchor="middle" class="t-s">get_weather</text>
+          <rect x="640" y="40" width="110" height="44" rx="8" class="bx"/><text x="695" y="60" text-anchor="middle" class="t-b">Final</text><text x="695" y="76" text-anchor="middle" class="t-b">answer</text>
+          <path d="M110 62 L148 62" class="ln" marker-end="url(#arr)"/>
+          <path d="M270 62 L308 62" class="ln" marker-end="url(#arr)"/>
+          <path d="M450 62 L488 62" class="ln" marker-end="url(#arr)"/>
+          <path d="M550 84 L550 130 L210 130 L210 86" class="ln dash" marker-end="url(#arr)"/>
+          <text x="380" y="150" text-anchor="middle" class="t-s">tool result goes back to the agent</text>
+          <path d="M270 50 Q455 -15 638 50" class="ln-a" marker-end="url(#arrA)"/>
+          <text x="455" y="-10" text-anchor="middle" class="t-s">no more tools needed → answer</text>
+        </svg>
+      </div>
+    </figure>
+  </div>
+  <div class="example">
+    <span class="tag">Real-world example</span>
+    <h4>Practical logistics agent</h4>
+    <p>The Logistics TAT Assistant from <a href="#what">Chapter 1</a>, as code. Each function is one tool. The one-line docstring under each function is required: it is what the model reads to decide when to use that tool.</p>
+    <div class="code"><div class="cap"><span>logistics_agent.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents import create_agent
+from langchain_groq import ChatGroq
+
+model = ChatGroq(model="openai/gpt-oss-120b", temperature=0)
+
+def query_vehicle_data(date: str) -> str:
+    """Get the vehicle records for a date."""
+    return "1500 vehicles"
+
+def calculate_stage_tat(records: str) -> dict:
+    """Calculate yard, plant and total TAT from vehicle records."""
+    return {
+        "yard_tat": "00:48",
+        "plant_tat": "03:12",
+        "total_tat": "04:00"
+    }
+
+def get_kpi_summary() -> str:
+    """Get the TAT KPI summary compared with the target."""
+    return "Plant TAT is 12% above target."
+
+agent = create_agent(
+    model=model,
+    tools=[
+        query_vehicle_data,
+        calculate_stage_tat,
+        get_kpi_summary
+    ],
+    system_prompt="You are a logistics analytics assistant."
+)
+
+response = agent.invoke({
+    "messages": [{"role": "user", "content": "Why was plant TAT high yesterday?"}]
+})
+print(response["messages"][-1].content)</code></pre></div>
+    <p>The functions return fixed sample values so you can run it right away. In a real project, replace their bodies with queries to your own vehicle database.</p>
+  </div>
+  <h3>Handling tool errors</h3>
+  <p>By default, a tool exception is raised. Usually you want the model to see the error and try again. Use the <code>wrap_tool_call</code> middleware (more in Chapter 16):</p>
+  <div class="code"><div class="cap"><span>tool_errors.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents.middleware import wrap_tool_call
+from langchain.messages import ToolMessage
+
+@wrap_tool_call
+def handle_tool_errors(request, handler):
+    try:
+        return handler(request)
+    except Exception as e:
+        return ToolMessage(
+            content=f"Tool error: {e}. Check the arguments and try again.",
+            tool_call_id=request.tool_call["id"],
+        )
+
+agent = create_agent(model, tools=[search_database], middleware=[handle_tool_errors])</code></pre></div>
+  <p>Since <code>langchain</code> 1.3.14 there is also a built-in version:</p>
+  <div class="code"><div class="cap"><span>tool_error_middleware.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents.middleware import ToolErrorMiddleware, ToolRetryMiddleware
+
+def on_error(exc, request) -> str | None:
+    if isinstance(exc, ValueError):
+        return f"`{request.tool_call['name']}` failed with {type(exc).__name__}. Fix the arguments."
+    return None          # None = let the exception propagate
+
+agent = create_agent(model, tools=[search_database], middleware=[
+    ToolErrorMiddleware(on_error),            # also accepts aon_error= (async) and tools=[...]
+    ToolRetryMiddleware(on_failure="error"),  # listed after it, so retries happen first
+])</code></pre></div>
+</section>
+
+<section class="ch prose" id="structured">
+  <span class="chno">Chapter 11 · Agents</span>
+  <h2>Structured output</h2>
+  <p>When code (not a person) consumes the answer, you want a validated object, not free text. Pass a schema to <code>response_format</code>; the result appears in <code>result["structured_response"]</code>.</p>
+  <div class="code"><div class="cap"><span>structured_agent.py</span><button type="button">Copy</button></div><pre><code class="language-python">from pydantic import BaseModel, Field
+from langchain.agents import create_agent
+from langchain.agents.structured_output import ToolStrategy, ProviderStrategy
+
+class ContactInfo(BaseModel):
+    name: str
+    email: str
+    phone: str = Field(description="Phone number with country code")
+
+agent = create_agent(
+    model="openai:gpt-5.4-mini",
+    tools=[],
+    response_format=ToolStrategy(ContactInfo),
+)
+
+result = agent.invoke({"messages": [{"role": "user",
+    "content": "Extract: John Doe, john@example.com, +1 555 123 4567"}]})
+
+contact = result["structured_response"]
+print(contact.email)   # john@example.com</code></pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Strategy</th><th>How it works</th><th>Use when</th></tr></thead>
+    <tbody>
+      <tr><td><code>ProviderStrategy(Schema)</code></td><td>Uses the provider's native JSON-schema mode</td><td>Provider supports it (OpenAI, Anthropic, Gemini …): most reliable</td></tr>
+      <tr><td><code>ToolStrategy(Schema)</code></td><td>Exposes the schema as a special tool the model "calls"</td><td>Works with any tool-calling model; retries on validation errors</td></tr>
+      <tr><td><code>Schema</code> (bare)</td><td>LangChain uses <code>ProviderStrategy</code> if the model supports native structured output, otherwise <code>ToolStrategy</code></td><td>Default choice. JSON-schema dicts are not auto-detected: wrap them in a strategy explicitly</td></tr>
+    </tbody>
+  </table></div>
+  <p>Without an agent, use the model directly:</p>
+  <div class="code"><div class="cap"><span>with_structured_output.py</span><button type="button">Copy</button></div><pre><code class="language-python">extractor = model.with_structured_output(ContactInfo)
+info = extractor.invoke("Priya Shah, priya@corp.in, +91 98200 00000")
+print(info.name)   # Priya Shah</code></pre></div>
+  <div class="note tip"><b>v1 improvement</b><p>Structured output is generated inside the main agent loop, not by an extra model call afterwards. That saves a request and cost on every run.</p></div>
+</section>
+
+<section class="ch prose" id="memory">
+  <span class="chno">Chapter 12 · Agents</span>
+  <h2>Short-term memory (conversation threads)</h2>
+  <p>By default an agent forgets everything between <code>invoke</code> calls. Add a <strong>checkpointer</strong> and pass a <code>thread_id</code>: the agent saves its state after every step and reloads it on the next call with the same thread.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>State, persistence, streaming and human-in-the-loop</h4>
+    <p>Every agent run has these four supporting pieces. This chapter covers state and persistence; streaming is <a href="#streaming">Chapter 15</a> and human approval is <a href="#hitl">Chapter 17</a>.</p>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 240" role="img" aria-label="Agent execution splits into state (working data), persistence (saved progress) and streaming (live output), which all lead to human-in-the-loop (approval and control)">
+          <rect x="280" y="10" width="200" height="40" rx="8" class="bx-a"/><text x="380" y="35" text-anchor="middle" class="t-b t-a">Agent execution</text>
+          <rect x="40" y="90" width="180" height="56" rx="8" class="bx"/><text x="130" y="114" text-anchor="middle" class="t-b">State</text><text x="130" y="133" text-anchor="middle" class="t-s">working data</text>
+          <rect x="290" y="90" width="180" height="56" rx="8" class="bx"/><text x="380" y="114" text-anchor="middle" class="t-b">Persistence</text><text x="380" y="133" text-anchor="middle" class="t-s">saved progress</text>
+          <rect x="540" y="90" width="180" height="56" rx="8" class="bx"/><text x="630" y="114" text-anchor="middle" class="t-b">Streaming</text><text x="630" y="133" text-anchor="middle" class="t-s">live output</text>
+          <path d="M330 50 L150 88" class="ln" marker-end="url(#arr)"/>
+          <path d="M380 50 L380 88" class="ln" marker-end="url(#arr)"/>
+          <path d="M430 50 L610 88" class="ln" marker-end="url(#arr)"/>
+          <path d="M130 146 L330 182" class="ln" marker-end="url(#arr)"/>
+          <path d="M380 146 L380 180" class="ln" marker-end="url(#arr)"/>
+          <path d="M630 146 L430 182" class="ln" marker-end="url(#arr)"/>
+          <rect x="270" y="182" width="220" height="50" rx="8" class="bx-w"/><text x="380" y="204" text-anchor="middle" class="t-b t-w">Human-in-the-loop</text><text x="380" y="222" text-anchor="middle" class="t-s">approval / control</text>
+        </svg>
+      </div>
+    </figure>
+  </div>
+  <div class="code"><div class="cap"><span>memory.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langgraph.checkpoint.memory import InMemorySaver
+
+agent = create_agent(model, tools=[], checkpointer=InMemorySaver())
+
+config = {"configurable": {"thread_id": "user-42-chat-1"}}
+agent.invoke({"messages": [{"role": "user", "content": "Hi, I'm Piyush."}]}, config)
+r = agent.invoke({"messages": [{"role": "user", "content": "What's my name?"}]}, config)
+print(r["messages"][-1].content)   # "Your name is Piyush."
+
+# A different thread_id is a fresh conversation
+other = {"configurable": {"thread_id": "user-42-chat-2"}}</code></pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Checkpointer</th><th>Package</th><th>Use for</th></tr></thead>
+    <tbody>
+      <tr><td><code>InMemorySaver</code></td><td><code>langgraph</code></td><td>Development, notebooks, tests</td></tr>
+      <tr><td><code>SqliteSaver</code></td><td><code>langgraph-checkpoint-sqlite</code></td><td>Single-machine apps</td></tr>
+      <tr><td><code>PostgresSaver</code></td><td><code>langgraph-checkpoint-postgres</code></td><td>Production</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Keeping long conversations inside the context window</h3>
+  <div class="code"><div class="cap"><span>summarize.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents.middleware import SummarizationMiddleware
+
+agent = create_agent(
+    model,
+    tools=[],
+    checkpointer=InMemorySaver(),
+    middleware=[
+        SummarizationMiddleware(
+            model="openai:gpt-5.4-mini",   # a cheap model writes the summary
+            trigger=("tokens", 4000),       # summarise once history passes 4,000 tokens
+            keep=("messages", 20),          # keep the last 20 messages verbatim
+        )
+    ],
+)</code></pre></div>
+  <div class="note warn"><b>Version note</b><p><code>max_tokens_before_summary</code> and <code>messages_to_keep</code> (seen in early 1.0 tutorials) are deprecated: use <code>trigger</code> and <code>keep</code>. Without <code>trigger</code>, summarisation never runs. <code>keep</code> defaults to <code>("messages", 20)</code>. <code>trigger</code> also accepts <code>("fraction", 0.8)</code> of the context window, a dict (all conditions must be met) or a list (any one is enough). <code>summary_prefix</code> is deprecated in favour of <code>summary_prompt</code>.</p></div>
+  <h3>Custom state</h3>
+  <p>Agent state is a dictionary with at least <code>messages</code>. Extend it to carry your own fields across steps. In v1 custom state must be a <code>TypedDict</code>.</p>
+  <div class="code"><div class="cap"><span>custom_state.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents import AgentState
+
+class SupportState(AgentState):
+    customer_tier: str
+    ticket_id: str | None
+
+agent = create_agent(model, tools=[...], state_schema=SupportState)
+agent.invoke({"messages": [...], "customer_tier": "gold", "ticket_id": None})</code></pre></div>
+</section>
+
+<section class="ch prose" id="longterm">
+  <span class="chno">Chapter 13 · Agents</span>
+  <h2>Long-term memory (across conversations)</h2>
+  <p>Short-term memory belongs to one thread. Long-term memory belongs to a user or organisation and is shared by every thread. It lives in a <strong>store</strong>: a key-value database organised by namespaces.</p>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 760 220" role="img" aria-label="Threads each have their own checkpoints; the store is shared across all threads">
+        <rect x="20" y="20" width="220" height="80" rx="8" class="bx-a"/>
+        <text x="36" y="44" class="t-b t-a">Thread "chat-1"</text>
+        <text x="36" y="66" class="t-s">checkpoints: every message</text>
+        <text x="36" y="84" class="t-s">and state of this chat</text>
+        <rect x="20" y="120" width="220" height="80" rx="8" class="bx-a"/>
+        <text x="36" y="144" class="t-b t-a">Thread "chat-2"</text>
+        <text x="36" y="166" class="t-s">a separate conversation,</text>
+        <text x="36" y="184" class="t-s">its own history</text>
+        <rect x="470" y="40" width="270" height="140" rx="8" class="bx-g"/>
+        <text x="486" y="66" class="t-b t-g">Store (long-term)</text>
+        <text x="486" y="92" class="t-m">("users", "42")</text>
+        <text x="486" y="112" class="t-s">→ {"language": "Hindi", "plan": "pro"}</text>
+        <text x="486" y="138" class="t-m">("memories", "42")</text>
+        <text x="486" y="158" class="t-s">→ facts learned in past chats</text>
+        <path d="M240 60 L468 95" class="ln" marker-end="url(#arr)"/>
+        <path d="M240 160 L468 135" class="ln" marker-end="url(#arr)"/>
+        <text x="300" y="110" class="t-s">read / write via runtime.store</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 13.1</b> Checkpointer = memory of one conversation. Store = memory of the user, shared by every conversation.</figcaption>
+  </figure>
+  <div class="code"><div class="cap"><span>long_term_memory.py</span><button type="button">Copy</button></div><pre><code class="language-python">from dataclasses import dataclass
+from langgraph.store.memory import InMemoryStore
+from langchain.tools import tool, ToolRuntime
+
+@dataclass
+class Context:
+    user_id: str
+
+@tool
+def save_preference(key: str, value: str, runtime: ToolRuntime[Context]) -> str:
+    """Remember a user preference for future conversations."""
+    runtime.store.put(("prefs", runtime.context.user_id), key, {"value": value})
+    return f"Saved {key} = {value}"
+
+@tool
+def get_preferences(runtime: ToolRuntime[Context]) -> str:
+    """Recall everything we know about the user's preferences."""
+    items = runtime.store.search(("prefs", runtime.context.user_id), limit=100)  # default limit is 10
+    return "\n".join(f"{i.key}: {i.value['value']}" for i in items) or "No preferences yet."
+
+store = InMemoryStore()   # production: PostgresStore
+agent = create_agent(model, tools=[save_preference, get_preferences],
+                     store=store, context_schema=Context)
+
+agent.invoke({"messages": [{"role": "user", "content": "I prefer answers in Hindi."}]},
+             context=Context(user_id="42"))
+# ...a week later, in a brand-new thread:
+agent.invoke({"messages": [{"role": "user", "content": "Explain RAG."}]},
+             context=Context(user_id="42"))</code></pre></div>
+</section>
+
+<section class="ch prose" id="context">
+  <span class="chno">Chapter 14 · Agents</span>
+  <h2>Runtime context and context engineering</h2>
+  <p><strong>Context engineering</strong> means giving the model the right information and tools at the right moment. Most agent failures are context failures: the model lacked a fact, saw too many tools, or had a stale prompt. v1 gives you three levers.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Source</th><th>Lifetime</th><th>Example</th><th>Access</th></tr></thead>
+    <tbody>
+      <tr><td>Runtime context</td><td>One <code>invoke</code></td><td>user ID, role, API keys, DB connection</td><td><code>runtime.context</code></td></tr>
+      <tr><td>State</td><td>One thread</td><td>messages, uploaded file names, ticket ID</td><td><code>runtime.state</code> / <code>request.state</code></td></tr>
+      <tr><td>Store</td><td>Forever</td><td>user preferences, learned facts</td><td><code>runtime.store</code></td></tr>
+    </tbody>
+  </table></div>
+  <h3>Dynamic system prompt</h3>
+  <div class="code"><div class="cap"><span>dynamic_prompt.py</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import TypedDict
+from langchain.agents.middleware import dynamic_prompt, ModelRequest
+
+class Context(TypedDict):
+    user_role: str
+
+@dynamic_prompt
+def role_based_prompt(request: ModelRequest) -> str:
+    role = request.runtime.context.get("user_role", "user")
+    base = "You are a helpful assistant."
+    if role == "expert":
+        return base + " Give detailed technical answers with code."
+    if role == "beginner":
+        return base + " Explain simply, avoid jargon, use analogies."
+    return base
+
+agent = create_agent(model, tools=[], middleware=[role_based_prompt], context_schema=Context)
+agent.invoke({"messages": [{"role": "user", "content": "What is a vector?"}]},
+             context={"user_role": "beginner"})</code></pre></div>
+  <h3>Dynamic model selection</h3>
+  <div class="code"><div class="cap"><span>dynamic_model.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents import create_agent
+from langchain.agents.middleware import wrap_model_call, ModelRequest, ModelResponse
+from langchain.chat_models import init_chat_model
+
+basic = init_chat_model("openai:gpt-5.4-mini")
+advanced = init_chat_model("anthropic:claude-sonnet-4-6")
+
+@wrap_model_call
+def pick_model(request: ModelRequest, handler) -> ModelResponse:
+    # Long conversations are usually harder: switch to the stronger model
+    model = advanced if len(request.state["messages"]) > 10 else basic
+    return handler(request.override(model=model))
+
+agent = create_agent(basic, tools=[...], middleware=[pick_model])</code></pre></div>
+  <h3>Dynamic tool selection</h3>
+  <p>Too many tools confuse models. <code>LLMToolSelectorMiddleware(model=..., max_tools=3, always_include=[...])</code> uses a model to pick the relevant few before each main call (it uses the agent's main model unless you pass a cheaper one); or filter <code>request.tools</code> yourself in <code>wrap_model_call</code> based on user permissions.</p>
+  <div class="code"><div class="cap"><span>tool_filter.py</span><button type="button">Copy</button></div><pre><code class="language-python">@wrap_model_call
+def tools_by_permission(request: ModelRequest, handler) -> ModelResponse:
+    if request.runtime.context.get("user_role") != "admin":
+        request = request.override(tools=[t for t in request.tools if not t.name.startswith("admin_")])
+    return handler(request)</code></pre></div>
+  <p><code>request.override(...)</code> also accepts <code>messages=</code>, <code>system_message=</code> and <code>response_format=</code>. Use <code>request.messages</code> as a shortcut for <code>request.state["messages"]</code>.</p>
+</section>
+
+<section class="ch prose" id="streaming">
+  <span class="chno">Chapter 15 · Agents</span>
+  <h2>Streaming</h2>
+  <p>Agents can take many seconds. Streaming shows progress as it happens: which tool is running, and the answer token by token.</p>
+  <div class="tbl"><table>
+    <thead><tr><th><code>stream_mode</code></th><th>What you receive</th><th>Good for</th></tr></thead>
+    <tbody>
+      <tr><td><code>"updates"</code></td><td>The state change after each step (model step, tools step)</td><td>Progress UI: "Searching database…"</td></tr>
+      <tr><td><code>"messages"</code></td><td><code>(token_chunk, metadata)</code> as the LLM generates</td><td>Chat UIs with typing effect</td></tr>
+      <tr><td><code>"custom"</code></td><td>Anything your tools send through <code>stream_writer</code></td><td>Tool progress bars</td></tr>
+      <tr><td><code>"values"</code></td><td>The full state after each step</td><td>Debugging</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code"><div class="cap"><span>streaming.py</span><button type="button">Copy</button></div><pre><code class="language-python">inputs = {"messages": [{"role": "user", "content": "Weather in Delhi and Goa?"}]}
+
+# Step-by-step progress
+for chunk in agent.stream(inputs, stream_mode="updates"):
+    for step, data in chunk.items():
+        print(f"[{step}]", data["messages"][-1].content_blocks)
+
+# Token-by-token
+for token, metadata in agent.stream(inputs, stream_mode="messages"):
+    if metadata["langgraph_node"] == "model" and token.text:
+        print(token.text, end="", flush=True)
+
+# Several modes at once
+for mode, chunk in agent.stream(inputs, stream_mode=["updates", "custom"]):
+    print(mode, chunk)</code></pre></div>
+  <h3>Newer streaming formats</h3>
+  <p>The code above uses the default format, which yields tuples. The current docs show two newer options:</p>
+  <ul>
+    <li><code>version="v2"</code> on <code>stream</code> gives every chunk the same dict shape: <code>{"type": ..., "ns": ..., "data": ...}</code>.</li>
+    <li><code>agent.stream_events(..., version="v3")</code> (new in LangChain 1.3) is the recommended API for new apps. It gives typed streams for messages, tool calls and values.</li>
+  </ul>
+  <div class="code"><div class="cap"><span>streaming_v2_v3.py</span><button type="button">Copy</button></div><pre><code class="language-python"># v2: uniform dict chunks
+for chunk in agent.stream(inputs, stream_mode="messages", version="v2"):
+    if chunk["type"] == "messages":
+        token, metadata = chunk["data"]
+        if metadata["langgraph_node"] == "model" and token.text:
+            print(token.text, end="", flush=True)
+
+# v3 event streaming: recommended for new applications (langchain 1.3+)
+stream = agent.stream_events(inputs, version="v3")
+for kind, item in stream.interleave("messages", "tool_calls"):
+    if kind == "messages":
+        for t in item.text:
+            print(t, end="", flush=True)
+    else:
+        print(f"\nTool call: {item.tool_name}({item.input}) -> {item.output}")</code></pre></div>
+</section>
+
+<!-- ================= PART IV ================= -->
+<section class="ch prose" id="middleware">
+  <span class="chno">Chapter 16 · Control</span>
+  <h2>Middleware: the defining feature of v1</h2>
+  <p>Middleware is code that runs at fixed points in the agent loop. It is how you add memory trimming, approvals, guardrails, retries, logging, model switching and prompt changes without rewriting the agent.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Middleware, the simple view</h4>
+    <p>Think of middleware as a supervisor around the agent. It can inspect, change, restrict, retry, log or pause each step.</p>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 780 110" role="img" aria-label="User request, then pre-model middleware, then model, then tool and response middleware, then final result">
+          <rect x="10" y="30" width="130" height="50" rx="8" class="bx"/><text x="75" y="60" text-anchor="middle" class="t-b">User request</text>
+          <rect x="170" y="30" width="150" height="50" rx="8" class="bx-w"/><text x="245" y="52" text-anchor="middle" class="t-b t-w">Pre-model</text><text x="245" y="69" text-anchor="middle" class="t-s">middleware</text>
+          <rect x="350" y="30" width="110" height="50" rx="8" class="bx-a"/><text x="405" y="60" text-anchor="middle" class="t-b t-a">Model</text>
+          <rect x="490" y="30" width="150" height="50" rx="8" class="bx-w"/><text x="565" y="52" text-anchor="middle" class="t-b t-w">Tool / response</text><text x="565" y="69" text-anchor="middle" class="t-s">middleware</text>
+          <rect x="670" y="30" width="100" height="50" rx="8" class="bx"/><text x="720" y="60" text-anchor="middle" class="t-b">Final result</text>
+          <path d="M140 55 L168 55" class="ln" marker-end="url(#arr)"/>
+          <path d="M320 55 L348 55" class="ln" marker-end="url(#arr)"/>
+          <path d="M460 55 L488 55" class="ln" marker-end="url(#arr)"/>
+          <path d="M640 55 L668 55" class="ln" marker-end="url(#arr)"/>
+        </svg>
+      </div>
+    </figure>
+    <div class="tbl"><table>
+      <thead><tr><th>Use case</th><th>Purpose</th><th>Built-in option</th></tr></thead>
+      <tbody>
+        <tr><td>Security</td><td>Block unauthorized tool calls</td><td><code>@wrap_tool_call</code> check, <code>ToolCallLimitMiddleware</code></td></tr>
+        <tr><td>PII protection</td><td>Redact sensitive information</td><td><code>PIIMiddleware</code></td></tr>
+        <tr><td>Logging</td><td>Record execution</td><td><code>@before_model</code> / <code>@after_model</code></td></tr>
+        <tr><td>Retries</td><td>Recover from temporary failures</td><td><code>ToolRetryMiddleware</code>, <code>ModelRetryMiddleware</code></td></tr>
+        <tr><td>Human approval</td><td>Pause before sensitive actions</td><td><code>HumanInTheLoopMiddleware</code> (<a href="#hitl">Ch. 17</a>)</td></tr>
+      </tbody>
+    </table></div>
+    <p>The detailed version, with every hook point, is Figure 16.1 below.</p>
+  </div>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 780 260" role="img" aria-label="Middleware hook points around the agent loop">
+        <rect x="10" y="40" width="110" height="50" rx="8" class="bx-w"/>
+        <text x="65" y="62" text-anchor="middle" class="t-m t-w">before_agent</text>
+        <text x="65" y="79" text-anchor="middle" class="t-s">once per run</text>
+        <rect x="150" y="40" width="120" height="50" rx="8" class="bx"/>
+        <text x="210" y="62" text-anchor="middle" class="t-m">before_model</text>
+        <text x="210" y="79" text-anchor="middle" class="t-s">edit state</text>
+        <rect x="300" y="26" width="160" height="78" rx="8" class="bx-a"/>
+        <text x="380" y="46" text-anchor="middle" class="t-m t-a">wrap_model_call</text>
+        <rect x="335" y="56" width="90" height="34" rx="6" class="bx"/>
+        <text x="380" y="78" text-anchor="middle" class="t-b">MODEL</text>
+        <rect x="490" y="40" width="120" height="50" rx="8" class="bx"/>
+        <text x="550" y="62" text-anchor="middle" class="t-m">after_model</text>
+        <text x="550" y="79" text-anchor="middle" class="t-s">inspect reply</text>
+        <rect x="650" y="40" width="115" height="50" rx="8" class="bx-w"/>
+        <text x="707" y="62" text-anchor="middle" class="t-m t-w">after_agent</text>
+        <text x="707" y="79" text-anchor="middle" class="t-s">once per run</text>
+        <path d="M120 65 L148 65" class="ln" marker-end="url(#arr)"/>
+        <path d="M270 65 L298 65" class="ln" marker-end="url(#arr)"/>
+        <path d="M460 65 L488 65" class="ln" marker-end="url(#arr)"/>
+        <path d="M610 65 L648 65" class="ln" marker-end="url(#arr)"/>
+        <text x="614" y="56" class="t-s">done</text>
+        <rect x="470" y="160" width="160" height="78" rx="8" class="bx-g"/>
+        <text x="550" y="180" text-anchor="middle" class="t-m t-g">wrap_tool_call</text>
+        <rect x="505" y="190" width="90" height="34" rx="6" class="bx"/>
+        <text x="550" y="212" text-anchor="middle" class="t-b">TOOLS</text>
+        <path d="M550 90 L550 158" class="ln" marker-end="url(#arr)"/>
+        <text x="558" y="128" class="t-s">tool calls</text>
+        <path d="M470 199 L210 199 L210 92" class="ln" marker-end="url(#arr)"/>
+        <text x="260" y="192" class="t-s">loop back with tool results</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 16.1</b> Hook points. "before/after" hooks read and update state. "wrap" hooks surround the call and can change the request, retry it, cache it or replace the result.</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <thead><tr><th>Hook</th><th>Runs</th><th>Typical use</th></tr></thead>
+    <tbody>
+      <tr><td><code>before_agent</code></td><td>Once, at the start of <code>invoke</code></td><td>Load user profile, input guardrails</td></tr>
+      <tr><td><code>before_model</code></td><td>Before each model call</td><td>Trim/summarise messages, inject context, enforce limits</td></tr>
+      <tr><td><code>wrap_model_call</code></td><td>Around each model call</td><td>Switch model, filter tools, retry, cache, fallback</td></tr>
+      <tr><td><code>after_model</code></td><td>After each model reply</td><td>Output guardrails, human approval, logging</td></tr>
+      <tr><td><code>wrap_tool_call</code></td><td>Around each tool execution</td><td>Error handling, retries, permission checks, timing</td></tr>
+      <tr><td><code>after_agent</code></td><td>Once, at the end</td><td>Save memories, analytics, final checks</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Built-in middleware</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Middleware</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>SummarizationMiddleware</code></td><td>Summarises old messages when history gets long</td></tr>
+      <tr><td><code>HumanInTheLoopMiddleware</code></td><td>Pauses before chosen tools for approve / edit / reject</td></tr>
+      <tr><td><code>PIIMiddleware</code></td><td>Detects emails, card numbers, IPs etc.; redacts, masks, hashes or blocks</td></tr>
+      <tr><td><code>ModelCallLimitMiddleware</code></td><td>Caps model calls per run or per thread (stops runaway loops)</td></tr>
+      <tr><td><code>ToolCallLimitMiddleware</code></td><td>Caps calls to a specific tool or all tools</td></tr>
+      <tr><td><code>ModelFallbackMiddleware</code></td><td>Tries backup models if the primary fails</td></tr>
+      <tr><td><code>ToolRetryMiddleware</code> / <code>ModelRetryMiddleware</code></td><td>Retries with exponential backoff</td></tr>
+      <tr><td><code>LLMToolSelectorMiddleware</code></td><td>Uses a small model to pick relevant tools</td></tr>
+      <tr><td><code>TodoListMiddleware</code></td><td>Gives the agent a <code>write_todos</code> planning tool</td></tr>
+      <tr><td><code>ContextEditingMiddleware</code></td><td>Clears old tool outputs to save tokens</td></tr>
+      <tr><td><code>ToolErrorMiddleware</code></td><td>Turns tool exceptions into error messages the model can react to (1.3.14+)</td></tr>
+      <tr><td><code>ProviderToolSearchMiddleware</code></td><td>Lets the provider search a large set of tools on demand</td></tr>
+      <tr><td><code>ShellToolMiddleware</code></td><td>Gives the agent a shell inside a workspace, with an execution policy</td></tr>
+      <tr><td><code>FilesystemFileSearchMiddleware</code></td><td>Glob and grep search over a folder</td></tr>
+      <tr><td><code>LLMToolEmulator</code></td><td>Fakes tool results with a model, for testing</td></tr>
+      <tr><td><code>FilesystemMiddleware</code>, <code>SubAgentMiddleware</code>, <code>RubricMiddleware</code></td><td>From the <code>deepagents</code> package: virtual files, sub-agents, rubric-checked answers</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code"><div class="cap"><span>builtin_middleware.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents.middleware import (
+    PIIMiddleware, ModelCallLimitMiddleware, ToolCallLimitMiddleware,
+    ModelFallbackMiddleware, ToolRetryMiddleware,
+)
+
+agent = create_agent(
+    model="anthropic:claude-sonnet-4-6",
+    tools=[search_database, get_weather],
+    middleware=[
+        PIIMiddleware("email", strategy="redact", apply_to_input=True),
+        PIIMiddleware("credit_card", strategy="mask"),   # "block" raises an exception instead
+        ModelCallLimitMiddleware(run_limit=8, exit_behavior="end"),
+        ToolCallLimitMiddleware(tool_name="search_database", run_limit=3),
+        ModelFallbackMiddleware("openai:gpt-5.4-mini"),
+        ToolRetryMiddleware(max_retries=3, backoff_factor=2.0),
+    ],
+)</code></pre></div>
+  <div class="note warn"><b>Defaults worth knowing</b><p><strong>PII:</strong> built-in types are <code>email</code>, <code>credit_card</code>, <code>ip</code>, <code>mac_address</code>, <code>url</code>; add your own with <code>detector=</code>. <code>apply_to_input</code> is on by default; <code>apply_to_output</code> and <code>apply_to_tool_results</code> are off. <code>strategy="block"</code> raises an exception, so catch it.<br>
+  <strong>Retries:</strong> <code>ToolRetryMiddleware</code> / <code>ModelRetryMiddleware</code> default to <code>max_retries=2</code>, <code>backoff_factor=2.0</code>, <code>initial_delay=1.0</code>, <code>max_delay=60.0</code>, <code>jitter=True</code>, <code>on_failure="continue"</code>.<br>
+  <strong>Limits:</strong> <code>ToolCallLimitMiddleware</code> <code>exit_behavior</code> defaults to <code>"continue"</code> (also <code>"error"</code>, <code>"end"</code>). <code>ModelCallLimitMiddleware</code> takes <code>"end"</code> or <code>"error"</code>; its <code>thread_limit</code> needs a checkpointer.</p></div>
+  <div class="note graph"><b>Order matters</b><p>Middleware runs like layers of an onion. <code>before_*</code> hooks run first to last; <code>after_*</code> hooks run last to first; the first <code>wrap_*</code> middleware is the outermost wrapper.</p></div>
+  <h3>Writing custom middleware: decorators</h3>
+  <div class="code"><div class="cap"><span>custom_decorators.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents.middleware import before_model, after_model, AgentState
+from langgraph.runtime import Runtime
+
+@before_model
+def log_call(state: AgentState, runtime: Runtime) -> dict | None:
+    print(f"Calling model with {len(state['messages'])} messages")
+    return None   # None = change nothing
+
+@after_model(can_jump_to=["end"])
+def block_banned_words(state: AgentState, runtime: Runtime) -> dict | None:
+    last = state["messages"][-1]
+    if "confidential" in last.text.lower():
+        return {
+            "messages": [{"role": "assistant", "content": "I can't share that."}],
+            "jump_to": "end",          # skip straight to the end of the run
+        }
+    return None</code></pre></div>
+  <h3>Writing custom middleware: classes</h3>
+  <p>Use a class when the middleware needs configuration, several hooks or its own state fields.</p>
+  <div class="code"><div class="cap"><span>custom_class.py</span><button type="button">Copy</button></div><pre><code class="language-python">import time
+from typing_extensions import NotRequired
+from langchain.agents.middleware import AgentMiddleware, AgentState
+
+class TimingState(AgentState):
+    model_ms: NotRequired[list[float]]   # extra fields should be optional
+
+class TimingMiddleware(AgentMiddleware[TimingState]):
+    state_schema = TimingState          # adds a field to agent state
+
+    def __init__(self, slow_ms: float = 5000):
+        super().__init__()
+        self.slow_ms = slow_ms
+
+    def wrap_model_call(self, request, handler):
+        start = time.perf_counter()
+        response = handler(request)
+        ms = (time.perf_counter() - start) * 1000
+        if ms > self.slow_ms:
+            print(f"Slow model call: {ms:.0f} ms")
+        return response
+
+    def after_agent(self, state, runtime):
+        print("Run finished with", len(state["messages"]), "messages")
+        return None
+
+agent = create_agent(model, tools=[], middleware=[TimingMiddleware(slow_ms=3000)])</code></pre></div>
+  <p>In class hooks, allow jumps with the <code>@hook_config(can_jump_to=["end"])</code> decorator. <code>jump_to</code> can be <code>"end"</code>, <code>"tools"</code> or <code>"model"</code>. Besides <code>state_schema</code>, a middleware class can also declare <code>tools</code> it adds to the agent.</p>
+</section>
+
+<section class="ch prose" id="hitl">
+  <span class="chno">Chapter 17 · Control</span>
+  <h2>Human in the loop</h2>
+  <p>Some actions should never happen without a person saying yes: sending email, paying, deleting, deploying. <code>HumanInTheLoopMiddleware</code> pauses the agent right before those tool calls, saves the state, and waits for a decision.</p>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 760 210" role="img" aria-label="Human in the loop: agent proposes tool call, middleware interrupts, human decides, agent resumes">
+        <rect x="10" y="70" width="130" height="60" rx="8" class="bx-a"/>
+        <text x="75" y="95" text-anchor="middle" class="t-b t-a">Agent</text>
+        <text x="75" y="113" text-anchor="middle" class="t-s">wants send_email</text>
+        <rect x="175" y="70" width="140" height="60" rx="8" class="bx-w"/>
+        <text x="245" y="95" text-anchor="middle" class="t-b t-w">Interrupt</text>
+        <text x="245" y="113" text-anchor="middle" class="t-s">state saved, run paused</text>
+        <rect x="350" y="70" width="130" height="60" rx="8" class="bx"/>
+        <text x="415" y="95" text-anchor="middle" class="t-b">Human reviews</text>
+        <text x="415" y="113" text-anchor="middle" class="t-s">UI, Slack, email…</text>
+        <rect x="520" y="10" width="110" height="40" rx="6" class="bx-a"/><text x="575" y="35" text-anchor="middle">approve</text>
+        <rect x="520" y="80" width="110" height="40" rx="6" class="bx-g"/><text x="575" y="105" text-anchor="middle">edit args</text>
+        <rect x="520" y="150" width="110" height="40" rx="6" class="bx-w"/><text x="575" y="175" text-anchor="middle">reject + reason</text>
+        <path d="M140 100 L173 100" class="ln" marker-end="url(#arr)"/>
+        <path d="M315 100 L348 100" class="ln" marker-end="url(#arr)"/>
+        <path d="M480 100 L518 30" class="ln" marker-end="url(#arr)"/>
+        <path d="M480 100 L518 100" class="ln" marker-end="url(#arr)"/>
+        <path d="M480 100 L518 170" class="ln" marker-end="url(#arr)"/>
+        <rect x="660" y="70" width="90" height="60" rx="8" class="bx"/>
+        <text x="705" y="95" text-anchor="middle" class="t-b">Resume</text>
+        <text x="705" y="113" text-anchor="middle" class="t-s">Command</text>
+        <path d="M630 30 L658 85" class="ln" marker-end="url(#arr)"/>
+        <path d="M630 100 L658 100" class="ln" marker-end="url(#arr)"/>
+        <path d="M630 170 L658 115" class="ln" marker-end="url(#arr)"/>
+      </svg>
+    </div>
+    <figcaption><b>Figure 17.1</b> The run can pause for minutes or days; the checkpointer keeps everything until the decision arrives.</figcaption>
+  </figure>
+  <div class="code"><div class="cap"><span>hitl.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents import create_agent
+from langchain.agents.middleware import HumanInTheLoopMiddleware
+from langchain.tools import tool
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.types import Command
+
+@tool
+def send_email(to: str, subject: str, body: str) -> str:
+    """Send an email."""
+    return f"Email sent to {to}"
+
+@tool
+def read_inbox() -> str:
+    """Read the latest emails."""
+    return "1 new email from boss@corp.com: 'Send the Q3 report to the client.'"
+
+agent = create_agent(
+    model="anthropic:claude-sonnet-4-6",
+    tools=[send_email, read_inbox],
+    checkpointer=InMemorySaver(),            # required: the pause must be saved
+    middleware=[HumanInTheLoopMiddleware(
+        interrupt_on={
+            "send_email": {"allowed_decisions": ["approve", "edit", "reject"]},
+            "read_inbox": False,             # safe: never pause
+        },
+        description_prefix="Approval needed",
+    )],
+)
+
+config = {"configurable": {"thread_id": "inbox-1"}}
+result = agent.invoke({"messages": [{"role": "user", "content": "Handle my inbox."}]}, config)
+
+# The run paused. Show the pending action to a human:
+print(result["__interrupt__"])
+
+# Option A: approve
+agent.invoke(Command(resume={"decisions": [{"type": "approve"}]}), config)
+
+# Option B: edit the arguments first
+agent.invoke(Command(resume={"decisions": [{
+    "type": "edit",
+    "edited_action": {"name": "send_email",
+                      "args": {"to": "client@acme.com", "subject": "Q3 report", "body": "Attached."}},
+}]}), config)
+
+# Option C: reject with feedback the model will see
+agent.invoke(Command(resume={"decisions": [{
+    "type": "reject", "message": "Don't email the client yet; wait for finance sign-off."
+}]}), config)</code></pre></div>
+  <h3>More HITL details</h3>
+  <ul>
+    <li><strong>Fourth decision, <code>respond</code>:</strong> <code>{"type": "respond", "message": "..."}</code> returns the human's text as a successful tool result. Use it only for "ask the user" tools, never to deny an action.</li>
+    <li><strong><code>True</code> shorthand:</strong> <code>interrupt_on={"send_email": True}</code> allows all decisions.</li>
+    <li><strong>Conditional pauses:</strong> add <code>"when": fn</code> to a tool's config to pause only when <code>fn(request)</code> returns true (1.3.3+).</li>
+    <li><strong>Payload:</strong> the interrupt holds <code>action_requests</code> (name, arguments, description) and <code>review_configs</code> (action name, allowed decisions). <code>description_prefix</code> defaults to "Tool execution requires approval".</li>
+    <li><strong>Several paused calls:</strong> send one decision per call, in the same order.</li>
+    <li><strong>Newer read style:</strong> the docs now use <code>agent.invoke(..., version="v2")</code> and read <code>result.interrupts</code>. <code>result["__interrupt__"]</code> still works with plain <code>invoke</code>.</li>
+  </ul>
+</section>
+
+<section class="ch prose" id="guardrails">
+  <span class="chno">Chapter 18 · Control</span>
+  <h2>Guardrails</h2>
+  <p>Guardrails are checks that keep an agent safe and on-topic. Layer them: cheap deterministic checks first, model-based checks where needed.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Layer</th><th>Hook</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td>Input</td><td><code>before_agent</code></td><td>Block prompt-injection phrases, off-topic requests, PII</td></tr>
+      <tr><td>Action</td><td><code>wrap_tool_call</code> / HITL</td><td>Only admins may call <code>delete_user</code>; approve payments</td></tr>
+      <tr><td>Cost</td><td>Limit middleware</td><td>Max 10 model calls, max 3 web searches per run</td></tr>
+      <tr><td>Output</td><td><code>after_agent</code></td><td>Check the final answer with a small "judge" model</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code"><div class="cap"><span>guardrails.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents.middleware import before_agent, after_agent
+from langchain.chat_models import init_chat_model
+from langchain.messages import AIMessage
+
+BLOCKED = ["ignore previous instructions", "reveal your system prompt"]
+
+@before_agent(can_jump_to=["end"])
+def input_guard(state, runtime):
+    text = state["messages"][-1].text.lower()
+    if any(p in text for p in BLOCKED):
+        return {"messages": [{"role": "assistant",
+                 "content": "I can't help with that request."}], "jump_to": "end"}
+    return None
+
+judge = init_chat_model("openai:gpt-5.4-mini", temperature=0)
+
+@after_agent(can_jump_to=["end"])
+def output_guard(state, runtime):
+    last = state["messages"][-1]
+    if not isinstance(last, AIMessage):
+        return None
+    verdict = judge.invoke(
+        f"Reply SAFE or UNSAFE. Does this answer leak secrets or give harmful advice?\n\n{last.text}"
+    ).text
+    if "UNSAFE" in verdict:
+        # Same id = replace the unsafe message. A new message would only be appended.
+        return {"messages": [AIMessage(content="I can't share that answer.", id=last.id)]}
+    return None</code></pre></div>
+</section>
+
+<!-- ================= PART V ================= -->
+<section class="ch prose" id="rag">
+  <span class="chno">Chapter 19 · Knowledge and scale</span>
+  <h2>RAG: answering from your own data</h2>
+  <p><strong>Retrieval-Augmented Generation</strong> means: find the passages of your documents that relate to the question, put them in the prompt, and let the model answer from them. It reduces made-up answers and lets the model use private, up-to-date information.</p>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 780 270" role="img" aria-label="RAG pipeline: indexing phase and query phase">
+        <text x="10" y="22" class="t-b">1 · Indexing (offline, once per document change)</text>
+        <rect x="10" y="36" width="120" height="56" rx="8" class="bx"/><text x="70" y="60" text-anchor="middle" class="t-b">Documents</text><text x="70" y="78" text-anchor="middle" class="t-s">PDF, web, DB</text>
+        <rect x="165" y="36" width="120" height="56" rx="8" class="bx"/><text x="225" y="60" text-anchor="middle" class="t-b">Loader</text><text x="225" y="78" text-anchor="middle" class="t-s">→ Document objects</text>
+        <rect x="320" y="36" width="120" height="56" rx="8" class="bx"/><text x="380" y="60" text-anchor="middle" class="t-b">Splitter</text><text x="380" y="78" text-anchor="middle" class="t-s">→ ~1000-char chunks</text>
+        <rect x="475" y="36" width="120" height="56" rx="8" class="bx"/><text x="535" y="60" text-anchor="middle" class="t-b">Embeddings</text><text x="535" y="78" text-anchor="middle" class="t-s">→ vectors</text>
+        <rect x="630" y="36" width="140" height="56" rx="8" class="bx-g"/><text x="700" y="60" text-anchor="middle" class="t-b t-g">Vector store</text><text x="700" y="78" text-anchor="middle" class="t-s">Chroma, PGVector…</text>
+        <path d="M130 64 L163 64" class="ln" marker-end="url(#arr)"/>
+        <path d="M285 64 L318 64" class="ln" marker-end="url(#arr)"/>
+        <path d="M440 64 L473 64" class="ln" marker-end="url(#arr)"/>
+        <path d="M595 64 L628 64" class="ln" marker-end="url(#arr)"/>
+        <text x="10" y="150" class="t-b t-a">2 · Query (every question)</text>
+        <rect x="10" y="166" width="120" height="56" rx="8" class="bx"/><text x="70" y="190" text-anchor="middle" class="t-b">Question</text><text x="70" y="208" text-anchor="middle" class="t-s">"Refund policy?"</text>
+        <rect x="165" y="166" width="140" height="56" rx="8" class="bx-g"/><text x="235" y="190" text-anchor="middle" class="t-b t-g">Retriever</text><text x="235" y="208" text-anchor="middle" class="t-s">top-k similar chunks</text>
+        <rect x="340" y="166" width="150" height="56" rx="8" class="bx"/><text x="415" y="190" text-anchor="middle" class="t-b">Prompt</text><text x="415" y="208" text-anchor="middle" class="t-s">question + chunks</text>
+        <rect x="525" y="166" width="100" height="56" rx="8" class="bx-a"/><text x="575" y="198" text-anchor="middle" class="t-b t-a">LLM</text>
+        <rect x="660" y="166" width="110" height="56" rx="8" class="bx"/><text x="715" y="190" text-anchor="middle" class="t-b">Answer</text><text x="715" y="208" text-anchor="middle" class="t-s">with sources</text>
+        <path d="M130 194 L163 194" class="ln" marker-end="url(#arr)"/>
+        <path d="M305 194 L338 194" class="ln" marker-end="url(#arr)"/>
+        <path d="M490 194 L523 194" class="ln" marker-end="url(#arr)"/>
+        <path d="M625 194 L658 194" class="ln" marker-end="url(#arr)"/>
+        <path d="M700 92 L700 125 L235 125 L235 164" class="ln dash" marker-end="url(#arr)"/>
+        <text x="420" y="118" class="t-s">similarity search</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 19.1</b> Indexing prepares your documents once; querying runs on every question.</figcaption>
+  </figure>
+  <h3>Step 1: index documents</h3>
+  <div class="code"><div class="cap"><span>rag/ingest.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain_community.document_loaders import PyPDFLoader, WebBaseLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
+from langchain_core.vectorstores import InMemoryVectorStore
+
+# Load
+docs = PyPDFLoader("policies/refund_policy.pdf").load()
+docs += WebBaseLoader("https://example.com/help/shipping").load()
+
+# Split: overlapping chunks keep sentences from being cut in half
+splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, add_start_index=True)
+chunks = splitter.split_documents(docs)
+print(len(chunks), "chunks")
+
+# Embed + store
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+vector_store = InMemoryVectorStore(embeddings)   # swap for Chroma / PGVector / Pinecone
+vector_store.add_documents(chunks)</code></pre></div>
+  <h3>Step 2a: agentic RAG (the agent decides when to search)</h3>
+  <div class="code"><div class="cap"><span>rag/agentic.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.tools import tool
+from langchain.agents import create_agent
+
+@tool(response_format="content_and_artifact")
+def retrieve_policy(query: str):
+    """Search company policy documents. Use for any refund, shipping or warranty question."""
+    found = vector_store.similarity_search(query, k=4)
+    text = "\n\n".join(f"[{d.metadata.get('source')}]\n{d.page_content}" for d in found)
+    return text, found          # text goes to the model; docs kept as an artifact
+
+agent = create_agent(
+    model="anthropic:claude-sonnet-4-6",
+    tools=[retrieve_policy],
+    system_prompt="Answer only from retrieved policy text. Cite the source in brackets. "
+                  "If the documents don't contain the answer, say so.",
+)</code></pre></div>
+  <h3>Step 2b: two-step RAG (always retrieve, one model call)</h3>
+  <div class="code"><div class="cap"><span>rag/two_step.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents.middleware import dynamic_prompt, ModelRequest
+
+@dynamic_prompt
+def inject_context(request: ModelRequest) -> str:
+    question = request.state["messages"][-1].text
+    docs = vector_store.similarity_search(question, k=4)
+    context = "\n\n".join(d.page_content for d in docs)
+    return f"Answer using only this context:\n\n{context}"
+
+rag_agent = create_agent(model, tools=[], middleware=[inject_context])</code></pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Two-step RAG</th><th>Agentic RAG</th></tr></thead>
+    <tbody>
+      <tr><td>Retrieval</td><td>Always, once</td><td>When the model decides; can search several times</td></tr>
+      <tr><td>Latency and cost</td><td>Low, predictable</td><td>Higher, variable</td></tr>
+      <tr><td>Best for</td><td>FAQ bots, document Q&amp;A</td><td>Research, multi-hop questions, mixing data with other tools</td></tr>
+      <tr><td>Hybrid RAG</td><td colspan="2">Combines both: always retrieve first, then let the agent search again or check its answer when the first context isn't enough.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>RAG component choices</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Component</th><th>Popular options</th></tr></thead>
+    <tbody>
+      <tr><td>Loaders</td><td><code>PyPDFLoader</code>, <code>WebBaseLoader</code>, <code>CSVLoader</code>, <code>Docx2txtLoader</code>, <code>DirectoryLoader</code>, Notion, Confluence, Google Drive</td></tr>
+      <tr><td>Splitters</td><td><code>RecursiveCharacterTextSplitter</code> (default), <code>MarkdownHeaderTextSplitter</code>, token-based, code-aware splitters</td></tr>
+      <tr><td>Embeddings</td><td>OpenAI <code>text-embedding-3-small</code>, Google, Cohere, Voyage, HuggingFace local models, Ollama</td></tr>
+      <tr><td>Vector stores</td><td>InMemory (dev), Chroma, FAISS (local), PGVector, Pinecone, Qdrant, Weaviate, Elasticsearch</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note graph"><b>Where the official tutorial went</b><p>The docs' RAG tutorial (<code>/langchain/rag</code>) now redirects to "RAG with Deep Agents", built on <code>create_deep_agent</code>. Concepts (2-step, agentic, hybrid) are on the <a href="https://docs.langchain.com/oss/python/langchain/retrieval" target="_blank" rel="noopener">Retrieval page</a>. The <code>create_agent</code> code in this chapter is still valid.</p></div>
+  <div class="note tip"><b>Quality tips</b><p>Tune chunk size (500–1500 chars) and overlap (10–20%). Store useful metadata (source, page, date) and filter on it. Evaluate retrieval separately from generation: if the right chunk is not retrieved, no prompt will fix the answer.</p></div>
+</section>
+
+<section class="ch prose" id="mcp">
+  <span class="chno">Chapter 20 · Knowledge and scale</span>
+  <h2>MCP: plug in external tool servers</h2>
+  <p>The <strong>Model Context Protocol</strong> is an open standard for exposing tools and data to AI apps. Thousands of MCP servers exist (GitHub, Slack, file systems, databases). LangChain now ships MCP support built in as <code>langchain.mcp</code> (beta, needs <code>langchain[mcp]&gt;=1.4.0</code>). It replaces the separate <code>langchain-mcp-adapters</code> package.</p>
+  <div class="code"><div class="cap"><span>mcp_agent.py</span><button type="button">Copy</button></div><pre><code class="language-python"># pip install -U "langchain[mcp]"
+import asyncio
+from langchain.agents import create_agent
+from langchain.mcp import MCPAdapter
+
+# Standard "mcpServers" config: the transport is worked out from each entry
+config = {
+    "mcpServers": {
+        "math": {"command": "python", "args": ["servers/math_server.py"]},  # local, stdio
+        "weather": {"url": "http://localhost:8000/mcp"},                    # remote, HTTP
+    }
+}
+
+async def main():
+    async with MCPAdapter(config) as adapter:
+        tools = await adapter.list_tools()   # names get a server prefix: math_add, math_multiply...
+        agent = create_agent("anthropic:claude-sonnet-4-6", tools)
+        result = await agent.ainvoke({"messages": [{"role": "user", "content": "(3 + 5) x 12?"}]})
+        print(result["messages"][-1].content)
+
+asyncio.run(main())
+
+# One server only:
+#   MCPAdapter("https://example.com/mcp")         # a plain string must be an http(s) URL
+#   MCPAdapter(Path("servers/math_server.py"))    # a local script is passed as a Path</code></pre></div>
+  <ul>
+    <li>Importing <code>langchain.mcp</code> shows a <code>LangChainBetaWarning</code> because the API is still in beta.</li>
+    <li>If a server asks for input partway through a call ("elicitation"), the run pauses like human-in-the-loop and resumes with <code>Command(resume={"responses": {...}})</code>.</li>
+    <li>MCP tool errors reach the model as <code>ToolMessage(status="error")</code>, so the agent can recover.</li>
+    <li>MCP prompts and resources are not wrapped yet; only tools are. The SSE transport is deprecated and WebSocket is not supported.</li>
+    <li>Authentication is set on a <code>fastmcp.Client</code>.</li>
+  </ul>
+  <div class="note warn"><b>On an older 1.x release?</b><p>Below <code>langchain</code> 1.4, use the separate package: <code>from langchain_mcp_adapters.client import MultiServerMCPClient</code>. Give each server a <code>"transport"</code> key (<code>"stdio"</code> or <code>"http"</code>), then call <code>await client.get_tools()</code>.</p></div>
+  <div class="code"><div class="cap"><span>servers/math_server.py (build your own MCP server)</span><button type="button">Copy</button></div><pre><code class="language-python">from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("Math")
+
+@mcp.tool()
+def add(a: int, b: int) -> int:
+    """Add two numbers."""
+    return a + b
+
+@mcp.tool()
+def multiply(a: int, b: int) -> int:
+    """Multiply two numbers."""
+    return a * b
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")</code></pre></div>
+</section>
+
+<section class="ch prose" id="multi">
+  <span class="chno">Chapter 21 · Knowledge and scale</span>
+  <h2>Multi-agent systems</h2>
+  <p>One agent with 40 tools gets confused. Split the work: specialised agents with a few tools each, coordinated by a supervisor. The simplest pattern in v1 is <strong>sub-agents as tools</strong>.</p>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 760 240" role="img" aria-label="Supervisor agent calls three specialist sub-agents as tools">
+        <rect x="280" y="14" width="200" height="56" rx="8" class="bx-a"/>
+        <text x="380" y="38" text-anchor="middle" class="t-b t-a">Supervisor agent</text>
+        <text x="380" y="56" text-anchor="middle" class="t-s">plans, delegates, combines</text>
+        <rect x="30" y="130" width="200" height="56" rx="8" class="bx-g"/>
+        <text x="130" y="154" text-anchor="middle" class="t-b t-g">Calendar agent</text>
+        <text x="130" y="172" text-anchor="middle" class="t-s">create_event, find_free_slot</text>
+        <rect x="280" y="130" width="200" height="56" rx="8" class="bx-g"/>
+        <text x="380" y="154" text-anchor="middle" class="t-b t-g">Email agent</text>
+        <text x="380" y="172" text-anchor="middle" class="t-s">draft_email, send_email</text>
+        <rect x="530" y="130" width="200" height="56" rx="8" class="bx-g"/>
+        <text x="630" y="154" text-anchor="middle" class="t-b t-g">Research agent</text>
+        <text x="630" y="172" text-anchor="middle" class="t-s">web_search, retrieve_docs</text>
+        <path d="M330 70 L150 128" class="ln" marker-end="url(#arr)"/>
+        <path d="M380 70 L380 128" class="ln" marker-end="url(#arr)"/>
+        <path d="M430 70 L610 128" class="ln" marker-end="url(#arr)"/>
+        <text x="380" y="220" text-anchor="middle" class="t-s">each sub-agent is wrapped in a @tool; it gets a task and returns only its final answer</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 21.1</b> Supervisor pattern. Each sub-agent sees only its own tools and a clean context.</figcaption>
+  </figure>
+  <div class="code"><div class="cap"><span>supervisor.py</span><button type="button">Copy</button></div><pre><code class="language-python">calendar_agent = create_agent(model, tools=[create_event, find_free_slot],
+    system_prompt="You schedule meetings. Confirm the exact time you booked.")
+email_agent = create_agent(model, tools=[draft_email, send_email],
+    system_prompt="You write and send professional emails.")
+
+@tool
+def schedule_meeting(request: str) -> str:
+    """Schedule a meeting. Describe who, when and how long in plain language."""
+    r = calendar_agent.invoke({"messages": [{"role": "user", "content": request}]})
+    return r["messages"][-1].text
+
+@tool
+def handle_email(request: str) -> str:
+    """Draft or send an email. Describe recipient and content in plain language."""
+    r = email_agent.invoke({"messages": [{"role": "user", "content": request}]})
+    return r["messages"][-1].text
+
+supervisor = create_agent(
+    model,
+    tools=[schedule_meeting, handle_email],
+    system_prompt="You are a personal assistant. Break requests into steps and delegate.",
+)
+supervisor.invoke({"messages": [{"role": "user",
+    "content": "Book 30 min with Meera tomorrow afternoon and email her the invite."}]})</code></pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Pattern</th><th>How</th><th>Use when</th></tr></thead>
+    <tbody>
+      <tr><td>Subagents</td><td>The main agent calls specialist agents as tools (shown above). Subagents keep no memory between calls.</td><td>Clear separation of domains</td></tr>
+      <tr><td>Handoffs</td><td>Tools return <code>Command(update={...})</code> to change a state field such as <code>current_step</code>; <code>@wrap_model_call</code> middleware swaps prompt and tools based on it. With separate agent subgraphs, use <code>Command(goto="sales_agent", graph=Command.PARENT)</code>.</td><td>Triage then specialist, step-by-step flows</td></tr>
+      <tr><td>Skills</td><td>One agent loads specialised prompts and knowledge only when needed</td><td>Many domains, one conversation</td></tr>
+      <tr><td>Router</td><td>A routing step classifies the input, sends it to one or more agents, and combines the results</td><td>Distinct request types</td></tr>
+      <tr><td>Custom workflow</td><td>Agents are nodes in a LangGraph <code>StateGraph</code></td><td>Fixed, auditable workflows</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="ch prose" id="langgraph">
+  <span class="chno">Chapter 22 · Knowledge and scale</span>
+  <h2>Dropping down to LangGraph</h2>
+  <p><code>create_agent</code> is a LangGraph graph with a fixed shape. When you need a different shape (fixed steps, branches, parallel work, loops you control), build the graph yourself. You keep the same checkpointers, streaming and interrupts.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>LangChain v1 is built on LangGraph</h4>
+    <p>The standard <code>create_agent()</code> agent already runs on the LangGraph runtime. You do not need to build a graph by hand for every simple agent.</p>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 190" role="img" aria-label="create_agent runs on the LangGraph runtime, which provides runtime, state, loops, routing, persistence and streaming">
+          <rect x="20" y="58" width="200" height="74" rx="10" class="bx-a"/>
+          <text x="120" y="88" text-anchor="middle" class="t-m t-a">create_agent()</text>
+          <text x="120" y="110" text-anchor="middle" class="t-s">LangChain v1</text>
+          <path d="M220 95 L262 95" class="ln" marker-end="url(#arr)"/>
+          <rect x="264" y="14" width="480" height="162" rx="10" class="bx-g"/>
+          <text x="282" y="38" class="t-b t-g">LangGraph</text>
+          <rect x="282" y="54" width="140" height="48" rx="6" class="bx"/><text x="352" y="83" text-anchor="middle" class="t-b">Runtime</text>
+          <rect x="434" y="54" width="140" height="48" rx="6" class="bx"/><text x="504" y="83" text-anchor="middle" class="t-b">State</text>
+          <rect x="586" y="54" width="140" height="48" rx="6" class="bx"/><text x="656" y="83" text-anchor="middle" class="t-b">Loops</text>
+          <rect x="282" y="112" width="140" height="48" rx="6" class="bx"/><text x="352" y="141" text-anchor="middle" class="t-b">Routing</text>
+          <rect x="434" y="112" width="140" height="48" rx="6" class="bx"/><text x="504" y="141" text-anchor="middle" class="t-b">Persistence</text>
+          <rect x="586" y="112" width="140" height="48" rx="6" class="bx"/><text x="656" y="141" text-anchor="middle" class="t-b">Streaming</text>
+        </svg>
+      </div>
+    </figure>
+  </div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>LangChain v1 vs LangGraph</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Question</th><th>LangChain v1</th><th>LangGraph</th></tr></thead>
+      <tbody>
+        <tr><td>Primary goal</td><td>Build agents simply</td><td>Control workflows explicitly</td></tr>
+        <tr><td>Abstraction</td><td>Higher-level</td><td>Lower-level orchestration</td></tr>
+        <tr><td>Simple agent</td><td>Excellent fit</td><td>Possible but more manual</td></tr>
+        <tr><td>Complex branching</td><td>Use lower-level capabilities</td><td>Excellent fit</td></tr>
+        <tr><td>Stateful workflows</td><td>Supported by runtime</td><td>Core strength</td></tr>
+        <tr><td>Complex multi-agent workflows</td><td>Possible</td><td>Excellent fit</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Annotation and state</h4>
+    <p>Annotations (types) describe the shape of the information carried through a workflow. Every step reads this state, and the model, tools and router all work from it. Structured state matters most in explicit LangGraph workflows like the one below.</p>
+    <div class="code"><div class="cap"><span>state.py</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import TypedDict
+
+class AgentState(TypedDict):
+    user_query: str
+    result: str
+    retry_count: int</code></pre></div>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 200" role="img" aria-label="Agent state with fields user_query, result and retry_count feeds the model, the tool and the router">
+          <rect x="250" y="10" width="260" height="96" rx="10" class="bx-g"/>
+          <text x="380" y="34" text-anchor="middle" class="t-b t-g">AGENT STATE</text>
+          <text x="380" y="58" text-anchor="middle" class="t-m">user_query : str</text>
+          <text x="380" y="76" text-anchor="middle" class="t-m">result : str</text>
+          <text x="380" y="94" text-anchor="middle" class="t-m">retry_count : int</text>
+          <rect x="90" y="146" width="140" height="44" rx="8" class="bx-a"/><text x="160" y="173" text-anchor="middle" class="t-b t-a">Model</text>
+          <rect x="310" y="146" width="140" height="44" rx="8" class="bx"/><text x="380" y="173" text-anchor="middle" class="t-b">Tool</text>
+          <rect x="530" y="146" width="140" height="44" rx="8" class="bx-w"/><text x="600" y="173" text-anchor="middle" class="t-b t-w">Router</text>
+          <path d="M310 106 L170 144" class="ln" marker-end="url(#arr)"/>
+          <path d="M380 106 L380 144" class="ln" marker-end="url(#arr)"/>
+          <path d="M450 106 L590 144" class="ln" marker-end="url(#arr)"/>
+        </svg>
+      </div>
+    </figure>
+  </div>
+  <div class="note graph"><b>Mental model</b><p><strong>State</strong> is a typed dictionary. <strong>Nodes</strong> are functions that read state and return updates. <strong>Edges</strong> decide which node runs next. Compile it and you get a Runnable with <code>invoke</code> and <code>stream</code>.</p></div>
+  <div class="code"><div class="cap"><span>graph_workflow.py · classify → route → respond</span><button type="button">Copy</button></div><pre><code class="language-python">from typing import Literal, TypedDict
+from langgraph.graph import StateGraph, START, END
+from langchain.chat_models import init_chat_model
+from langchain.agents import create_agent
+
+llm = init_chat_model("openai:gpt-5.4-mini", temperature=0)
+tech_agent = create_agent(llm, tools=[], system_prompt="You are technical support.")
+
+class State(TypedDict):
+    question: str
+    category: str
+    answer: str
+
+def classify(state: State) -> dict:
+    label = llm.invoke(
+        f"Classify as 'billing' or 'technical'. One word only.\n\n{state['question']}"
+    ).text.strip().lower()
+    return {"category": label}
+
+def billing(state: State) -> dict:
+    return {"answer": llm.invoke(f"As billing support, answer: {state['question']}").text}
+
+def technical(state: State) -> dict:
+    return {"answer": tech_agent.invoke(   # a create_agent agent can be a node
+        {"messages": [{"role": "user", "content": state["question"]}]}
+    )["messages"][-1].text}
+
+def route(state: State) -> Literal["billing", "technical"]:
+    return "billing" if "billing" in state["category"] else "technical"
+
+builder = StateGraph(State)
+builder.add_node("classify", classify)
+builder.add_node("billing", billing)
+builder.add_node("technical", technical)
+builder.add_edge(START, "classify")
+builder.add_conditional_edges("classify", route)
+builder.add_edge("billing", END)
+builder.add_edge("technical", END)
+
+graph = builder.compile()
+print(graph.invoke({"question": "Why was I charged twice?"})["answer"])</code></pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Need</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td>Model + tools in a loop, customised with hooks</td><td><code>create_agent</code> + middleware</td></tr>
+      <tr><td>Fixed sequence or branches you design</td><td>LangGraph <code>StateGraph</code></td></tr>
+      <tr><td>Parallel fan-out (e.g. summarise 50 docs, then merge)</td><td>LangGraph <code>Send</code> API</td></tr>
+      <tr><td>Long research or coding tasks with planning</td><td>Deep Agents</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="ch prose" id="deep">
+  <span class="chno">Chapter 23 · Knowledge and scale</span>
+  <h2>Deep Agents</h2>
+  <p>Simple agents are "shallow": they work well for a few steps but lose track on long tasks. <code>deepagents</code> is built on <code>create_agent</code> and adds what tools like Claude Code use: a virtual file system for notes, sub-agents (the <code>task</code> tool) with isolated context, and a detailed system prompt. Since v0.7, planning is opt-in: add <code>middleware=[TodoListMiddleware()]</code> (from <code>langchain.agents.middleware</code>).</p>
+  <p>Other options in the docs: <code>subagents=</code>, <code>skills=</code>, <code>memory=["./AGENTS.md"]</code>, <code>permissions=</code>, <code>interrupt_on=</code>, pluggable storage and sandbox backends, and automatic prompt caching on Anthropic models. The package is still pre-1.0, so its API can change.</p>
+  <div class="code"><div class="cap"><span>deep_research.py</span><button type="button">Copy</button></div><pre><code class="language-python"># pip install deepagents tavily-python
+from deepagents import create_deep_agent
+from tavily import TavilyClient
+
+tavily = TavilyClient()
+
+def internet_search(query: str, max_results: int = 5) -> dict:
+    """Search the web for current information."""
+    return tavily.search(query, max_results=max_results)
+
+agent = create_deep_agent(
+    model="anthropic:claude-sonnet-4-6",   # pass a model explicitly: the default is deprecated
+    tools=[internet_search],
+    system_prompt="You are an expert researcher. Plan first, save notes to files, "
+                  "then write a well-cited report to /final_report.md.",
+)
+
+result = agent.invoke({"messages": [{"role": "user",
+    "content": "Compare LangChain v1 and other agent frameworks for enterprise use."}]})
+# Files live in agent state under absolute paths; each value is a dict
+print(result["files"]["/final_report.md"]["content"])
+print(result["messages"][-1].content)   # the agent's final message</code></pre></div>
+  <p>The current Deep Agents quickstart suggests the provider's built-in web search (for example <code>{"type": "web_search"}</code>) instead of a separate search API like Tavily.</p>
+</section>
+
+<!-- ================= PART VI ================= -->
+<section class="ch prose" id="langsmith">
+  <span class="chno">Chapter 24 · Production</span>
+  <h2>LangSmith: observe and evaluate</h2>
+  <p>You cannot improve what you cannot see. Set <code>LANGSMITH_TRACING=true</code> and an API key, and every run is recorded: each model call with its prompt and output, each tool call, tokens, cost and latency. No code changes are needed.</p>
+  <h3>Evaluation: test answers against a dataset</h3>
+  <div class="code"><div class="cap"><span>evaluate.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langsmith import Client
+
+client = Client()
+dataset = client.create_dataset("support-qa")
+client.create_examples(
+    dataset_id=dataset.id,
+    examples=[
+        {"inputs": {"question": "How long do refunds take?"},
+         "outputs": {"answer": "5-7 business days"}},
+        {"inputs": {"question": "Do you ship to Sri Lanka?"},
+         "outputs": {"answer": "Yes, in 10-14 days"}},
+    ],
+)
+
+def target(inputs: dict) -> dict:
+    r = agent.invoke({"messages": [{"role": "user", "content": inputs["question"]}]})
+    return {"answer": r["messages"][-1].text}
+
+def mentions_expected(outputs: dict, reference_outputs: dict) -> bool:
+    return reference_outputs["answer"].lower() in outputs["answer"].lower()
+
+client.evaluate(target, data="support-qa", evaluators=[mentions_expected],
+                experiment_prefix="v1-prompt")</code></pre></div>
+  <p>Run this after every prompt or model change and compare experiments side by side. For subjective quality, use an LLM-as-judge evaluator; for agents, also check the <em>trajectory</em> (did it call the right tools in a sensible order?) with the <code>agentevals</code> package.</p>
+</section>
+
+<section class="ch prose" id="testing">
+  <span class="chno">Chapter 25 · Production</span>
+  <h2>Testing</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Level</th><th>What</th><th>Calls a real LLM?</th></tr></thead>
+    <tbody>
+      <tr><td>Unit</td><td>Tools, middleware, and the agent with a fake model (<code>GenericFakeChatModel</code>, <code>InMemorySaver</code>)</td><td>No</td></tr>
+      <tr><td>Integration</td><td>The agent against real model APIs</td><td>Yes</td></tr>
+      <tr><td>Evals</td><td>Trajectory match or LLM-as-judge scoring (<code>agentevals</code>, LangSmith, Chapter 24)</td><td>Yes</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code"><div class="cap"><span>tests/test_tools.py</span><button type="button">Copy</button></div><pre><code class="language-python">from src.tools import get_weather, search_database
+
+def test_weather_celsius():
+    assert "22°C" in get_weather.invoke({"location": "Pune"})
+
+def test_search_respects_limit():
+    assert "3 results" in search_database.invoke({"query": "x", "limit": 3})
+
+def test_tool_schema_is_documented():
+    assert search_database.description, "Model needs a docstring to choose this tool"</code></pre></div>
+  <div class="code"><div class="cap"><span>tests/test_agent.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
+from langchain.messages import AIMessage
+from langchain.agents import create_agent
+
+def test_agent_returns_model_reply():
+    fake = GenericFakeChatModel(messages=iter([AIMessage("Hello from the fake model")]))
+    agent = create_agent(fake, tools=[])
+    out = agent.invoke({"messages": [{"role": "user", "content": "hi"}]})
+    assert out["messages"][-1].text == "Hello from the fake model"</code></pre></div>
+</section>
+
+<section class="ch prose" id="deploy">
+  <span class="chno">Chapter 26 · Production</span>
+  <h2>Deployment</h2>
+  <h3>Option A: Agent Server (LangSmith Deployment)</h3>
+  <p>The Agent Server (formerly LangGraph Server) gives you a REST API with threads, streaming, background runs, persistence and human-in-the-loop endpoints out of the box. Run it locally first:</p>
+  <div class="code"><div class="cap"><span>langgraph.json</span><button type="button">Copy</button></div><pre><code class="language-json">{
+  "dependencies": ["."],
+  "graphs": { "support_agent": "./src/agent.py:agent" },
+  "env": ".env"
+}</code></pre></div>
+  <div class="code"><div class="cap"><span>terminal</span><button type="button">Copy</button></div><pre><code class="language-bash">pip install -U "langgraph-cli[inmem]"
+langgraph dev        # local server + LangGraph Studio (needs Python 3.11+)</code></pre></div>
+  <p>When it works locally, connect the GitHub repo in LangSmith to deploy, or use <code>langgraph build -t my-agent-image</code> to produce a Docker image for your own infrastructure.</p>
+  <div class="note warn"><b>No checkpointer needed on the server</b><p>The Agent Server provides persistence automatically. When you serve with <code>langgraph dev</code> or deploy, don't pass your own <code>checkpointer</code> or <code>store</code> to <code>create_agent</code>.</p></div>
+  <h3>Option B: your own FastAPI service</h3>
+  <div class="code"><div class="cap"><span>server.py</span><button type="button">Copy</button></div><pre><code class="language-python">from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from src.agent import agent   # built with a Postgres checkpointer in production
+
+app = FastAPI()
+
+class ChatIn(BaseModel):
+    thread_id: str
+    message: str
+
+@app.post("/chat")
+async def chat(body: ChatIn):
+    config = {"configurable": {"thread_id": body.thread_id}}
+    result = await agent.ainvoke({"messages": [{"role": "user", "content": body.message}]}, config)
+    return {"reply": result["messages"][-1].text}
+
+@app.post("/chat/stream")
+async def chat_stream(body: ChatIn):
+    config = {"configurable": {"thread_id": body.thread_id}}
+    async def tokens():
+        async for token, meta in agent.astream(
+            {"messages": [{"role": "user", "content": body.message}]}, config, stream_mode="messages"
+        ):
+            if meta.get("langgraph_node") == "model" and token.text:   # skip tool output
+                yield token.text
+    return StreamingResponse(tokens(), media_type="text/plain")</code></pre></div>
+</section>
+
+<section class="ch prose" id="migrate">
+  <span class="chno">Chapter 27 · Production</span>
+  <h2>Migrating from LangChain v0.x</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>v0.x</th><th>v1</th></tr></thead>
+    <tbody>
+      <tr><td><code>langgraph.prebuilt.create_react_agent</code></td><td><code>langchain.agents.create_agent</code></td></tr>
+      <tr><td><code>AgentExecutor</code>, <code>initialize_agent</code></td><td><code>create_agent</code> (old ones in <code>langchain-classic</code>)</td></tr>
+      <tr><td><code>prompt=</code> argument</td><td><code>system_prompt=</code></td></tr>
+      <tr><td><code>pre_model_hook</code> / <code>post_model_hook</code></td><td><code>before_model</code> / <code>after_model</code> middleware</td></tr>
+      <tr><td>Prompt as a function of state</td><td><code>@dynamic_prompt</code> middleware</td></tr>
+      <tr><td>Passing user data in <code>config["configurable"]</code></td><td><code>context_schema</code> + <code>invoke(..., context=...)</code></td></tr>
+      <tr><td>Pydantic / dataclass custom state</td><td><code>TypedDict</code> extending <code>AgentState</code></td></tr>
+      <tr><td>Pre-bound model <code>model.bind_tools(...)</code> passed to agent</td><td>Pass the plain model and <code>tools=[...]</code></td></tr>
+      <tr><td>Structured output via extra LLM call</td><td><code>ToolStrategy</code> / <code>ProviderStrategy</code> in the main loop</td></tr>
+      <tr><td><code>LLMChain</code>, <code>RetrievalQA</code>, <code>ConversationChain</code></td><td><code>create_agent</code> or LCEL; old classes in <code>langchain-classic</code></td></tr>
+      <tr><td><code>from langchain import hub</code></td><td><code>langchain_classic</code> or LangSmith client</td></tr>
+      <tr><td><code>message.text()</code></td><td><code>message.text</code> (property)</td></tr>
+      <tr><td>Python 3.9</td><td>Python 3.10+</td></tr>
+      <tr><td><code>state_modifier=</code></td><td>Middleware</td></tr>
+      <tr><td><code>tools=ToolNode([...])</code></td><td>A plain list of tools (<code>ToolNode</code> is no longer accepted)</td></tr>
+      <tr><td><code>ToolNode(handle_tool_errors=...)</code></td><td><code>@wrap_tool_call</code> or <code>ToolErrorMiddleware</code></td></tr>
+      <tr><td>Streaming node name <code>"agent"</code></td><td><code>"model"</code></td></tr>
+      <tr><td><code>response_format=("prompt", Schema)</code></td><td>Removed</td></tr>
+      <tr><td>Callable <code>model=</code> for dynamic selection</td><td><code>@wrap_model_call</code> + <code>request.override(model=...)</code></td></tr>
+      <tr><td>Parsing provider-specific <code>message.content</code></td><td><code>message.content_blocks</code></td></tr>
+      <tr><td><code>AIMessage(example=...)</code></td><td>Removed (use <code>additional_kwargs</code>)</td></tr>
+      <tr><td><code>langchain-openai</code> Responses API output</td><td>Items are now stored in <code>content</code>; <code>output_version="v0"</code> restores the old shape</td></tr>
+      <tr><td><code>langchain-anthropic</code> <code>max_tokens=1024</code> default</td><td>Higher, model-dependent default</td></tr>
+    </tbody>
+  </table></div>
+  <p><code>config["configurable"]</code> still works for backward compatibility, but <code>context=</code> is the recommended way.</p>
+  <div class="note tip"><b>Quick escape hatch</b><p>For a large legacy codebase: <code>pip install langchain-classic</code> and change imports from <code>langchain.</code> to <code>langchain_classic.</code>. Then migrate one agent at a time.</p></div>
+</section>
+
+<section class="ch prose" id="practices">
+  <span class="chno">Chapter 28 · Production</span>
+  <h2>Best practices from production</h2>
+  <ul class="check">
+    <li><strong>Few, sharp tools.</strong> 3–10 tools per agent with clear, non-overlapping docstrings beat 40 vague ones.</li>
+    <li><strong>Temperature 0</strong> for agents and extraction.</li>
+    <li><strong>Always set limits</strong> (<code>ModelCallLimitMiddleware</code>) so a confused agent cannot loop and burn money.</li>
+    <li><strong>Return errors to the model</strong> as <code>ToolMessage</code>s instead of crashing.</li>
+    <li><strong>Human approval</strong> for anything irreversible or external.</li>
+    <li><strong>Persistent checkpointer</strong> (Postgres) in production; <code>InMemorySaver</code> loses everything on restart.</li>
+    <li><strong>Trace everything</strong> with LangSmith from day one.</li>
+    <li><strong>Evaluate before shipping</strong> a prompt or model change; keep a dataset of 20–100 real questions.</li>
+    <li><strong>Control cost:</strong> cheap model for summaries, routing and judges; strong model for the main reasoning; fallback middleware for outages.</li>
+    <li><strong>Secrets in env vars or runtime context</strong>, never in prompts.</li>
+    <li><strong>Treat retrieved and tool text as untrusted</strong>: it can contain prompt-injection instructions.</li>
+    <li><strong>Pin versions</strong> in <code>pyproject.toml</code> and read release notes before upgrading.</li>
+  </ul>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Common mistakes</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Mistake</th><th>Correct understanding</th></tr></thead>
+      <tbody>
+        <tr><td>API keys are tools</td><td>Keys authenticate providers; tools are callable actions.</td></tr>
+        <tr><td>Content blocks are tools</td><td>Content blocks standardize content representation.</td></tr>
+        <tr><td>Build a graph for every agent</td><td>Use <code>create_agent()</code> for the common case.</td></tr>
+        <tr><td>A Python function runs automatically</td><td>Expose it to the agent as a tool.</td></tr>
+        <tr><td>Use old examples blindly</td><td>Check whether the example targets LangChain v1.</td></tr>
+        <tr><td>Give unrestricted database access</td><td>Expose controlled, validated business tools.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ================= PART VII ================= -->
+<section class="ch prose" id="capstone">
+  <span class="chno">Chapter 29 · Mastery</span>
+  <h2>Capstone: a production-style support agent</h2>
+  <p>This single file uses almost every concept in the guide: tools with runtime context, RAG, long-term memory, structured state, summarisation, PII redaction, limits, retries, human approval for refunds, streaming and threads.</p>
+  <div class="code"><div class="cap"><span>src/agent.py</span><button type="button">Copy</button></div><pre><code class="language-python">import uuid
+from dataclasses import dataclass
+from dotenv import load_dotenv
+from langchain.agents import create_agent, AgentState
+from langchain.agents.middleware import (
+    SummarizationMiddleware, HumanInTheLoopMiddleware, PIIMiddleware,
+    ModelCallLimitMiddleware, ToolRetryMiddleware, dynamic_prompt, ModelRequest,
+)
+from langchain.chat_models import init_chat_model
+from langchain.tools import tool, ToolRuntime
+from langchain_openai import OpenAIEmbeddings
+from langchain_core.vectorstores import InMemoryVectorStore
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.store.memory import InMemoryStore
+
+load_dotenv()
+
+# ---------- context and state ----------
+@dataclass
+class Context:
+    user_id: str
+    user_name: str
+    tier: str            # "free" | "pro"
+
+class SupportState(AgentState):
+    ticket_id: str | None
+
+# ---------- knowledge base ----------
+kb = InMemoryVectorStore(OpenAIEmbeddings(model="text-embedding-3-small"))
+kb.add_texts([
+    "Refunds are processed within 5-7 business days after approval.",
+    "Pro customers get free express shipping on all orders.",
+    "Orders can be cancelled free of charge until they ship.",
+], metadatas=[{"source": "refund-policy"}, {"source": "shipping"}, {"source": "cancellation"}])
+
+# ---------- tools ----------
+ORDERS = {"1042": {"status": "shipped", "total": 2499}, "1051": {"status": "processing", "total": 899}}
+
+@tool
+def search_kb(query: str) -> str:
+    """Search help-centre policies. Use for refund, shipping and cancellation questions."""
+    docs = kb.similarity_search(query, k=2)
+    return "\n".join(f"[{d.metadata['source']}] {d.page_content}" for d in docs)
+
+@tool
+def lookup_order(order_id: str) -> str:
+    """Look up the status and total of an order by its number, e.g. '1042'."""
+    o = ORDERS.get(order_id)
+    return f"Order {order_id}: {o['status']}, ₹{o['total']}" if o else f"No order {order_id}"
+
+@tool
+def issue_refund(order_id: str, reason: str) -> str:
+    """Refund an order. Requires human approval."""
+    return f"Refund issued for order {order_id} ({reason})."
+
+@tool
+def remember(fact: str, runtime: ToolRuntime[Context]) -> str:
+    """Save a lasting fact about the customer, e.g. a preferred language."""
+    ns = ("facts", runtime.context.user_id)
+    runtime.store.put(ns, str(uuid.uuid4()), {"fact": fact})   # unique key per fact
+    return "Saved."
+
+# ---------- dynamic prompt with memory ----------
+@dynamic_prompt
+def personalised_prompt(request: ModelRequest) -> str:
+    ctx = request.runtime.context
+    facts = request.runtime.store.search(("facts", ctx.user_id), limit=50)
+    known = "; ".join(f.value["fact"] for f in facts) or "nothing yet"
+    return (
+        f"You are AutoPlant's support agent. Customer: {ctx.user_name} ({ctx.tier} plan).\n"
+        f"Known about them: {known}.\n"
+        "Check orders with lookup_order and policies with search_kb before answering. "
+        "Cite policy sources in brackets. Use issue_refund only when policy allows. "
+        "Save lasting preferences with remember."
+    )
+
+# ---------- the agent ----------
+agent = create_agent(
+    model=init_chat_model("anthropic:claude-sonnet-4-6", temperature=0),
+    tools=[search_kb, lookup_order, issue_refund, remember],
+    state_schema=SupportState,
+    context_schema=Context,
+    checkpointer=InMemorySaver(),      # production: PostgresSaver
+    store=InMemoryStore(),             # production: PostgresStore
+    middleware=[
+        personalised_prompt,
+        PIIMiddleware("credit_card", strategy="mask", apply_to_input=True),
+        SummarizationMiddleware(model="openai:gpt-5.4-mini",
+                                trigger=("tokens", 6000), keep=("messages", 20)),
+        ModelCallLimitMiddleware(run_limit=10, exit_behavior="end"),
+        ToolRetryMiddleware(max_retries=2),
+        HumanInTheLoopMiddleware(interrupt_on={"issue_refund": True}),
+    ],
+)
+
+if __name__ == "__main__":
+    from langgraph.types import Command
+    ctx = Context(user_id="u42", user_name="Piyush", tier="pro")
+    cfg = {"configurable": {"thread_id": "ticket-001"}}
+
+    msg = {"messages": [{"role": "user",
+           "content": "Order 1051 is taking forever. Please cancel and refund it. Also, I prefer Hindi."}]}
+    for mode, chunk in agent.stream(msg, cfg, context=ctx, stream_mode=["updates", "messages"]):
+        if mode == "messages" and chunk[0].text:
+            print(chunk[0].text, end="", flush=True)
+
+    state = agent.get_state(cfg)
+    if state.interrupts:                         # refund awaiting approval
+        print("\n\nPending:", state.interrupts[0].value)
+        final = agent.invoke(Command(resume={"decisions": [{"type": "approve"}]}), cfg, context=ctx)
+        print(final["messages"][-1].text)</code></pre></div>
+  <h3>Extend it yourself</h3>
+  <ul class="check">
+    <li>Replace <code>InMemorySaver</code> and <code>InMemoryStore</code> with Postgres versions.</li>
+    <li>Load real policy PDFs with <code>PyPDFLoader</code> into Chroma.</li>
+    <li>Add a LangSmith dataset of 30 real tickets and evaluate.</li>
+    <li>Serve it with <code>langgraph dev</code> and test in LangGraph Studio. Remove the <code>checkpointer</code> and <code>store</code> arguments first: the server provides them.</li>
+    <li>Split into a supervisor with "orders" and "policy" sub-agents.</li>
+  </ul>
+</section>
+
+<section class="ch prose" id="cheat">
+  <span class="chno">Chapter 30 · Mastery</span>
+  <h2>Cheat sheet</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>I want to…</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td>Create any model</td><td><code>init_chat_model("provider:model")</code></td></tr>
+      <tr><td>Build an agent</td><td><code>create_agent(model, tools, system_prompt=...)</code></td></tr>
+      <tr><td>Run it</td><td><code>agent.invoke({"messages": [...]})</code></td></tr>
+      <tr><td>Make a tool</td><td><code>@tool</code> + docstring + type hints</td></tr>
+      <tr><td>Read user ID inside a tool</td><td><code>runtime: ToolRuntime[Context]</code> → <code>runtime.context</code></td></tr>
+      <tr><td>Remember a conversation</td><td><code>checkpointer=InMemorySaver()</code> + <code>thread_id</code></td></tr>
+      <tr><td>Remember a user forever</td><td><code>store=InMemoryStore()</code> → <code>runtime.store</code></td></tr>
+      <tr><td>Get JSON / an object back</td><td><code>response_format=Schema</code> → <code>result["structured_response"]</code></td></tr>
+      <tr><td>Stream tokens</td><td><code>agent.stream(..., stream_mode="messages")</code>, or <code>agent.stream_events(..., version="v3")</code> in new apps</td></tr>
+      <tr><td>Change prompt per user</td><td><code>@dynamic_prompt</code></td></tr>
+      <tr><td>Change model per request</td><td><code>@wrap_model_call</code> + <code>request.override(model=...)</code></td></tr>
+      <tr><td>Catch tool errors</td><td><code>ToolErrorMiddleware(on_error)</code>, or <code>@wrap_tool_call</code> returning a <code>ToolMessage</code></td></tr>
+      <tr><td>Approve risky actions</td><td><code>HumanInTheLoopMiddleware</code> + <code>Command(resume=...)</code></td></tr>
+      <tr><td>Trim long chats</td><td><code>SummarizationMiddleware</code></td></tr>
+      <tr><td>Stop runaway loops</td><td><code>ModelCallLimitMiddleware</code></td></tr>
+      <tr><td>Redact personal data</td><td><code>PIIMiddleware</code></td></tr>
+      <tr><td>Use an MCP server</td><td><code>async with MCPAdapter(config) as a: await a.list_tools()</code></td></tr>
+      <tr><td>Search my documents</td><td>loader → splitter → embeddings → vector store → <code>@tool</code></td></tr>
+      <tr><td>Custom workflow</td><td><code>StateGraph</code> from <code>langgraph.graph</code></td></tr>
+      <tr><td>See what happened</td><td><code>LANGSMITH_TRACING=true</code></td></tr>
+      <tr><td>Serve as API</td><td><code>langgraph.json</code> + <code>langgraph dev</code></td></tr>
+    </tbody>
+  </table></div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>The complete mental model</h4>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 330" role="img" aria-label="LangChain v1 builds the agent from model, tools and middleware; LangGraph runs the workflow with state, routing and persistence; the final output is content blocks">
+          <rect x="170" y="10" width="420" height="120" rx="10" class="bx-a"/>
+          <text x="186" y="34" class="t-b t-a">LANGCHAIN v1</text>
+          <text x="574" y="34" text-anchor="end" class="t-s">"Build the agent"</text>
+          <rect x="190" y="52" width="120" height="58" rx="8" class="bx"/><text x="250" y="77" text-anchor="middle" class="t-b">Model</text><text x="250" y="96" text-anchor="middle" class="t-s">brain</text>
+          <rect x="320" y="52" width="120" height="58" rx="8" class="bx"/><text x="380" y="77" text-anchor="middle" class="t-b">Tools</text><text x="380" y="96" text-anchor="middle" class="t-s">actions</text>
+          <rect x="450" y="52" width="120" height="58" rx="8" class="bx"/><text x="510" y="77" text-anchor="middle" class="t-b">Middleware</text><text x="510" y="96" text-anchor="middle" class="t-s">control</text>
+          <path d="M380 130 L380 156" class="ln" marker-end="url(#arr)"/>
+          <rect x="170" y="158" width="420" height="104" rx="10" class="bx-g"/>
+          <text x="186" y="182" class="t-b t-g">LANGGRAPH</text>
+          <text x="574" y="182" text-anchor="end" class="t-s">"Run the workflow"</text>
+          <rect x="190" y="198" width="120" height="44" rx="8" class="bx"/><text x="250" y="225" text-anchor="middle" class="t-b">State</text>
+          <rect x="320" y="198" width="120" height="44" rx="8" class="bx"/><text x="380" y="225" text-anchor="middle" class="t-b">Routing</text>
+          <rect x="450" y="198" width="120" height="44" rx="8" class="bx"/><text x="510" y="225" text-anchor="middle" class="t-b">Persistence</text>
+          <path d="M380 262 L380 284" class="ln" marker-end="url(#arr)"/>
+          <rect x="290" y="286" width="180" height="40" rx="8" class="bx"/><text x="380" y="304" text-anchor="middle" class="t-b">Final output</text><text x="380" y="319" text-anchor="middle" class="t-s">(content blocks)</text>
+        </svg>
+      </div>
+    </figure>
+  </div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Quick reference: remember it as</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Term</th><th>Remember it as</th></tr></thead>
+      <tbody>
+        <tr><td>LangChain v1</td><td>Modern high-level agent framework</td></tr>
+        <tr><td><code>create_agent()</code></td><td>Standard v1 agent creation</td></tr>
+        <tr><td>Model</td><td>Brain</td></tr>
+        <tr><td>Tool</td><td>Action / hand</td></tr>
+        <tr><td>Agent</td><td>Decision maker</td></tr>
+        <tr><td>Middleware</td><td>Control layer</td></tr>
+        <tr><td>LangGraph</td><td>Workflow / runtime engine</td></tr>
+        <tr><td>State</td><td>Current working information</td></tr>
+        <tr><td>Persistence</td><td>Saved state / checkpoints</td></tr>
+        <tr><td>Streaming</td><td>Progressive output</td></tr>
+        <tr><td>Human-in-the-loop</td><td>Human approval / intervention</td></tr>
+        <tr><td>Content blocks</td><td>Standardized model / message content</td></tr>
+        <tr><td>Annotation</td><td>Structure / types for state and data</td></tr>
+        <tr><td><code>langchain-classic</code></td><td>Legacy APIs / integrations</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <h3>Import map</h3>
+  <div class="code"><div class="cap"><span>imports.py</span><button type="button">Copy</button></div><pre><code class="language-python">from langchain.agents import create_agent, AgentState
+from langchain.agents.middleware import (AgentMiddleware, before_model, after_model,
+    before_agent, after_agent, wrap_model_call, wrap_tool_call, dynamic_prompt,
+    ModelRequest, ModelResponse, SummarizationMiddleware, HumanInTheLoopMiddleware,
+    PIIMiddleware, ModelCallLimitMiddleware, ToolCallLimitMiddleware)
+from langchain.agents.structured_output import ToolStrategy, ProviderStrategy
+from langchain.chat_models import init_chat_model
+from langchain.embeddings import init_embeddings
+from langchain.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
+from langchain.tools import tool, ToolRuntime
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.store.memory import InMemoryStore
+from langgraph.types import Command
+from langgraph.graph import StateGraph, START, END
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.mcp import MCPAdapter   # needs langchain[mcp]&gt;=1.4</code></pre></div>
+</section>
+
+<section class="ch prose" id="roadmap">
+  <span class="chno">Chapter 31 · Mastery</span>
+  <h2>Learning roadmap and exercises</h2>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Recommended learning order</h4>
+    <p>Learn one step at a time, in this order. Each step links to its chapter.</p>
+    <ol class="steps">
+      <li><a href="#models">LLM + messages</a> (Ch. 6–7)</li>
+      <li><a href="#tools">Tools</a> (Ch. 9)</li>
+      <li><a href="#agents"><code>create_agent()</code></a> (Ch. 10)</li>
+      <li><a href="#agents">The agent tool loop</a> (Ch. 10, Figure 10.1)</li>
+      <li><a href="#middleware">Middleware</a> (Ch. 16)</li>
+      <li><a href="#memory">State</a> (Ch. 12)</li>
+      <li><a href="#langgraph">LangGraph</a> (Ch. 22)</li>
+      <li><a href="#memory">Persistence / checkpoints</a> (Ch. 12–13)</li>
+      <li><a href="#hitl">Human-in-the-loop</a> (Ch. 17)</li>
+      <li><a href="#multi">Complex / multi-agent workflows</a> (Ch. 21, 23)</li>
+      <li><a href="#langsmith">Production: security, testing, observability, scaling</a> (Ch. 18, 24–28)</li>
+    </ol>
+    <div class="note graph"><b>Final takeaway</b><p>Start with LangChain v1 and <code>create_agent()</code> for standard agents. Add tools and middleware as needed. Move into LangGraph when you need explicit state, routing, persistence, human approval, or complex multi-step workflows.</p></div>
+  </div>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 780 150" role="img" aria-label="Six-level learning roadmap from basics to production">
+        <rect x="10" y="30" width="115" height="80" rx="8" class="bx"/>
+        <text x="67" y="56" text-anchor="middle" class="t-s">Level 1</text><text x="67" y="78" text-anchor="middle" class="t-b">Models</text><text x="67" y="96" text-anchor="middle" class="t-s">Ch. 5–8</text>
+        <rect x="140" y="30" width="115" height="80" rx="8" class="bx"/>
+        <text x="197" y="56" text-anchor="middle" class="t-s">Level 2</text><text x="197" y="78" text-anchor="middle" class="t-b">Tools + agent</text><text x="197" y="96" text-anchor="middle" class="t-s">Ch. 9–11</text>
+        <rect x="270" y="30" width="115" height="80" rx="8" class="bx-a"/>
+        <text x="327" y="56" text-anchor="middle" class="t-s">Level 3</text><text x="327" y="78" text-anchor="middle" class="t-b t-a">Memory</text><text x="327" y="96" text-anchor="middle" class="t-s">Ch. 12–15</text>
+        <rect x="400" y="30" width="115" height="80" rx="8" class="bx-a"/>
+        <text x="457" y="56" text-anchor="middle" class="t-s">Level 4</text><text x="457" y="78" text-anchor="middle" class="t-b t-a">Middleware</text><text x="457" y="96" text-anchor="middle" class="t-s">Ch. 16–18</text>
+        <rect x="530" y="30" width="115" height="80" rx="8" class="bx-g"/>
+        <text x="587" y="56" text-anchor="middle" class="t-s">Level 5</text><text x="587" y="78" text-anchor="middle" class="t-b t-g">RAG · multi</text><text x="587" y="96" text-anchor="middle" class="t-s">Ch. 19–23</text>
+        <rect x="660" y="30" width="110" height="80" rx="8" class="bx-w"/>
+        <text x="715" y="56" text-anchor="middle" class="t-s">Level 6</text><text x="715" y="78" text-anchor="middle" class="t-b t-w">Production</text><text x="715" y="96" text-anchor="middle" class="t-s">Ch. 24–29</text>
+        <path d="M125 70 L138 70" class="ln" marker-end="url(#arr)"/>
+        <path d="M255 70 L268 70" class="ln" marker-end="url(#arr)"/>
+        <path d="M385 70 L398 70" class="ln" marker-end="url(#arr)"/>
+        <path d="M515 70 L528 70" class="ln" marker-end="url(#arr)"/>
+        <path d="M645 70 L658 70" class="ln" marker-end="url(#arr)"/>
+        <text x="390" y="140" text-anchor="middle" class="t-s">Spend roughly a week per level, building one exercise at each.</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 31.1</b> A six-level path. Finish each exercise before moving on.</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <thead><tr><th>Level</th><th>Exercise</th><th>You've mastered it when…</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>A translator CLI using <code>init_chat_model</code> and a prompt template; swap providers with one line</td><td>You can stream, batch and read <code>usage_metadata</code></td></tr>
+      <tr><td>2</td><td>A calculator + weather agent; then an invoice extractor with <code>response_format</code></td><td>You can read the message trace and explain every step</td></tr>
+      <tr><td>3</td><td>A chatbot that remembers within a thread and stores user preferences across threads</td><td>You know when to use state vs context vs store</td></tr>
+      <tr><td>4</td><td>Add summarisation, a call limit, PII redaction, a custom timing middleware and approval for one tool</td><td>You can predict middleware order</td></tr>
+      <tr><td>5</td><td>RAG over 5 of your own PDFs; then a supervisor with research and writer sub-agents; then one MCP server</td><td>You can debug a bad answer as retrieval vs generation</td></tr>
+      <tr><td>6</td><td>The capstone with Postgres, a LangSmith eval dataset, and <code>langgraph dev</code></td><td>You can ship a change and prove it didn't regress</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Official resources</h3>
+  <ul>
+    <li>Docs: <a href="https://docs.langchain.com/oss/python/langchain/overview" target="_blank" rel="noopener">docs.langchain.com/oss/python/langchain/overview</a></li>
+    <li>v1 release notes: <a href="https://docs.langchain.com/oss/python/releases/langchain-v1" target="_blank" rel="noopener">docs.langchain.com/oss/python/releases/langchain-v1</a></li>
+    <li>v1 migration guide: <a href="https://docs.langchain.com/oss/python/migrate/langchain-v1" target="_blank" rel="noopener">docs.langchain.com/oss/python/migrate/langchain-v1</a></li>
+    <li>LangGraph: <a href="https://docs.langchain.com/oss/python/langgraph/overview" target="_blank" rel="noopener">docs.langchain.com/oss/python/langgraph/overview</a></li>
+    <li>LangChain Academy (free courses): <a href="https://academy.langchain.com" target="_blank" rel="noopener">academy.langchain.com</a></li>
+    <li>Source code: <a href="https://github.com/langchain-ai/langchain" target="_blank" rel="noopener">github.com/langchain-ai/langchain</a></li>
+  </ul>
+</section>
+
+<section class="ch prose" id="glossary">
+  <span class="chno">Chapter 32 · Mastery</span>
+  <h2>Glossary</h2>
+  <div class="tbl"><table>
+    <tbody>
+      <tr><td><strong>Agent</strong></td><td>A model that calls tools in a loop until it can answer.</td></tr>
+      <tr><td><strong>Checkpointer</strong></td><td>Saves agent state after each step, per thread. Enables memory, pause/resume and time travel.</td></tr>
+      <tr><td><strong>Content block</strong></td><td>A typed piece of a message (text, reasoning, image, tool call) in a provider-independent shape.</td></tr>
+      <tr><td><strong>Context engineering</strong></td><td>Controlling exactly what the model sees at each step: prompt, messages, tools, retrieved data.</td></tr>
+      <tr><td><strong>Embedding</strong></td><td>A list of numbers representing the meaning of text; similar meanings have nearby vectors.</td></tr>
+      <tr><td><strong>Interrupt</strong></td><td>A pause in a run waiting for outside input, resumed with <code>Command(resume=...)</code>.</td></tr>
+      <tr><td><strong>LCEL</strong></td><td>LangChain Expression Language: composing Runnables with <code>|</code>.</td></tr>
+      <tr><td><strong>MCP</strong></td><td>Model Context Protocol: an open standard for serving tools to AI apps.</td></tr>
+      <tr><td><strong>Middleware</strong></td><td>Hooks that run before, after or around model and tool calls in <code>create_agent</code>.</td></tr>
+      <tr><td><strong>RAG</strong></td><td>Retrieval-Augmented Generation: answering from retrieved documents.</td></tr>
+      <tr><td><strong>ReAct</strong></td><td>Reason + Act: the think → call tool → observe → repeat pattern.</td></tr>
+      <tr><td><strong>Runnable</strong></td><td>The base interface in <code>langchain-core</code> with <code>invoke</code>, <code>stream</code>, <code>batch</code>.</td></tr>
+      <tr><td><strong>Runtime context</strong></td><td>Per-request, read-only data (user ID, role) passed via <code>context=</code>.</td></tr>
+      <tr><td><strong>State</strong></td><td>The agent's working data for one thread, including <code>messages</code>.</td></tr>
+      <tr><td><strong>Store</strong></td><td>Long-term key-value memory shared across threads.</td></tr>
+      <tr><td><strong>Thread</strong></td><td>One conversation, identified by <code>thread_id</code>.</td></tr>
+      <tr><td><strong>Tool call</strong></td><td>The model's request to run a named tool with arguments.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="foot">Checked against the official docs at docs.langchain.com on 5 October 2026. Written for LangChain 1.x (Python). APIs marked as version-sensitive (summarisation parameters, some middleware options) may differ slightly in your installed release: check <code>help(ClassName)</code> or the official docs when in doubt. Model names are examples.</p>
+</section>
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script>
+// Copy buttons
+document.querySelectorAll(".code button").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var code = btn.closest(".code").querySelector("code");
+    var text = code.innerText;
+    function done(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+    function fallback(){
+      var r = document.createRange(); r.selectNodeContents(code);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "Selected: press Ctrl+C";
+    }
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch(e){ fallback(); }
+  });
+});
+// Highlight the current chapter in the rail
+var links = Array.prototype.slice.call(document.querySelectorAll(".rail a"));
+var map = {};
+links.forEach(function(a){ map[a.getAttribute("href").slice(1)] = a; });
+if ("IntersectionObserver" in window){
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting){
+        links.forEach(function(a){ a.classList.remove("on"); });
+        var a = map[e.target.id]; if (a) a.classList.add("on");
+      }
+    });
+  }, {rootMargin:"-20% 0px -70% 0px"});
+  document.querySelectorAll("section.ch").forEach(function(s){ io.observe(s); });
+}
+// Collapse contents on phones
+if (window.matchMedia("(max-width:900px)").matches){ document.getElementById("toc").removeAttribute("open"); }
+</script>

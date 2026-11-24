@@ -2,28 +2,32 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Search, LogOut, Library, BarChart3, Star, Layers, Sparkles } from "lucide-react";
+import { Search, LogOut, Library, BarChart3, Star, Layers, Sparkles, BookOpen } from "lucide-react";
 import { signOut } from "@/app/actions";
 import {
   TYPE_META,
   type Item,
   type ItemType,
 } from "@/lib/types";
+import { STUDY_DOCS, type StudyCounts } from "@/lib/study";
 import AddBar from "./AddBar";
 import ItemCard from "./ItemCard";
 import ItemModal from "./ItemModal";
 import Insights from "./Insights";
 import ClaudeSkills from "./ClaudeSkills";
+import StudyIndex from "./study/StudyIndex";
 
-type Tab = "library" | "insights" | "skills" | "bookmarks";
+type Tab = "library" | "study" | "insights" | "skills" | "bookmarks";
 const TYPES: ItemType[] = ["link", "repo", "pdf", "image", "note"];
 
 export default function Dashboard({
   items,
   email,
+  study,
 }: {
   items: Item[];
   email: string;
+  study: { counts: StudyCounts; setupNeeded: boolean };
 }) {
   const [tab, setTab] = useState<Tab>("library");
   const [query, setQuery] = useState("");
@@ -89,7 +93,9 @@ export default function Dashboard({
         <Tabs tab={tab} setTab={setTab} counts={{ all: items.length, fav: favCount }} />
       </div>
 
-      {tab === "insights" ? (
+      {tab === "study" ? (
+        <StudyIndex docs={STUDY_DOCS} counts={study.counts} setupNeeded={study.setupNeeded} />
+      ) : tab === "insights" ? (
         <Insights items={items} />
       ) : tab === "skills" ? (
         <ClaudeSkills />
@@ -183,6 +189,7 @@ function Tabs({
 }) {
   const defs: { id: Tab; label: string; icon: typeof Library; badge?: number }[] = [
     { id: "library", label: "Library", icon: Layers, badge: counts.all },
+    { id: "study", label: "Study", icon: BookOpen, badge: STUDY_DOCS.length },
     { id: "insights", label: "Insights", icon: BarChart3 },
     { id: "skills", label: "Claude Skills", icon: Sparkles },
     { id: "bookmarks", label: "Bookmarks", icon: Star, badge: counts.fav },

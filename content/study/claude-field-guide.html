@@ -1,0 +1,1313 @@
+<title>Claude Field Guide</title>
+<meta name="description" content="A practical study guide to using Claude well: every major feature of the Claude apps, Cowork, Claude Code and the API, plus prompting techniques, workflow recipes and ways to save usage.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sticky chapter rail on the left, a single reading column on the right; diagrams and code may break wider inside their own scrollers. */
+:root{
+  --paper:#f7f4f1; --sheet:#ffffff; --ink:#231a15; --ink-2:#5e524a; --rule:#e4dbd3;
+  --accent:#a8481f; --accent-soft:#f8e8df; --graph:#4548a8; --graph-soft:#e8e9f8;
+  --warn:#9a5b00; --warn-soft:#fbf0dc; --bad:#a3312b; --bad-soft:#f9e5e3;
+  --code-bg:#1d1613; --code-ink:#dbe7e3; --code-com:#7d958f; --code-str:#9fdcae; --code-kw:#f2b874; --code-fn:#8fc7ff; --code-num:#e9a3c9;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#141110; --sheet:#1c1715; --ink:#eee6e0; --ink-2:#b3a69c; --rule:#3a302a;
+    --accent:#f0956b; --accent-soft:#3a2219; --graph:#9fa2ff; --graph-soft:#1f2140;
+    --warn:#f0b75a; --warn-soft:#33270f; --bad:#ff8f86; --bad-soft:#3a1b19;
+    --code-bg:#100c0b; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141110; --sheet:#1c1715; --ink:#eee6e0; --ink-2:#b3a69c; --rule:#3a302a;
+  --accent:#f0956b; --accent-soft:#3a2219; --graph:#9fa2ff; --graph-soft:#1f2140;
+  --warn:#f0b75a; --warn-soft:#33270f; --bad:#ff8f86; --bad-soft:#3a1b19;
+  --code-bg:#100c0b; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65;margin:0}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.shell{display:grid;grid-template-columns:260px minmax(0,1fr);gap:48px;max-width:1240px;margin:0 auto;padding-inline:24px;padding-block:32px 96px}
+@media (max-width:900px){.shell{grid-template-columns:minmax(0,1fr);gap:16px;padding-inline:16px}}
+
+/* rail */
+.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);overflow:auto;font-size:13.5px;padding-right:8px}
+.rail details{border:0}
+.rail summary{font-family:var(--display);font-weight:700;font-size:15px;cursor:pointer;list-style:none;padding-block:4px 10px;color:var(--ink)}
+.rail summary::-webkit-details-marker{display:none}
+.rail ol{list-style:none;margin:0;padding:0;display:grid;gap:1px}
+.rail .part{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);margin-top:14px;padding-left:10px}
+.rail a{display:block;text-decoration:none;color:var(--ink-2);padding:3px 10px;border-left:2px solid transparent;border-radius:0 4px 4px 0}
+.rail a:hover{color:var(--ink);background:var(--accent-soft)}
+.rail a.on{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft);font-weight:500}
+@media (max-width:900px){.rail{position:static;max-height:none;background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:10px 14px}}
+
+/* reading column */
+main{min-width:0}
+.prose{max-width:760px}
+header.cover{padding-block:8px 32px;border-bottom:1px solid var(--rule);margin-bottom:24px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.15;color:var(--ink)}
+h1{font-size:clamp(2.2rem,5vw,3.4rem);margin:.3em 0 .3em;letter-spacing:-.015em}
+h2{font-size:1.85rem;margin:0 0 .5em;letter-spacing:-.01em}
+h3{font-size:1.25rem;margin:1.8em 0 .5em}
+h4{font-size:1.02rem;margin:1.4em 0 .4em;font-family:var(--body);font-weight:600}
+.lede{font-size:1.15rem;color:var(--ink-2);max-width:62ch}
+section.ch{padding-block:44px 8px;border-top:1px solid var(--rule);scroll-margin-top:16px}
+section.ch:first-of-type{border-top:0}
+.chno{font-family:var(--mono);font-size:12px;color:var(--ink-2);letter-spacing:.06em;display:block;margin-bottom:6px}
+p,li{max-width:68ch}
+ul,ol{padding-left:1.3em}
+li{margin-block:.25em}
+code{font-family:var(--mono);font-size:.86em;background:var(--accent-soft);color:var(--ink);padding:.1em .35em;border-radius:4px}
+strong{font-weight:600}
+
+/* definition block */
+.define{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:20px 24px;margin:20px 0}
+.define .term{font-family:var(--display);font-size:1.4rem;font-weight:700}
+.define .pos{font-family:var(--mono);font-size:12px;color:var(--ink-2);margin-left:8px}
+.define p{margin:.5em 0 0;font-size:1.06rem}
+
+/* callouts */
+.note{border-radius:8px;padding:12px 16px;margin:18px 0;font-size:.96rem}
+.note b{display:block;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.note.tip{background:var(--accent-soft)} .note.tip b{color:var(--accent)}
+.note.warn{background:var(--warn-soft)} .note.warn b{color:var(--warn)}
+.note.graph{background:var(--graph-soft)} .note.graph b{color:var(--graph)}
+.note p{margin:.3em 0}
+
+/* code */
+.code{position:relative;margin:16px 0 20px;border-radius:10px;background:var(--code-bg);overflow:hidden}
+.code .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 12px;font-family:var(--mono);font-size:11.5px;color:var(--code-com);border-bottom:1px solid #ffffff14}
+.code button{font-family:var(--mono);font-size:11px;background:transparent;color:var(--code-ink);border:1px solid #ffffff2a;border-radius:5px;padding:2px 8px;cursor:pointer}
+.code button:hover{background:#ffffff14}
+.code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6;color:var(--code-ink);tab-size:4}
+.code pre code{background:none;padding:0;color:inherit;font-size:inherit}
+.token.comment{color:var(--code-com);font-style:italic}
+.token.string,.token.triple-quoted-string{color:var(--code-str)}
+.token.keyword,.token.boolean,.token.builtin{color:var(--code-kw)}
+.token.function,.token.decorator,.token.class-name{color:var(--code-fn)}
+.token.number{color:var(--code-num)}
+.token.operator,.token.punctuation{color:#b7c6c2}
+.output{font-family:var(--mono);font-size:12.5px;background:var(--sheet);border:1px dashed var(--rule);border-radius:8px;padding:10px 14px;white-space:pre-wrap;color:var(--ink-2);margin:-8px 0 20px}
+
+/* tables */
+.tbl{overflow-x:auto;margin:16px 0 22px;border:1px solid var(--rule);border-radius:10px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);font-weight:600;background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td code{white-space:nowrap}
+
+/* diagrams */
+figure{margin:22px 0 26px}
+.dia{overflow-x:auto;background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:14px}
+.dia svg{display:block;min-width:640px;width:100%;height:auto}
+figcaption{font-size:13px;color:var(--ink-2);margin-top:8px}
+figcaption b{color:var(--ink);font-weight:600}
+svg .bx{fill:var(--sheet);stroke:var(--rule);stroke-width:1.5}
+svg .bx-a{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg .bx-g{fill:var(--graph-soft);stroke:var(--graph);stroke-width:1.5}
+svg .bx-w{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.5}
+svg .bx-p{fill:var(--paper);stroke:var(--rule);stroke-width:1.5}
+svg .ln{stroke:var(--ink-2);stroke-width:1.6;fill:none}
+svg .ln-a{stroke:var(--accent);stroke-width:1.8;fill:none}
+svg .dash{stroke-dasharray:5 4}
+svg .ah{fill:var(--ink-2)}
+svg .ah-a{fill:var(--accent)}
+svg text{fill:var(--ink);font-family:var(--body);font-size:13px}
+svg .t-b{font-weight:600;font-size:14px}
+svg .t-s{font-size:11.5px;fill:var(--ink-2)}
+svg .t-m{font-family:var(--mono);font-size:12px}
+svg .t-a{fill:var(--accent)} svg .t-g{fill:var(--graph)} svg .t-w{fill:var(--warn)}
+
+/* grids */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:16px 0 22px}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;min-width:0}
+.card h4{margin:0 0 4px}
+.card p{margin:0;font-size:14.5px;color:var(--ink-2)}
+.yes h4{color:var(--accent)} .no h4{color:var(--bad)}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:99px;background:var(--accent-soft);color:var(--accent);vertical-align:middle}
+.pill.g{background:var(--graph-soft);color:var(--graph)}
+.pill.w{background:var(--warn-soft);color:var(--warn)}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps>li{counter-increment:s;position:relative;padding-left:40px;margin-block:12px}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--sheet);font-family:var(--mono);font-size:12.5px;display:grid;place-items:center}
+.check{list-style:none;padding:0}
+.check li{padding-left:26px;position:relative}
+.check li::before{content:"";position:absolute;left:2px;top:.55em;width:12px;height:12px;border:1.6px solid var(--accent);border-radius:3px}
+/* example boxes: examples and flowcharts from the reference guide */
+.example{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:0 20px 6px;margin:26px 0}
+.example .tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;background:var(--accent);color:var(--sheet);padding:3px 10px;border-radius:0 0 6px 6px}
+.example h4{margin:.6em 0 .3em;font-size:1.08rem}
+.example>p{margin:.4em 0 .8em}
+.example figure{margin:14px 0}
+.example .dia{border:0;padding:4px 0;background:transparent}
+@media (max-width:600px){.example{padding-inline:12px}}
+.rail .ex-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle}
+.foot{margin-top:56px;padding-top:20px;border-top:1px solid var(--rule);font-size:13.5px;color:var(--ink-2)}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-a"/></marker>
+  </defs>
+</svg>
+
+<div class="shell">
+<nav class="rail" aria-label="Chapters">
+  <details id="toc" open>
+    <summary>Contents</summary>
+    <ol>
+      <li class="part">Part I · Foundations</li>
+      <li><a href="#what">1. What Claude is<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#mindset">2. Beyond chat<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#plans">3. Plans and usage limits</a></li>
+      <li><a href="#models">4. Models, effort, thinking<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li class="part">Part II · The app toolkit</li>
+      <li><a href="#projects">5. Projects<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#artifacts">6. Artifacts<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#files">7. Files and code execution<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#research">8. Web search and Research<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#memory">9. Memory and personalization<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#connectors">10. Connectors<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#skills">11. Skills<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#cowork">12. Cowork<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#everywhere">13. Chrome, Office, Slack</a></li>
+      <li><a href="#mobile">14. Voice and mobile</a></li>
+      <li class="part">Part III · Prompting well</li>
+      <li><a href="#anatomy">15. Anatomy of a good prompt<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#techniques">16. Ten techniques<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#patterns">17. Prompt patterns to copy<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#context">18. Long conversations<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li class="part">Part IV · Claude for builders</li>
+      <li><a href="#code">19. Claude Code<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#code-custom">20. Customizing Claude Code<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#api">21. API and Agent SDK<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li class="part">Part V · Working efficiently</li>
+      <li><a href="#choose">22. Pick the right tool<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#usage">23. Make your usage last</a></li>
+      <li><a href="#recipes">24. Workflow recipes<span class="ex-dot" aria-label="has examples"></span></a></li>
+      <li><a href="#safety">25. Accuracy, privacy, safety</a></li>
+      <li><a href="#mistakes">26. Common mistakes</a></li>
+      <li class="part">Part VI · Mastery</li>
+      <li><a href="#cheat">27. Cheat sheet</a></li>
+      <li><a href="#roadmap">28. 30-day learning path</a></li>
+      <li><a href="#glossary">29. Glossary</a></li>
+    </ol>
+  </details>
+</nav>
+
+<main>
+<header class="cover prose">
+  <div class="eyebrow">Study notes · Claude apps, Cowork, Claude Code &amp; API · October 2026</div>
+  <h1>Claude Field Guide</h1>
+  <p class="lede">Most people use Claude like a search box: ask one question, read the answer, start over. This guide shows the rest of it. It covers every major feature, when each one is worth using, and how to put them together so Claude does more of the work.</p>
+  <div class="note tip"><b>How to read this</b><p>Part I explains what Claude is and how to choose a plan and model. Part II goes through the app's features one at a time. Part III is about writing good prompts. Part IV is for people who build things with Claude Code or the API. Part V brings it all together into everyday workflows. Chapters marked with an orange dot <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent)"></span> in the contents have <strong>Example</strong> boxes.</p><p>The examples follow one running task: <strong>the weekly Plant TAT report</strong>. Each Monday an analyst turns a spreadsheet of truck turnaround times (TAT) into a summary for plant managers. The numbers are made up.</p></div>
+  <div class="note warn"><b>Features change fast</b><p>This guide was checked against Anthropic's help center, pricing page and docs on 11 October 2026. Menu names, plan rules and limits change often. Before you rely on a detail, check the source links in <a href="#roadmap">Chapter 28</a>.</p></div>
+</header>
+
+<!-- ================= PART I ================= -->
+<section class="ch prose" id="what">
+  <span class="chno">Chapter 1 · Foundations</span>
+  <h2>What Claude is</h2>
+  <div class="define">
+    <span class="term">Claude</span><span class="pos">AI model family + apps · by Anthropic</span>
+    <p>A family of AI models made by Anthropic, and the apps you use them through. Claude can read and write text, look at images and documents, write and run code, search the web, use your other apps through connectors, and carry out multi-step tasks on its own.</p>
+  </div>
+  <p>"Claude" means two things. The <strong>model</strong> is the AI itself, such as Opus 5.5 or Sonnet 5.5. The <strong>surfaces</strong> are the places you use it: the chat app, Cowork, Claude Code, browser and Office add-ins, Slack, and the API for developers. Every surface uses the same models, but each one gives Claude different tools.</p>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Where Claude lives</h4>
+    <p>The same models power every surface. What changes is what Claude can touch: your messages only, your files, your browser, your apps, or your codebase.</p>
+    <figure>
+      <div class="dia">
+        <svg viewBox="0 0 760 330" role="img" aria-label="Claude models in the centre, connected to seven surfaces: chat apps, Cowork, Claude Code, Claude in Chrome, Office add-ins, Claude in Slack and the API.">
+          <rect x="300" y="135" width="160" height="60" rx="10" class="bx-a"/>
+          <text x="380" y="161" text-anchor="middle" class="t-b t-a">Claude models</text>
+          <text x="380" y="179" text-anchor="middle" class="t-s">Fable · Opus · Sonnet · Haiku</text>
+          <rect x="20" y="20" width="200" height="56" rx="8" class="bx"/><text x="120" y="44" text-anchor="middle" class="t-b">Chat apps</text><text x="120" y="62" text-anchor="middle" class="t-s">web · desktop · mobile</text>
+          <rect x="280" y="20" width="200" height="56" rx="8" class="bx"/><text x="380" y="44" text-anchor="middle" class="t-b">Cowork</text><text x="380" y="62" text-anchor="middle" class="t-s">agent for files and tasks</text>
+          <rect x="540" y="20" width="200" height="56" rx="8" class="bx"/><text x="640" y="44" text-anchor="middle" class="t-b">Claude Code</text><text x="640" y="62" text-anchor="middle" class="t-s">agent for software</text>
+          <rect x="20" y="137" width="200" height="56" rx="8" class="bx"/><text x="120" y="161" text-anchor="middle" class="t-b">Claude in Chrome</text><text x="120" y="179" text-anchor="middle" class="t-s">acts in your browser</text>
+          <rect x="540" y="137" width="200" height="56" rx="8" class="bx"/><text x="640" y="161" text-anchor="middle" class="t-b">Office add-ins</text><text x="640" y="179" text-anchor="middle" class="t-s">Excel · PowerPoint · Word</text>
+          <rect x="150" y="254" width="200" height="56" rx="8" class="bx"/><text x="250" y="278" text-anchor="middle" class="t-b">Claude in Slack</text><text x="250" y="296" text-anchor="middle" class="t-s">@Claude in channels</text>
+          <rect x="410" y="254" width="200" height="56" rx="8" class="bx-g"/><text x="510" y="278" text-anchor="middle" class="t-b t-g">Claude API</text><text x="510" y="296" text-anchor="middle" class="t-s">for your own software</text>
+          <path d="M120 76 L320 135" class="ln"/>
+          <path d="M380 76 L380 135" class="ln"/>
+          <path d="M640 76 L440 135" class="ln"/>
+          <path d="M220 165 L300 165" class="ln"/>
+          <path d="M540 165 L460 165" class="ln"/>
+          <path d="M250 254 L340 195" class="ln"/>
+          <path d="M510 254 L420 195" class="ln"/>
+        </svg>
+      </div>
+      <figcaption><b>One brain, many workplaces.</b> Learn the model once; pick the surface by what Claude needs to reach.</figcaption>
+    </figure>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Surface</th><th>What it is</th><th>Use it when</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Chat apps</strong></td><td>claude.ai in a browser, the desktop app (Mac, Windows) and the mobile app</td><td>Thinking, writing, analysing, asking questions</td></tr>
+      <tr><td><strong>Cowork</strong></td><td>An agent that works through multi-step tasks on its own, using folders and apps you give it</td><td>"Go and do this" jobs that take many steps</td></tr>
+      <tr><td><strong>Claude Code</strong></td><td>An agent that reads, writes and runs code in a project</td><td>Building or changing software, scripts, websites</td></tr>
+      <tr><td><strong>Claude in Chrome</strong></td><td>A browser extension that can click, type and move between tabs</td><td>Tasks on websites with no connector</td></tr>
+      <tr><td><strong>Office add-ins</strong></td><td>Claude inside Excel, PowerPoint and other Microsoft 365 apps</td><td>Working inside a spreadsheet or deck</td></tr>
+      <tr><td><strong>Claude in Slack</strong></td><td>Tag <code>@Claude</code> in a channel to hand off work (Team and Enterprise)</td><td>Team requests where the conversation already is</td></tr>
+      <tr><td><strong>Claude API</strong></td><td>Direct access for developers, billed per use</td><td>Putting Claude inside your own product</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note graph"><b>Key idea</b><p>Claude is no longer just a chatbot. It can keep context in a Project, produce real files and apps, work in your tools, and finish tasks while you do something else. Getting good at Claude mostly means knowing which of these to use for the job in front of you.</p></div>
+</section>
+
+<section class="ch prose" id="mindset">
+  <span class="chno">Chapter 2 · Foundations</span>
+  <h2>Beyond chat: the mindset shift</h2>
+  <p>Plain chat treats each conversation as a blank start. You paste context, get a reply, copy it somewhere, and next week you do it all again. Using Claude well means moving up a ladder, from one-off answers to setups that remember your context and do the work for you.</p>
+
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 760 250" role="img" aria-label="A ladder of five steps rising left to right: ask, set up a Project, produce an Artifact or file, connect your apps, delegate to an agent.">
+        <rect x="10"  y="190" width="140" height="50" rx="8" class="bx-p"/><text x="80" y="212" text-anchor="middle" class="t-b">1 · Ask</text><text x="80" y="229" text-anchor="middle" class="t-s">one-off chat</text>
+        <rect x="160" y="150" width="140" height="90" rx="8" class="bx"/><text x="230" y="172" text-anchor="middle" class="t-b">2 · Set up</text><text x="230" y="189" text-anchor="middle" class="t-s">Project + instructions</text>
+        <rect x="310" y="110" width="140" height="130" rx="8" class="bx"/><text x="380" y="132" text-anchor="middle" class="t-b">3 · Produce</text><text x="380" y="149" text-anchor="middle" class="t-s">Artifacts and files</text>
+        <rect x="460" y="70"  width="140" height="170" rx="8" class="bx-g"/><text x="530" y="92" text-anchor="middle" class="t-b t-g">4 · Connect</text><text x="530" y="109" text-anchor="middle" class="t-s">connectors and skills</text>
+        <rect x="610" y="30"  width="140" height="210" rx="8" class="bx-a"/><text x="680" y="52" text-anchor="middle" class="t-b t-a">5 · Delegate</text><text x="680" y="69" text-anchor="middle" class="t-s">Cowork, Code, schedules</text>
+        <path d="M40 170 L700 14" class="ln-a dash" marker-end="url(#arrA)"/>
+      </svg>
+    </div>
+    <figcaption><b>Each step up saves you more repeated effort.</b> You don't need step 5 for everything. Many jobs are best done at step 2 or 3.</figcaption>
+  </figure>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>The weekly TAT report, done three ways</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Approach</th><th>What you do each Monday</th><th>Time</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Plain chat</strong></td><td>Open a new chat, explain the plant again, paste the data, ask for a summary, fix the format, copy it into an email.</td><td>~40 min</td></tr>
+        <tr><td><strong>Project + skill</strong></td><td>Open the "TAT report" Project. It already knows the plant, the targets and your report format. Upload the file and say "this week's report". You get a finished Word file and a chart.</td><td>~10 min</td></tr>
+        <tr><td><strong>Scheduled agent</strong></td><td>A Cowork scheduled task reads the new file from the shared folder each Monday at 8:00, writes the report, and drafts the email. You check it and press send.</td><td>~3 min</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <h3>Four habits that make the shift</h3>
+  <ol class="steps">
+    <li><strong>Give context once, not every time.</strong> Put standing information in a Project, your instructions or a skill (Chapters 5, 9, 11).</li>
+    <li><strong>Ask for the finished thing.</strong> Ask for the spreadsheet, the deck or the working page, not a description of it (Chapters 6–7).</li>
+    <li><strong>Let Claude reach the source.</strong> Connect Drive, email or the web instead of copying and pasting (Chapters 8, 10).</li>
+    <li><strong>Hand off, then review.</strong> For multi-step jobs, describe the outcome, let an agent do the steps, and check the result (Chapters 12, 19).</li>
+  </ol>
+</section>
+
+<section class="ch prose" id="plans">
+  <span class="chno">Chapter 3 · Foundations</span>
+  <h2>Plans and usage limits</h2>
+  <p>Your plan decides which models and features you can use and how much you can use them. These prices are from claude.com/pricing in October 2026.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Plan</th><th>Price</th><th>Main additions</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Free</strong></td><td>$0</td><td>Sonnet and Haiku, web search, file creation, code execution, memory, connectors, skills, Artifacts (with Docs, Slides and Design templates), up to 5 Projects</td></tr>
+      <tr><td><strong>Pro</strong></td><td>$20/month ($17 billed yearly)</td><td>Opus, more usage, unlimited Projects, Research, Claude Code, Cowork, Claude in Chrome, Microsoft 365, scheduled tasks, Dashboards (beta), option to buy extra usage</td></tr>
+      <tr><td><strong>Max</strong></td><td>$100 or $200/month</td><td>5× or 20× Pro usage, higher output limits, priority when busy, early access, access to Fable</td></tr>
+      <tr><td><strong>Team</strong></td><td>$25 Standard / $125 Premium per seat per month (less billed yearly)</td><td>Shared workspace, admin controls, SSO, Claude in Slack, Motion (beta); Premium seats get 5× usage and Fable</td></tr>
+      <tr><td><strong>Enterprise</strong></td><td>Seat fee plus usage at API rates</td><td>SCIM, audit logs, Compliance API, role-based access, custom data retention, HIPAA-ready option</td></tr>
+    </tbody>
+  </table></div>
+  <h3>How the limits work</h3>
+  <ul>
+    <li><strong>A rolling 5-hour window.</strong> Your allowance refills over time rather than once a day. Paid plans also have a <strong>weekly</strong> cap.</li>
+    <li><strong>One shared pool.</strong> Chat, Cowork, Claude Code, the desktop and mobile apps all count against the same allowance.</li>
+    <li><strong>No fixed message count.</strong> What counts is the work done. Long chats, big files, bigger models, higher effort and agent tasks all use more.</li>
+  </ul>
+  <div class="note tip"><b>Which plan?</b><p>Try Free to learn the basics. Pro is the usual choice for daily work, because it adds Opus, Research, Cowork and Claude Code. Choose Max only if you keep hitting Pro's limits. Teams that share Projects and need admin control should use Team.</p></div>
+</section>
+
+<section class="ch prose" id="models">
+  <span class="chno">Chapter 4 · Foundations</span>
+  <h2>Models, effort and thinking</h2>
+  <p>Use the model menu next to the Send button to choose a model, an <strong>effort</strong> level and thinking. Bigger models are smarter but slower, and they use up your allowance faster.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Model</th><th>Character</th><th>Good for</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Fable 5.1</strong></td><td>The top tier, the most capable</td><td>The hardest reasoning, research and long agent tasks (Max, Team Premium, Enterprise)</td></tr>
+      <tr><td><strong>Opus 5.5</strong></td><td>Very capable, deep reasoning</td><td>Complex analysis, important writing, serious coding</td></tr>
+      <tr><td><strong>Sonnet 5.5</strong></td><td>Fast and strong, the everyday default</td><td>Most work: drafting, summarising, analysis, everyday coding</td></tr>
+      <tr><td><strong>Haiku 5.5</strong></td><td>The fastest and lightest</td><td>Quick questions, rewording, sorting, simple extraction</td></tr>
+    </tbody>
+  </table></div>
+  <p>Older models are listed under "More models".</p>
+
+  <h3>Effort and thinking</h3>
+  <p><strong>Effort</strong> sets how hard Claude works on each reply. The levels are Low, Medium, High, Extra high and Max. Higher effort means more careful reasoning, slower answers and more usage. On the current models, <strong>thinking</strong> (Claude reasoning step by step before it answers) is always on. Effort is the control you actually adjust.</p>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Matching model and effort to the task</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Task</th><th>Model</th><th>Effort</th></tr></thead>
+      <tbody>
+        <tr><td>"Make this email to the transporter more polite"</td><td>Haiku or Sonnet</td><td>Low</td></tr>
+        <tr><td>"Summarise this week's TAT data and flag anomalies"</td><td>Sonnet</td><td>Default</td></tr>
+        <tr><td>"Why did TAT rise 18% at Gate 2? Test three explanations against the data"</td><td>Opus</td><td>High</td></tr>
+        <tr><td>"Review this vendor contract for risk clauses before we sign"</td><td>Opus or Fable</td><td>Extra high / Max</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="note tip"><b>Rule of thumb</b><p>Start with Sonnet at the default effort. Move up only when the answer is shallow or wrong. Move down for simple, repetitive jobs. That is the easiest way to make your allowance last.</p></div>
+</section>
+
+<!-- ================= PART II ================= -->
+<section class="ch prose" id="projects">
+  <span class="chno">Chapter 5 · The app toolkit</span>
+  <h2>Projects</h2>
+  <div class="define">
+    <span class="term">Project</span><span class="pos">workspace · all plans (Free: up to 5)</span>
+    <p>A workspace with its own chats, a set of <strong>knowledge files</strong> Claude can read in every chat, and <strong>project instructions</strong> that apply to every chat inside it.</p>
+  </div>
+  <p>Projects fix the biggest waste in plain chat: explaining the same background again and again. Upload the reference material once and write the standing rules once. Every new chat in the Project starts with them. On paid plans, when the knowledge files get large, Claude switches to searching them, so a Project can hold far more than one chat can.</p>
+  <h3>How to set one up</h3>
+  <ol class="steps">
+    <li>Sidebar → <strong>Projects</strong> → <strong>New project</strong>. Give it a clear name and a one-line description.</li>
+    <li>Add <strong>knowledge</strong>: reference documents, templates, glossaries, past examples of good work.</li>
+    <li>Write <strong>instructions</strong>: who the audience is, the format, the tone, and the rules.</li>
+    <li>Start a new chat in the Project for each task. Keep one topic per chat.</li>
+  </ol>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>The "Plant TAT report" Project</h4>
+    <p><strong>Knowledge files:</strong> <code>plant-layout.pdf</code>, <code>tat-targets.xlsx</code> (target TAT by gate and vehicle type), <code>report-sample-good.docx</code> (a past report the managers liked), <code>glossary.md</code>.</p>
+    <div class="code"><div class="cap"><span>Project instructions</span><button type="button">Copy</button></div><pre><code class="language-none">You help the logistics analyst at a manufacturing plant write the weekly
+truck turnaround-time (TAT) report.
+
+Audience: plant managers. They read on their phones and have 2 minutes.
+
+Always:
+- Start with a 3-line summary: overall TAT vs target, the biggest change,
+  and one recommended action.
+- Compare every gate against tat-targets.xlsx.
+- Call any gate more than 15% over target "red", 5-15% "amber".
+- Use the structure of report-sample-good.docx.
+- If the data has gaps or obvious errors, list them at the end
+  instead of guessing.
+
+Never invent numbers. If a figure isn't in the data, say so.</code></pre></div>
+    <p>Now a chat in this Project only needs: <em>"Here's this week's file. Write the report."</em></p>
+  </div>
+  <div class="note tip"><b>Tips</b><p>Make one Project per <em>recurring</em> job or area, not per one-off question. Keep knowledge files tidy and current: an old version of a template quietly produces old-format output. On Team plans you can share a Project so colleagues get the same setup.</p></div>
+</section>
+
+<section class="ch prose" id="artifacts">
+  <span class="chno">Chapter 6 · The app toolkit</span>
+  <h2>Artifacts</h2>
+  <div class="define">
+    <span class="term">Artifact</span><span class="pos">standalone output · all plans</span>
+    <p>A piece of work Claude makes that lives outside the chat as its own page: a document, a slide deck, a design, a chart, a dashboard, or a small working app. You can keep editing it, share it with others, and reopen it later from the <strong>Artifacts</strong> tab in the sidebar.</p>
+  </div>
+  <p>Turn artifacts on in <strong>Settings → Capabilities</strong> (the same switch as code execution and file creation). After that, Claude makes an artifact whenever the result is something you'll keep or reuse. You can also just ask: "make this an artifact".</p>
+  <h3>Artifact types</h3>
+  <div class="cards">
+    <div class="card"><h4>Docs</h4><p>Documents you and your team edit together with Claude. Export to Word, PDF or Markdown.</p></div>
+    <div class="card"><h4>Slides</h4><p>Decks you can present, or export to PowerPoint or PDF.</p></div>
+    <div class="card"><h4>Design</h4><p>Mockups, prototypes and one-page layouts.</p></div>
+    <div class="card"><h4>Dashboards <span class="pill w">beta</span></h4><p>Charts built from connected data. Pro and above.</p></div>
+    <div class="card"><h4>Motion <span class="pill w">beta</span></h4><p>Animated explainers you can export as MP4. Team and Enterprise.</p></div>
+    <div class="card"><h4>Custom pages and apps</h4><p>Calculators, trackers, quizzes, interactive guides like this one.</p></div>
+  </div>
+  <h3>Three things that make artifacts more than pages</h3>
+  <ul>
+    <li><strong>Sharing.</strong> Artifacts start private. You decide who can open them, and you can share the link with your team.</li>
+    <li><strong>AI-powered artifacts.</strong> An artifact can call Claude itself, which makes it a small app. Each person who uses it signs in with their own account, and the usage counts against <em>their</em> plan, not yours.</li>
+    <li><strong>Saved data.</strong> An artifact can save data per person or shared across everyone, up to 20 MB of text. This needs a paid plan. A sign-up sheet or team tracker keeps its entries between visits.</li>
+  </ul>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>From report to tool</h4>
+    <div class="code"><div class="cap"><span>Prompt</span><button type="button">Copy</button></div><pre><code class="language-none">Turn this week's TAT data into an interactive dashboard artifact:
+- a bar chart of average TAT per gate, with the target as a line
+- a filter for vehicle type (inbound / outbound / tanker)
+- a table of the 10 slowest trucks, sortable by any column
+Mobile-friendly. Use red/amber/green for the status rules in the
+project instructions.</code></pre></div>
+    <p>Then share the link with the plant managers. Next week, ask Claude to update the same artifact with the new file, so the link stays the same.</p>
+  </div>
+  <div class="note tip"><b>Tips</b><p>To change part of an artifact, highlight the text and choose <strong>Edit with Claude</strong>, instead of asking it to regenerate everything. Before typing anything sensitive into a shared artifact, check whether it uses shared storage, which everyone with the link can see.</p></div>
+</section>
+
+<section class="ch prose" id="files">
+  <span class="chno">Chapter 7 · The app toolkit</span>
+  <h2>Files, file creation and code execution</h2>
+  <p>Claude can <strong>read</strong> what you upload: PDFs, Word files, spreadsheets, CSVs, images, screenshots and slides. With <strong>code execution and file creation</strong> turned on (Settings → Capabilities, all plans), Claude also gets a private computer in the cloud. There it can run real code on your data and give you back real files: Excel workbooks with formulas, PowerPoint decks, Word documents, PDFs and charts.</p>
+  <div class="cards">
+    <div class="card yes"><h4>Analysis that's actually computed</h4><p>Totals, averages and trends are calculated by code, not estimated. That makes them far more reliable on big tables.</p></div>
+    <div class="card yes"><h4>Files you can download</h4><p>Ask for "an .xlsx with a pivot tab and a chart" and you get the file, not instructions for making it.</p></div>
+    <div class="card yes"><h4>Clean-up jobs</h4><p>Merge files, fix dates, remove duplicates, split columns, reshape a messy export.</p></div>
+  </div>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Messy export in, clean workbook out</h4>
+    <div class="code"><div class="cap"><span>Prompt (with gate_log_week41.csv attached)</span><button type="button">Copy</button></div><pre><code class="language-none">This is raw gate-in/gate-out data for week 41.
+1. Clean it: fix the mixed date formats, drop exact duplicate rows,
+   and flag trucks with gate-out before gate-in (don't delete them).
+2. Calculate TAT in minutes per truck.
+3. Give me an Excel file with three sheets:
+   "Clean data", "Summary by gate" (avg, median, 90th percentile, count),
+   and "Issues" (every row you flagged and why).
+4. Add a bar chart of average TAT by gate on the Summary sheet.
+Tell me how many rows you removed or flagged.</code></pre></div>
+  </div>
+  <div class="note warn"><b>Check the numbers</b><p>Code is accurate, but only if it reads the data the way you meant. Ask Claude to state its assumptions ("I treated blank gate-out as still inside the plant"), and spot-check two or three rows yourself.</p></div>
+</section>
+
+<section class="ch prose" id="research">
+  <span class="chno">Chapter 8 · The app toolkit</span>
+  <h2>Web search and Research</h2>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Web search</th><th>Research</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Plans</strong></td><td>All</td><td>Pro and above</td></tr>
+      <tr><td><strong>What it does</strong></td><td>A few quick searches to answer the current question, with links to sources</td><td>Many searches in a planned sequence across the web and your connected apps (Gmail, Calendar, Drive), then a cited report</td></tr>
+      <tr><td><strong>Time</strong></td><td>Seconds</td><td>Usually 5–15 minutes, sometimes up to 45</td></tr>
+      <tr><td><strong>Turn on</strong></td><td>The search toggle in the chat box's tools menu</td><td>The <strong>Research</strong> button in the chat box (web search must be on)</td></tr>
+      <tr><td><strong>Use for</strong></td><td>Facts, recent news, prices, "what's the current…"</td><td>Market scans, vendor comparisons, literature reviews, briefing packs</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>A good Research request</h4>
+    <div class="code"><div class="cap"><span>Prompt (Research on)</span><button type="button">Copy</button></div><pre><code class="language-none">Research: ways mid-size manufacturing plants in India have cut truck
+turnaround time at the gate in the last 3 years.
+
+I need:
+- 5-8 concrete interventions (e.g. slot booking, RFID gates, e-seals),
+  each with the typical TAT reduction reported and the source
+- rough cost range and implementation time for each
+- which ones fit a plant with 3 gates and ~400 trucks/day
+
+Prefer case studies, industry bodies and vendor-neutral sources over
+vendor marketing. Flag any figure that only comes from a vendor.
+Finish with a 1-page comparison table.</code></pre></div>
+  </div>
+  <div class="note tip"><b>Tips</b><p>Say what kind of sources you trust and what form you want the answer in. Open two or three of the cited links for any figure you plan to repeat. Search results can be wrong, and Claude can misread them.</p></div>
+</section>
+
+<section class="ch prose" id="memory">
+  <span class="chno">Chapter 9 · The app toolkit</span>
+  <h2>Memory and personalization</h2>
+  <p>Four settings shape how Claude treats you in <em>every</em> chat. Set them up once, and you stop repeating yourself.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Setting</th><th>What it does</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Instructions for Claude</strong></td><td>Standing information about you and how you like answers. Applies to every chat.</td><td>Settings → profile / personalization</td></tr>
+      <tr><td><strong>Memory</strong></td><td>Claude remembers useful facts from past chats as separate entries you can view, edit and delete. It works across chat and Cowork. On by default for Free, Pro and Max; on Team and Enterprise an owner enables it.</td><td>Settings → Memory</td></tr>
+      <tr><td><strong>Search and reference chats</strong></td><td>Lets Claude look up your earlier conversations when you mention them ("like the report we did last week").</td><td>Settings → Memory</td></tr>
+      <tr><td><strong>Styles</strong></td><td>Changes the tone and format of replies: Normal, Concise, Formal, Explanatory, or a custom style made from samples of your writing.</td><td>The style menu in the chat box</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Good account-wide instructions</h4>
+    <div class="code"><div class="cap"><span>Instructions for Claude</span><button type="button">Copy</button></div><pre><code class="language-none">About me: I work in requirements and planning at a manufacturing
+company. I'm not a developer: explain technical things by what they
+mean for the business, not by syntax.
+
+How I like answers:
+- Lead with the answer or recommendation, then the reasoning.
+- Use tables for comparisons.
+- Plain English, short sentences. UK/Indian spelling.
+- If my request is ambiguous, ask one short question before a long job.
+- Say clearly when you're unsure or when something needs checking.</code></pre></div>
+    <p>These are about <em>you</em>. Rules for one job (like the TAT report format) belong in that job's Project or skill.</p>
+  </div>
+
+  <h3>Incognito chats</h3>
+  <p>Click the <strong>ghost icon</strong> to start an incognito chat (all plans). It isn't saved to your history and isn't used for memory. Use it for one-off sensitive topics, or when you want an answer that isn't shaped by your past chats. On Team and Enterprise plans, incognito chats can still appear in your organization's data exports.</p>
+  <div class="note tip"><b>Tip</b><p>Every month or so, open Settings → Memory and read what Claude has stored. Delete anything wrong or out of date. A wrong memory affects every chat until you remove it.</p></div>
+</section>
+
+<section class="ch prose" id="connectors">
+  <span class="chno">Chapter 10 · The app toolkit</span>
+  <h2>Connectors</h2>
+  <div class="define">
+    <span class="term">Connector</span><span class="pos">link to another app · built on MCP</span>
+    <p>A link that lets Claude read from, and sometimes act in, another app: Google Drive, Gmail, Calendar, Microsoft 365, Slack, GitHub, Notion, Salesforce and many more. Connectors are built on MCP (the Model Context Protocol), so any company can publish one.</p>
+  </div>
+  <p>Without connectors, you copy and paste. With them, Claude fetches the latest version itself: "summarise the TAT emails from transporters this week" or "find the gate-SOP document in Drive and check our report against it".</p>
+  <h3>How to add one</h3>
+  <ol class="steps">
+    <li>Open <strong>Settings → Connectors</strong> (or the tools menu in the chat box) and browse the directory.</li>
+    <li>Click <strong>Connect</strong> and sign in to that app. You approve what Claude may access.</li>
+    <li>In a chat, use the tools menu to switch connectors on or off for that chat.</li>
+    <li>For an app that isn't listed, add a <strong>custom connector</strong> with the app's remote MCP address (your IT team may provide one).</li>
+  </ol>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Connectors working together</h4>
+    <div class="code"><div class="cap"><span>Prompt (Gmail, Drive and Calendar connected)</span><button type="button">Copy</button></div><pre><code class="language-none">Before my 3pm logistics review today:
+1. Check my calendar for who's attending.
+2. Find emails from the last 7 days about gate delays or truck queues.
+3. Open "Gate SOP v4" in Drive.
+Give me a one-page brief: the main issues raised, who raised them,
+and which SOP steps they relate to. Suggest 3 questions to ask.</code></pre></div>
+  </div>
+  <div class="note warn"><b>Only connect what you need</b><p>Connectors that can <em>write</em> (send email, create files, edit calendars) can make real changes. Claude asks before taking actions, so read those prompts before you approve them. Turn off connectors a chat doesn't need. They take up context and invite mistakes. Your company's admin may control which connectors are allowed.</p></div>
+</section>
+
+<section class="ch prose" id="skills">
+  <span class="chno">Chapter 11 · The app toolkit</span>
+  <h2>Skills</h2>
+  <div class="define">
+    <span class="term">Skill</span><span class="pos">packaged know-how · all plans (needs code execution)</span>
+    <p>A folder of instructions, and optionally templates and scripts, that teaches Claude how to do one specific job. Claude loads a skill automatically when your request matches it, so you don't have to paste the instructions in.</p>
+  </div>
+  <p>A Project gives Claude context for <em>one area</em>. A skill teaches Claude a <em>method</em> it can use anywhere: in any chat, in Cowork, in Claude Code and in the Office add-ins. Anthropic ships built-in skills, for example for creating Word, Excel, PowerPoint and PDF files, and you can add your own. Skills follow an open standard, so the same skill works across Claude's surfaces.</p>
+  <h3>What a skill looks like</h3>
+  <p>A skill is a folder with a <code>SKILL.md</code> file. The short description at the top tells Claude <em>when</em> to use it. The rest tells Claude <em>how</em>. Only the description is always loaded, and the full body loads only when the skill is used, so skills are cheap to keep around.</p>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>A "weekly TAT report" skill</h4>
+    <div class="code"><div class="cap"><span>tat-report/SKILL.md</span><button type="button">Copy</button></div><pre><code class="language-markdown">---
+name: tat-weekly-report
+description: Write the weekly plant truck turnaround-time (TAT) report from a
+  gate log file. Use when the user asks for the TAT report, gate performance
+  summary, or weekly logistics report.
+---
+
+# Weekly TAT report
+
+## Steps
+1. Load the gate log. Calculate TAT (gate-out minus gate-in) in minutes.
+2. Compare each gate with `targets.csv` in this folder.
+3. Status: red if more than 15% over target, amber 5-15%, green otherwise.
+4. Fill `template.docx` in this folder. Keep its headings.
+5. Add one bar chart: average TAT by gate, with the target as a line.
+
+## Rules
+- Start with a 3-line summary for managers reading on a phone.
+- Never fill gaps with guesses. List data problems in an "Issues" section.
+- Round minutes to whole numbers.</code></pre></div>
+    <p>Zip the folder (with <code>targets.csv</code> and <code>template.docx</code> inside) and upload it at <strong>Customize → Skills → + → Upload a skill</strong>. Now "do the TAT report" works in any chat. On Team and Enterprise you can share it with the whole organization.</p>
+  </div>
+  <div class="note tip"><b>Fastest way to make a skill</b><p>After a chat where you and Claude finally got a process right, say: <em>"Turn what we just did into a skill I can reuse."</em> Claude writes the SKILL.md for you. Read it, fix anything wrong, and upload it.</p></div>
+</section>
+
+<section class="ch prose" id="cowork">
+  <span class="chno">Chapter 12 · The app toolkit</span>
+  <h2>Cowork</h2>
+  <div class="define">
+    <span class="term">Cowork</span><span class="pos">desktop, web and mobile agent · Pro and above</span>
+    <p>An agent version of Claude for knowledge work. You describe an outcome, and Cowork plans the steps and carries them out on its own: reading and writing files in folders you give it, using your connectors and skills, and reporting back when it's done.</p>
+  </div>
+  <p>Chat is a conversation, where you stay in the loop for every step. Cowork is delegation: you hand over a task and come back to a result. It is available in the desktop app (Mac and Windows) and on web and mobile, where you can also check on tasks from your phone. Anthropic is merging chat and Cowork into one experience, so you may see them side by side.</p>
+  <h3>What it's good at</h3>
+  <ul>
+    <li>Sorting, renaming and organizing a folder of files</li>
+    <li>Turning a pile of documents (receipts, PDFs, notes) into one spreadsheet or report</li>
+    <li>Multi-step research that ends in a finished file</li>
+    <li><strong>Scheduled tasks</strong>: run the same job every morning, weekly, or monthly</li>
+    <li>Using <strong>plugins</strong> from the Cowork plugin marketplace that bundle skills and connectors for a role, such as finance or sales</li>
+  </ul>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>A scheduled Monday report</h4>
+    <div class="code"><div class="cap"><span>Cowork task</span><button type="button">Copy</button></div><pre><code class="language-none">Every Monday at 08:00:
+1. Look in the folder "Plant/Gate logs" for the newest CSV.
+2. Use the tat-weekly-report skill to produce this week's report
+   and save it to "Plant/Reports" as TAT-week-&lt;number&gt;.docx.
+3. Draft (don't send) an email to the plant managers group with the
+   3-line summary in the body and the report attached.
+If the newest file is older than 7 days, stop and tell me instead.</code></pre></div>
+  </div>
+  <div class="note warn"><b>Give it the smallest access that works</b><p>Grant Cowork only the folders it needs. Ask it to <em>draft</em> rather than <em>send</em> until you trust a workflow. Agent tasks use your allowance faster than chat because they take many steps.</p></div>
+</section>
+
+<section class="ch prose" id="everywhere">
+  <span class="chno">Chapter 13 · The app toolkit</span>
+  <h2>Claude in Chrome, Office and Slack</h2>
+  <p>These put Claude inside tools you already use, so you don't have to move work in and out of a chat window.</p>
+  <h3>Claude in Chrome <span class="pill">paid plans</span></h3>
+  <p>A Chrome extension with a side panel. Claude can read the page, click, fill in forms and move between tabs. Since August 2026 the side panel runs as a Cowork session, so your skills, connectors and history come with you. Use it for websites that have no connector, such as a transporter's portal you check every day.</p>
+  <div class="note warn"><b>Use carefully</b><p>Anthropic itself describes browser control as still risky. A web page can contain hidden text that tries to trick an AI into doing something you didn't ask for. Start on low-stakes sites, watch what it does, and don't let it handle payments or passwords. It works in Chrome on desktop only, not in other browsers.</p></div>
+  <h3>Office add-ins <span class="pill">Pro and above</span></h3>
+  <ul>
+    <li><strong>Excel</strong>: explains formulas, traces errors, builds models and pivot tables, and edits cells while showing you what changed.</li>
+    <li><strong>PowerPoint</strong>: builds and restyles slides using your company template.</li>
+    <li>Excel and PowerPoint share conversation context and can use your skills. Anthropic also offers Claude for other Microsoft 365 apps. Check the Microsoft AppSource store for what your account can install.</li>
+  </ul>
+  <div class="note tip"><b>Tip for Excel</b><p>Before you let Claude edit a workbook, ask it to <em>explain</em> how the existing formulas work. You'll catch misunderstandings before they turn into changes.</p></div>
+  <h3>Claude in Slack <span class="pill g">Team and Enterprise</span></h3>
+  <p>Tag <code>@Claude</code> in a channel or thread to hand it work, such as "summarise this thread and draft the decision note". It can follow up later on its own, and admins choose which channels and tools it can use. The Slack <em>connector</em> (Chapter 10) works the other way round: it lets Claude read Slack from a chat in the Claude app.</p>
+</section>
+
+<section class="ch prose" id="mobile">
+  <span class="chno">Chapter 14 · The app toolkit</span>
+  <h2>Voice and mobile</h2>
+  <ul>
+    <li><strong>Voice mode</strong> (beta, all plans): tap the sound-wave icon to talk with Claude out loud. It works best on a phone, and it can use your connectors, for example "what's on my calendar after lunch?"</li>
+    <li><strong>Dictation</strong>: tap the microphone to speak a long prompt instead of typing it. This is great for getting messy thoughts out quickly.</li>
+    <li><strong>Camera and photos</strong>: snap a whiteboard, a gate register page or a dashboard on a screen, and ask Claude to turn it into a table.</li>
+    <li><strong>Phone integrations</strong>: calendar, maps and reminders on mobile, plus checking on Cowork tasks while you're away from your desk.</li>
+  </ul>
+  <div class="note tip"><b>Tip</b><p>Use voice to brain-dump on a walk ("here's everything wrong with the gate process…"). Back at your desk, open the same chat and say "turn that into a structured problem statement".</p></div>
+</section>
+
+<!-- ================= PART III ================= -->
+<section class="ch prose" id="anatomy">
+  <span class="chno">Chapter 15 · Prompting well</span>
+  <h2>Anatomy of a good prompt</h2>
+  <p>Anthropic's own advice is to treat Claude like a <strong>brilliant new colleague who knows nothing about your situation</strong>. Their test: if a capable colleague with no background would be confused by your request, Claude will be too. Most weak answers come from missing context, not from a weak model.</p>
+
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 760 300" role="img" aria-label="A prompt made of six stacked blocks: role, context, task, inputs, constraints, output format. Each block has a short example beside it.">
+        <rect x="20" y="16"  width="180" height="40" rx="8" class="bx-a"/><text x="110" y="41" text-anchor="middle" class="t-b t-a">Role</text>
+        <rect x="20" y="62"  width="180" height="40" rx="8" class="bx-a"/><text x="110" y="87" text-anchor="middle" class="t-b t-a">Context and why</text>
+        <rect x="20" y="108" width="180" height="40" rx="8" class="bx-a"/><text x="110" y="133" text-anchor="middle" class="t-b t-a">Task</text>
+        <rect x="20" y="154" width="180" height="40" rx="8" class="bx"/><text x="110" y="179" text-anchor="middle" class="t-b">Inputs</text>
+        <rect x="20" y="200" width="180" height="40" rx="8" class="bx"/><text x="110" y="225" text-anchor="middle" class="t-b">Constraints</text>
+        <rect x="20" y="246" width="180" height="40" rx="8" class="bx-g"/><text x="110" y="271" text-anchor="middle" class="t-b t-g">Output format</text>
+        <text x="225" y="41" class="t-s">"You're a logistics analyst writing for plant managers."</text>
+        <text x="225" y="87" class="t-s">"Managers decide Friday whether to add a 4th gate, so accuracy matters."</text>
+        <text x="225" y="133" class="t-s">"Compare gate TAT with targets and recommend whether a 4th gate is justified."</text>
+        <text x="225" y="179" class="t-s">"Attached: week 41 gate log, targets sheet, last quarter's volumes."</text>
+        <text x="225" y="225" class="t-s">"Use only the attached data. Flag gaps. Under 300 words."</text>
+        <text x="225" y="271" class="t-s">"3-line summary, then a table by gate, then the recommendation."</text>
+      </svg>
+    </div>
+    <figcaption><b>Six building blocks.</b> You rarely need all six. The orange ones matter most, and the output format saves the most rework.</figcaption>
+  </figure>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Weak prompt vs strong prompt</h4>
+    <div class="cards">
+      <div class="card no"><h4>Weak</h4><p>"Analyse this TAT data."</p><p style="margin-top:8px">Claude has to guess who it's for, what "analyse" means, what matters, and how long the answer should be. You get a generic summary.</p></div>
+      <div class="card yes"><h4>Strong</h4><p>"I'm presenting to plant managers on Friday. They're deciding whether to build a 4th gate. Using the attached week-41 log and targets, tell me which gates are over target and by how much, and whether the data supports a 4th gate. Start with a 3-line answer, then a table by gate. If the data can't answer the question, tell me what's missing."</p></div>
+    </div>
+  </div>
+  <div class="note tip"><b>Don't over-engineer it</b><p>A clear paragraph written the way you'd brief a colleague beats a long template. Add structure only when the task is long or has many parts.</p></div>
+</section>
+
+<section class="ch prose" id="techniques">
+  <span class="chno">Chapter 16 · Prompting well</span>
+  <h2>Ten techniques that work</h2>
+  <p>These come from Anthropic's prompting guides, plus what works in daily use.</p>
+
+  <h3>1. Explain why, not just what</h3>
+  <p>"Keep it under 150 words <em>because managers read it on their phones</em>" works better than "under 150 words". When Claude knows the reason, it applies the rule sensibly in cases you didn't think of.</p>
+
+  <h3>2. Say what to do, not what to avoid</h3>
+  <p>"Write in flowing paragraphs" works better than "don't use bullet points". Positive instructions are clearer.</p>
+
+  <h3>3. Show an example</h3>
+  <p>One good example of the output you want is often worth a page of description. For consistent results, give 3–5 varied examples. Wrap them in tags so Claude knows they're examples, not part of the task.</p>
+
+  <h3>4. Use tags to separate the parts of a long prompt</h3>
+  <div class="code"><div class="cap"><span>Prompt with tags</span><button type="button">Copy</button></div><pre><code class="language-markup">&lt;context&gt;
+Weekly TAT report for plant managers. Targets: inbound 90 min, outbound 120 min.
+&lt;/context&gt;
+
+&lt;data&gt;
+[paste the table here]
+&lt;/data&gt;
+
+&lt;example&gt;
+Gate 2 inbound averaged 112 min (target 90, +24%, RED). Main cause: weighbridge downtime Tue-Wed.
+&lt;/example&gt;
+
+&lt;instructions&gt;
+Write one line like the example for each gate and vehicle type.
+&lt;/instructions&gt;</code></pre></div>
+
+  <h3>5. Put long documents first, questions last</h3>
+  <p>When you paste or attach long material, put your question <em>after</em> it. Claude answers better when the question comes at the end.</p>
+
+  <h3>6. Give Claude permission to say "I don't know"</h3>
+  <p>Add: "If the documents don't answer this, say so rather than guessing." This one line cuts down on made-up answers more than anything else.</p>
+
+  <h3>7. Ask for quotes before conclusions</h3>
+  <p>For questions about long documents: "First quote the relevant passages, then answer using only those quotes." You can check the quotes, and Claude stays tied to the source.</p>
+
+  <h3>8. Let Claude ask you questions first</h3>
+  <p>For bigger jobs, say: "Before you start, ask me up to 5 questions about anything unclear." Five minutes of questions saves several rounds of revision.</p>
+
+  <h3>9. Break big jobs into steps</h3>
+  <p>Instead of "write the whole business case", go in stages: outline → agree the outline → draft each section → review. Each step is easier to check, and mistakes don't pile up.</p>
+
+  <h3>10. Iterate in place, with specifics</h3>
+  <p>"Better" doesn't help. "Shorter by half, more direct, and lead with the cost figure" does. If a reply goes badly wrong, <strong>edit your original message</strong> and resend it, instead of arguing over several turns. The bad answer then stops cluttering the conversation.</p>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Techniques 6, 7 and 8 together</h4>
+    <div class="code"><div class="cap"><span>Prompt (with a 60-page transport contract attached)</span><button type="button">Copy</button></div><pre><code class="language-none">I need to know our rights if the transporter's trucks wait more than
+4 hours at our gate (detention charges).
+
+Before you answer, ask me any questions you need, up to 3.
+
+Then: quote the exact clauses that deal with waiting time, detention
+or demurrage, with clause numbers. After the quotes, explain in plain
+English what we owe and when. If the contract doesn't cover something,
+say "not covered" rather than assuming.</code></pre></div>
+  </div>
+</section>
+
+<section class="ch prose" id="patterns">
+  <span class="chno">Chapter 17 · Prompting well</span>
+  <h2>Prompt patterns you can copy</h2>
+  <p>Reusable shapes for common jobs. Replace the parts in [brackets].</p>
+
+  <h4>The interviewer: when you don't know what you need yet</h4>
+  <div class="code"><div class="cap"><span>Prompt</span><button type="button">Copy</button></div><pre><code class="language-none">I want to [write a requirements document for a truck slot-booking system].
+Interview me one question at a time until you have what you need.
+Then summarise what you've understood and wait for my OK before writing.</code></pre></div>
+
+  <h4>The critic: stress-test your own work</h4>
+  <div class="code"><div class="cap"><span>Prompt</span><button type="button">Copy</button></div><pre><code class="language-none">Here is my [proposal]. Act as a sceptical [CFO] reviewing it.
+List the 5 strongest objections, ranked by how likely they are to sink it.
+For each, suggest how I could address it. Be direct; don't soften it.</code></pre></div>
+
+  <h4>The options table: decisions</h4>
+  <div class="code"><div class="cap"><span>Prompt</span><button type="button">Copy</button></div><pre><code class="language-none">I need to decide between [option A, B, C] for [goal].
+Compare them in a table on: cost, time to implement, risk, effort for
+my team, and reversibility. Then give your recommendation and the one
+thing that would change your mind.</code></pre></div>
+
+  <h4>The translator: same content, new audience</h4>
+  <div class="code"><div class="cap"><span>Prompt</span><button type="button">Copy</button></div><pre><code class="language-none">Rewrite this [technical vendor note] for [plant shift supervisors].
+They care about [what changes on the floor and when]. Keep every fact;
+drop the jargon. Max [120] words.</code></pre></div>
+
+  <h4>The extractor: messy text into structured data</h4>
+  <div class="code"><div class="cap"><span>Prompt</span><button type="button">Copy</button></div><pre><code class="language-none">From these [meeting notes / emails], extract every action item as a table:
+owner | action | due date | source quote.
+If an owner or date isn't stated, write "unclear" — don't guess.</code></pre></div>
+
+  <h4>The teacher: learn something new</h4>
+  <div class="code"><div class="cap"><span>Prompt</span><button type="button">Copy</button></div><pre><code class="language-none">Teach me [queueing theory basics] as it applies to [truck gates].
+Start with the simplest idea and an everyday example. After each idea,
+ask me one question to check I've understood before moving on.</code></pre></div>
+
+  <h4>The handover: before a chat gets too long</h4>
+  <div class="code"><div class="cap"><span>Prompt</span><button type="button">Copy</button></div><pre><code class="language-none">Summarise this conversation as a handover note for a fresh chat:
+the goal, decisions made, the current draft or state, open questions,
+and the next step. Make it self-contained.</code></pre></div>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Chaining patterns into a workflow</h4>
+    <p>For a slot-booking proposal: <strong>Interviewer</strong> (gather requirements) → <strong>Research</strong> (what other plants did) → <strong>Options table</strong> (choose an approach) → draft as a <strong>Docs artifact</strong> → <strong>Critic</strong> (CFO review) → revise → <strong>Translator</strong> (a short version for supervisors). That's seven small, checkable steps instead of one giant prompt.</p>
+  </div>
+</section>
+
+<section class="ch prose" id="context">
+  <span class="chno">Chapter 18 · Prompting well</span>
+  <h2>Working in long conversations</h2>
+  <div class="define">
+    <span class="term">Context window</span><span class="pos">Claude's working memory for one chat</span>
+    <p>Everything Claude can "see" at once: your instructions, the files, and every message so far. It is large, but not unlimited. Every new reply re-reads the whole conversation, so long chats are slower, cost more of your allowance, and can drift.</p>
+  </div>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 760 170" role="img" aria-label="Two bars. A focused chat uses a small part of the context window, mostly the task. A long, mixed chat fills the window with old topics and leaves little room for the current task.">
+        <text x="20" y="34" class="t-b">Focused chat</text>
+        <rect x="170" y="16" width="570" height="30" rx="6" class="bx-p"/>
+        <rect x="170" y="16" width="70" height="30" rx="6" class="bx-g"/><text x="205" y="36" text-anchor="middle" class="t-s">setup</text>
+        <rect x="240" y="16" width="150" height="30" rx="0" class="bx-a"/><text x="315" y="36" text-anchor="middle" class="t-s">current task</text>
+        <text x="560" y="36" text-anchor="middle" class="t-s">free room</text>
+        <text x="20" y="104" class="t-b">Long, mixed chat</text>
+        <rect x="170" y="86" width="570" height="30" rx="6" class="bx-p"/>
+        <rect x="170" y="86" width="70" height="30" rx="6" class="bx-g"/><text x="205" y="106" text-anchor="middle" class="t-s">setup</text>
+        <rect x="240" y="86" width="400" height="30" class="bx-w"/><text x="440" y="106" text-anchor="middle" class="t-s">old topics, failed drafts, pasted files</text>
+        <rect x="640" y="86" width="80" height="30" class="bx-a"/><text x="680" y="106" text-anchor="middle" class="t-s">task</text>
+        <text x="170" y="150" class="t-s">Every reply re-reads everything on the bar, so clutter costs speed, usage and accuracy.</text>
+      </svg>
+    </div>
+  </figure>
+  <h3>Habits</h3>
+  <ul>
+    <li><strong>One topic per chat.</strong> Start a new chat when the subject changes. Projects and memory carry the background over.</li>
+    <li><strong>Edit instead of correcting.</strong> Fix the original prompt and resend it, so failed attempts don't pile up.</li>
+    <li><strong>Hand over when a chat gets long.</strong> Use the handover pattern (Chapter 17) and paste the note into a fresh chat.</li>
+    <li><strong>Attach only what's relevant.</strong> Ten pages that matter beat 200 pages of "just in case".</li>
+  </ul>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Signs it's time for a fresh chat</h4>
+    <ul class="check">
+      <li>Claude forgets a rule you set at the start</li>
+      <li>It brings back something you already rejected</li>
+      <li>Replies are getting slow</li>
+      <li>You've changed topic twice</li>
+      <li>You see a message that the chat is long, or that your limit is close</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= PART IV ================= -->
+<section class="ch prose" id="code">
+  <span class="chno">Chapter 19 · Claude for builders</span>
+  <h2>Claude Code</h2>
+  <div class="define">
+    <span class="term">Claude Code</span><span class="pos">agentic coding tool · Pro and above</span>
+    <p>An agent that works inside a project folder. It reads the files, plans changes, edits code, runs commands and tests, and repeats until the job is done, asking your permission along the way.</p>
+  </div>
+  <p>You don't need to be a developer to benefit. People use Claude Code to build small internal tools, websites, data scripts and dashboards by describing what they want in plain language. It runs in several places:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Where</th><th>How</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Terminal (CLI)</strong></td><td>Run <code>claude</code> inside a project folder</td></tr>
+      <tr><td><strong>Desktop app</strong></td><td>The <strong>Code</strong> tab, next to Chat and Cowork</td></tr>
+      <tr><td><strong>Web</strong></td><td>claude.ai/code runs in Anthropic's cloud, so it keeps working with your laptop closed</td></tr>
+      <tr><td><strong>IDE</strong></td><td>Extensions for VS Code and JetBrains</td></tr>
+      <tr><td><strong>Slack</strong></td><td>Hand coding tasks to Claude from a thread</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Install (terminal)</h3>
+  <div class="code"><div class="cap"><span>Windows PowerShell</span><button type="button">Copy</button></div><pre><code class="language-powershell">irm https://claude.ai/install.ps1 | iex</code></pre></div>
+  <div class="code"><div class="cap"><span>macOS / Linux / WSL</span><button type="button">Copy</button></div><pre><code class="language-bash">curl -fsSL https://claude.ai/install.sh | bash</code></pre></div>
+  <p>Open a new terminal, go to your project folder and run <code>claude</code> to sign in. Run <code>claude doctor</code> if something seems wrong. On Windows, install Git for Windows first.</p>
+
+  <h3>Permission modes</h3>
+  <p>Press <strong>Shift+Tab</strong> to cycle between modes. The status bar shows which one is active.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Mode</th><th>What happens</th><th>Use when</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Default</strong></td><td>Asks before each edit and command</td><td>Learning, or sensitive projects</td></tr>
+      <tr><td><strong>Plan</strong></td><td>Reads and proposes a plan; changes nothing until you approve</td><td>Before any big change. Highly recommended.</td></tr>
+      <tr><td><strong>Accept edits</strong></td><td>Edits files without asking; still asks before most commands</td><td>Once you trust the plan</td></tr>
+      <tr><td><strong>Auto</strong></td><td>A safety classifier reviews each action instead of you</td><td>Longer tasks you don't want to babysit</td></tr>
+      <tr><td><strong>Bypass</strong></td><td>No checks at all</td><td>Only in throwaway, isolated environments</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>A first session that works</h4>
+    <ol class="steps">
+      <li>Create an empty folder, open a terminal in it, and run <code>claude</code>.</li>
+      <li>Switch to <strong>Plan mode</strong> (Shift+Tab) and describe the outcome: <em>"Build a one-page web app where gate staff enter truck number, gate-in and gate-out times. It shows today's average TAT per gate and highlights trucks over 2 hours. Works on a phone."</em></li>
+      <li>Read the plan. Ask questions. Say what to change. Approve it.</li>
+      <li>Let it build. When it says it's done, ask: <em>"Run it and test it in a browser; show me a screenshot."</em></li>
+      <li>Ask for changes one at a time. When something works, ask it to save a checkpoint with git.</li>
+    </ol>
+  </div>
+
+  <h3>Keys worth knowing</h3>
+  <div class="tbl"><table>
+    <tbody>
+      <tr><td><code>Shift+Tab</code></td><td>Cycle permission modes</td></tr>
+      <tr><td><code>Esc</code></td><td>Stop Claude mid-task (nothing is lost)</td></tr>
+      <tr><td><code>Esc Esc</code> or <code>/rewind</code></td><td>Go back to an earlier point: code, conversation or both</td></tr>
+      <tr><td><code>Ctrl+B</code></td><td>Move a long-running task to the background</td></tr>
+      <tr><td><code>Ctrl+R</code></td><td>Search your earlier prompts</td></tr>
+      <tr><td><code>Alt+P</code> / <code>Option+P</code></td><td>Switch model</td></tr>
+      <tr><td><code>/clear</code></td><td>Start fresh for an unrelated task</td></tr>
+      <tr><td><code>/compact</code></td><td>Summarise the conversation to free up context</td></tr>
+      <tr><td><code>/model</code>, <code>/effort</code></td><td>Choose model and effort level</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warn"><b>Rewind has limits</b><p>Rewind restores files Claude <em>edited</em>, but not files deleted or moved by commands it ran. Use git, or ask Claude to commit after each working step, so you can always get back.</p></div>
+</section>
+
+<section class="ch prose" id="code-custom">
+  <span class="chno">Chapter 20 · Claude for builders</span>
+  <h2>Customizing Claude Code</h2>
+  <p>The same ideas as the app (instructions, skills, connectors) exist in Claude Code, plus a few that only make sense for an agent.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Feature</th><th>What it is</th><th>Use it for</th></tr></thead>
+    <tbody>
+      <tr><td><strong>CLAUDE.md</strong></td><td>A file of instructions in your project that Claude reads at the start of every session</td><td>How to run the project, conventions, "always do X"</td></tr>
+      <tr><td><strong>Auto memory</strong></td><td>Notes Claude writes for itself about you and the project</td><td>Lessons learned that carry over to the next session</td></tr>
+      <tr><td><strong>Slash commands</strong></td><td>Type <code>/</code> to see built-in commands and your skills</td><td>Quick actions: <code>/compact</code>, <code>/rewind</code>, <code>/mcp</code>, <code>/plugin</code></td></tr>
+      <tr><td><strong>Skills</strong></td><td>Folders with a <code>SKILL.md</code> in <code>.claude/skills/</code> (the project) or <code>~/.claude/skills/</code> (all projects)</td><td>Repeatable procedures: release steps, review checklists</td></tr>
+      <tr><td><strong>Subagents</strong></td><td>Helpers with their own separate context. Only their summary comes back to you</td><td>Big searches or research without cluttering the main chat</td></tr>
+      <tr><td><strong>Hooks</strong></td><td>Commands that run automatically at fixed moments, for example after every edit</td><td>Things that must <em>always</em> happen, like formatting or tests</td></tr>
+      <tr><td><strong>MCP servers</strong></td><td>Connectors for Claude Code</td><td>Databases, Notion, Jira, internal tools</td></tr>
+      <tr><td><strong>Plugins</strong></td><td>Installable bundles of skills, agents, hooks and MCP servers</td><td>Adding a whole capability in one step via <code>/plugin</code></td></tr>
+      <tr><td><strong>Artifacts</strong></td><td>Claude Code can publish pages to claude.ai</td><td>Sharing a report, walkthrough or dashboard from your work</td></tr>
+      <tr><td><strong>Routines and schedules</strong></td><td>Run tasks on a schedule in the cloud (<code>/schedule</code>) or on your desktop; <code>/loop</code> repeats inside a session</td><td>Nightly checks, weekly reports, watching for changes</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>A short, useful CLAUDE.md</h4>
+    <div class="code"><div class="cap"><span>CLAUDE.md</span><button type="button">Copy</button></div><pre><code class="language-markdown"># Gate TAT app
+
+The owner is not a developer. Explain changes by what users will see,
+not by code details.
+
+## Run
+- `npm install` then `npm run dev`, open http://localhost:5173
+
+## Rules
+- Mobile-first: test every screen at phone width.
+- After each feature: run the app, test it in a browser, then commit.
+- Never commit the .env file.
+- Times are stored in UTC and shown in IST.</code></pre></div>
+    <p>Keep it short and specific. CLAUDE.md is guidance Claude weighs, not a rule it can't break. For something that must happen every time, use a hook.</p>
+  </div>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Adding a connector and using a subagent</h4>
+    <div class="code"><div class="cap"><span>Terminal</span><button type="button">Copy</button></div><pre><code class="language-bash"># connect Notion so Claude can read your specs there
+claude mcp add --transport http notion https://mcp.notion.com/mcp
+
+# then, inside claude:
+#   /mcp            -> sign in and check status
+#   "Use a subagent to read every spec page in the 'Gate app' Notion space
+#    and list requirements we haven't built yet."</code></pre></div>
+  </div>
+  <div class="note tip"><b>Headless mode</b><p><code>claude -p "your task"</code> runs Claude Code once, without the interactive screen. That makes it usable from scripts and automated pipelines.</p></div>
+</section>
+
+<section class="ch prose" id="api">
+  <span class="chno">Chapter 21 · Claude for builders</span>
+  <h2>The API and Agent SDK</h2>
+  <p>For putting Claude inside your own software. You pay per token (roughly per word processed) through the Claude Developer Platform, separately from app subscriptions.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Feature</th><th>What it gives you</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Messages API</strong></td><td>Send messages, get replies. The base of everything.</td></tr>
+      <tr><td><strong>Tool use</strong></td><td>Describe your functions. Claude decides when to call them, and your code runs them. Built-in server tools (web search, web fetch, code execution) need no code of your own.</td></tr>
+      <tr><td><strong>Prompt caching</strong></td><td>Reuse a long, unchanging start of a prompt (instructions, documents). Cached reads cost about a tenth of normal input.</td></tr>
+      <tr><td><strong>Message Batches</strong></td><td>Send many requests at once, processed within hours at 50% lower cost. Good for bulk jobs.</td></tr>
+      <tr><td><strong>Files API</strong></td><td>Upload a file once and refer to it in later requests.</td></tr>
+      <tr><td><strong>MCP connector</strong></td><td>Let Claude use remote MCP servers directly from an API call.</td></tr>
+      <tr><td><strong>Agent SDK</strong></td><td>The engine behind Claude Code as a library (Python <code>claude-agent-sdk</code>, TypeScript <code>@anthropic-ai/claude-agent-sdk</code>): agent loop, file and shell tools, permissions, subagents, hooks, MCP. You host it.</td></tr>
+      <tr><td><strong>Managed Agents</strong></td><td>Agents that Anthropic hosts for you, each with its own sandbox.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>The smallest possible API call</h4>
+    <div class="code"><div class="cap"><span>Python · pip install anthropic</span><button type="button">Copy</button></div><pre><code class="language-python">import anthropic
+
+client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from the environment
+
+reply = client.messages.create(
+    model="claude-sonnet-5-5",
+    max_tokens=500,
+    system="You summarise plant logistics data for managers. Be brief.",
+    messages=[{"role": "user", "content": "Gate 2 averaged 112 min vs a 90 min target. Write one status line."}],
+)
+print(reply.content[0].text)</code></pre></div>
+    <p>To go deeper on agents and tools, see your <strong>LangChain</strong> and <strong>MCP</strong> field guides, which build on exactly this.</p>
+  </div>
+</section>
+
+<!-- ================= PART V ================= -->
+<section class="ch prose" id="choose">
+  <span class="chno">Chapter 22 · Working efficiently</span>
+  <h2>Pick the right tool</h2>
+  <p>Most wasted effort comes from using the wrong feature: asking chat to do a five-step job, or building a Project for a one-off question.</p>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 760 360" role="img" aria-label="Decision flow. Start with a task. If it's one-off and quick, use plain chat. If it recurs, use a Project or skill. If it needs current outside information, use web search or Research. If it needs your apps, add connectors. If it's many steps on files, use Cowork. If it's software, use Claude Code. If it's on a website without a connector, use Claude in Chrome.">
+        <rect x="300" y="10" width="160" height="40" rx="20" class="bx-a"/><text x="380" y="35" text-anchor="middle" class="t-b t-a">Your task</text>
+        <path d="M380 50 L380 70" class="ln" marker-end="url(#arr)"/>
+        <rect x="20" y="74" width="720" height="34" rx="6" class="bx-p"/><text x="380" y="96" text-anchor="middle" class="t-s">Ask in order and stop at the first "yes"</text>
+        <rect x="20"  y="130" width="230" height="56" rx="8" class="bx"/><text x="135" y="153" text-anchor="middle" class="t-b">Building software?</text><text x="135" y="172" text-anchor="middle" class="t-s">→ Claude Code</text>
+        <rect x="265" y="130" width="230" height="56" rx="8" class="bx"/><text x="380" y="153" text-anchor="middle" class="t-b">Many steps, on its own?</text><text x="380" y="172" text-anchor="middle" class="t-s">→ Cowork (schedule if it repeats)</text>
+        <rect x="510" y="130" width="230" height="56" rx="8" class="bx"/><text x="625" y="153" text-anchor="middle" class="t-b">On a website, no connector?</text><text x="625" y="172" text-anchor="middle" class="t-s">→ Claude in Chrome</text>
+        <rect x="20"  y="206" width="230" height="56" rx="8" class="bx-g"/><text x="135" y="229" text-anchor="middle" class="t-b">Needs your apps' data?</text><text x="135" y="248" text-anchor="middle" class="t-s">→ add connectors</text>
+        <rect x="265" y="206" width="230" height="56" rx="8" class="bx-g"/><text x="380" y="229" text-anchor="middle" class="t-b">Needs the outside world?</text><text x="380" y="248" text-anchor="middle" class="t-s">→ web search, or Research</text>
+        <rect x="510" y="206" width="230" height="56" rx="8" class="bx-g"/><text x="625" y="229" text-anchor="middle" class="t-b">Output you'll keep?</text><text x="625" y="248" text-anchor="middle" class="t-s">→ artifact or file</text>
+        <rect x="20"  y="282" width="355" height="56" rx="8" class="bx-w"/><text x="197" y="305" text-anchor="middle" class="t-b">Will you do this again?</text><text x="197" y="324" text-anchor="middle" class="t-s">→ Project (context) or skill (method)</text>
+        <rect x="385" y="282" width="355" height="56" rx="8" class="bx-p"/><text x="562" y="305" text-anchor="middle" class="t-b">None of the above</text><text x="562" y="324" text-anchor="middle" class="t-s">→ plain chat. Simple is fine.</text>
+      </svg>
+    </div>
+    <figcaption><b>The answers combine.</b> A real task often uses several: a Project with connectors that produces an artifact.</figcaption>
+  </figure>
+
+  <div class="example">
+    <span class="tag">Example</span>
+    <h4>Ten common tasks, matched</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Task</th><th>Best fit</th></tr></thead>
+      <tbody>
+        <tr><td>Reword one email</td><td>Plain chat, Haiku/Sonnet</td></tr>
+        <tr><td>Weekly report in a fixed format</td><td>Project + skill → file</td></tr>
+        <tr><td>Compare 6 vendors with sources</td><td>Research → Docs artifact</td></tr>
+        <tr><td>Brief me before a meeting</td><td>Chat + Calendar, Gmail and Drive connectors</td></tr>
+        <tr><td>Rename and file 300 scanned invoices</td><td>Cowork</td></tr>
+        <tr><td>Build a gate-entry web app</td><td>Claude Code</td></tr>
+        <tr><td>Fix a broken Excel model</td><td>Claude in Excel</td></tr>
+        <tr><td>Check a transporter portal daily</td><td>Claude in Chrome, scheduled</td></tr>
+        <tr><td>A team tracker everyone updates</td><td>Artifact with shared storage</td></tr>
+        <tr><td>Learn a new topic</td><td>Chat with the "teacher" pattern, or Explanatory style</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section class="ch prose" id="usage">
+  <span class="chno">Chapter 23 · Working efficiently</span>
+  <h2>Make your usage last</h2>
+  <p>Usage depends on how much Claude has to read and think about, not on how many messages you send. These habits stretch any plan.</p>
+  <ol class="steps">
+    <li><strong>Start new chats often.</strong> Long chats re-read everything on every reply. This is the biggest single saving.</li>
+    <li><strong>Use the smallest model that does the job well.</strong> Sonnet for most work, Haiku for simple jobs, Opus or Fable when you really need them.</li>
+    <li><strong>Keep effort at the default</strong> unless the answer is clearly too shallow.</li>
+    <li><strong>Put reusable context in Projects and skills,</strong> instead of pasting it into every chat.</li>
+    <li><strong>Attach only what's relevant.</strong> Trim big PDFs to the pages you need.</li>
+    <li><strong>Turn off unused connectors and tools</strong> for the chat.</li>
+    <li><strong>Batch related questions</strong> into one well-structured message instead of five quick ones.</li>
+    <li><strong>Edit and resend</strong> instead of piling corrections on top of a bad answer.</li>
+    <li><strong>Be specific up front.</strong> One clear prompt costs less than three rounds of "not quite".</li>
+    <li><strong>Save Research and agent tasks for jobs that need them.</strong> They are the heaviest features.</li>
+  </ol>
+  <div class="note tip"><b>Hit the limit?</b><p>The 5-hour window refills on a rolling basis, so a break often solves it. On Pro and above you can turn on extra usage in settings, paid at standard rates, so important work isn't blocked.</p></div>
+</section>
+
+<section class="ch prose" id="recipes">
+  <span class="chno">Chapter 24 · Working efficiently</span>
+  <h2>Workflow recipes</h2>
+  <p>Complete workflows that combine several features. Adapt them to your own work.</p>
+
+  <div class="example">
+    <span class="tag">Recipe 1</span>
+    <h4>Requirements document from scattered inputs</h4>
+    <ol class="steps">
+      <li>Create a Project "Slot booking". Upload meeting notes, emails and the current process map.</li>
+      <li>Chat: use the <strong>interviewer</strong> pattern to fill the gaps.</li>
+      <li>Ask: <em>"Draft a requirements document as a Docs artifact: problem, goals, users, user stories, acceptance criteria, out-of-scope, open questions."</em></li>
+      <li>Use the <strong>critic</strong> pattern as an operations head and as an IT head. Revise.</li>
+      <li>Share the Doc with stakeholders and collect their comments. Ask Claude to work through the comments.</li>
+    </ol>
+  </div>
+
+  <div class="example">
+    <span class="tag">Recipe 2</span>
+    <h4>Meeting → actions → follow-up</h4>
+    <ol class="steps">
+      <li>Record or transcribe the meeting, or dictate your notes on mobile right after.</li>
+      <li>Use the <strong>extractor</strong> pattern for an owner/action/date table.</li>
+      <li>With the Gmail connector: <em>"Draft a follow-up email to the attendees with the decisions and the action table."</em></li>
+      <li>With the Calendar connector: <em>"Suggest a 30-minute check-in next week when all owners are free."</em></li>
+    </ol>
+  </div>
+
+  <div class="example">
+    <span class="tag">Recipe 3</span>
+    <h4>Data question → evidence → deck</h4>
+    <ol class="steps">
+      <li>Upload three months of gate logs. Ask Claude to compute the trends with code and list its assumptions.</li>
+      <li>Opus, high effort: <em>"Test these three explanations for the TAT rise against the data. Which does the evidence support?"</em></li>
+      <li><em>"Make a 6-slide deck (Slides artifact) for the plant head: problem, evidence, cause, options, recommendation, ask."</em></li>
+      <li>Export to PowerPoint and polish it in Claude for PowerPoint with the company template.</li>
+    </ol>
+  </div>
+
+  <div class="example">
+    <span class="tag">Recipe 4</span>
+    <h4>Turn a repeated chore into an automation</h4>
+    <ol class="steps">
+      <li>Do the task once in chat, step by step, until the result is right.</li>
+      <li><em>"Turn what we just did into a skill."</em> Review it and upload it.</li>
+      <li>Run it in Cowork a couple of times and check the results.</li>
+      <li>Schedule it. Keep "draft, don't send" until you've trusted it for a few weeks.</li>
+    </ol>
+  </div>
+
+  <div class="example">
+    <span class="tag">Recipe 5</span>
+    <h4>Build a small internal tool without coding</h4>
+    <ol class="steps">
+      <li>Prototype it first as an <strong>artifact</strong> in chat. It's fast, shareable and free to change.</li>
+      <li>When it needs real users, a database or logins, move to <strong>Claude Code</strong>: Plan mode → approve → build → test → commit.</li>
+      <li>Put the house rules in CLAUDE.md, and ask Claude to test in a browser after every change.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="ch prose" id="safety">
+  <span class="chno">Chapter 25 · Working efficiently</span>
+  <h2>Accuracy, privacy and safety</h2>
+  <h3>Accuracy</h3>
+  <ul>
+    <li>Claude can be confidently wrong, especially on exact figures, quotes, dates, citations and recent events. <strong>Verify anything you'll act on or repeat.</strong></li>
+    <li>Ask for sources (web search), quotes (documents) or code (calculations). All three can be checked.</li>
+    <li>Tell Claude it may say "I don't know", and ask it to list its assumptions.</li>
+    <li>For important decisions, ask it to argue the other side as well.</li>
+  </ul>
+  <h3>Privacy</h3>
+  <ul>
+    <li>Follow your company's rules on what data may go into AI tools. Team and Enterprise plans have stronger admin, retention and compliance controls.</li>
+    <li>Check your data settings, including whether your chats may be used to improve models, under Settings → Privacy.</li>
+    <li>Use incognito for sensitive one-offs, and review your memory from time to time.</li>
+    <li>Shared artifacts and shared Projects are visible to everyone they're shared with.</li>
+  </ul>
+  <h3>Agents and connected tools</h3>
+  <ul>
+    <li>Give agents the <strong>least access</strong> that does the job: specific folders, specific connectors.</li>
+    <li>Read approval prompts before you click Allow, especially for sending, deleting, paying or posting.</li>
+    <li>Be careful with untrusted content. Web pages, emails and documents can contain hidden instructions aimed at AI ("prompt injection"). That's a key reason to keep humans approving actions that matter.</li>
+    <li>Prefer "draft" over "send", and test automations on copies of your data.</li>
+  </ul>
+</section>
+
+<section class="ch prose" id="mistakes">
+  <span class="chno">Chapter 26 · Working efficiently</span>
+  <h2>Common mistakes</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Mistake</th><th>What happens</th><th>Do this instead</th></tr></thead>
+    <tbody>
+      <tr><td>Re-explaining context in every chat</td><td>Wasted time, inconsistent results</td><td>Project instructions, personal instructions, skills</td></tr>
+      <tr><td>One endless chat for everything</td><td>Slow, drifts, burns usage</td><td>One topic per chat; handover notes</td></tr>
+      <tr><td>Vague requests ("make it better")</td><td>Generic output, many revisions</td><td>Say the audience, purpose, format and length</td></tr>
+      <tr><td>Arguing with a bad answer</td><td>The bad answer stays in context</td><td>Edit the original prompt and resend</td></tr>
+      <tr><td>Asking for a description of a file</td><td>You still have to build it</td><td>Ask for the actual file or artifact</td></tr>
+      <tr><td>Copy-pasting from your apps</td><td>Stale data, wasted time</td><td>Connectors</td></tr>
+      <tr><td>Opus at max effort for everything</td><td>You hit limits quickly</td><td>Sonnet by default; move up when needed</td></tr>
+      <tr><td>Trusting numbers without checking</td><td>Errors in reports</td><td>Code execution, sources, spot checks</td></tr>
+      <tr><td>Giving an agent broad access on day one</td><td>Unwanted changes</td><td>Narrow access, draft-only, review first</td></tr>
+      <tr><td>Never checking memory</td><td>Old or wrong facts shape answers</td><td>Review Settings → Memory monthly</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= PART VI ================= -->
+<section class="ch prose" id="cheat">
+  <span class="chno">Chapter 27 · Mastery</span>
+  <h2>Cheat sheet</h2>
+  <div class="cards">
+    <div class="card"><h4>Context once</h4><p>Personal instructions = about you. Project = about an area. Skill = a method. Memory = what Claude learned.</p></div>
+    <div class="card"><h4>Real outputs</h4><p>Artifacts for pages, docs, decks and apps. File creation for .xlsx, .pptx, .docx and .pdf. Code execution for exact numbers.</p></div>
+    <div class="card"><h4>Reach</h4><p>Web search for quick facts. Research for reports. Connectors for your apps. Chrome for websites.</p></div>
+    <div class="card"><h4>Delegate</h4><p>Cowork for multi-step work and schedules. Claude Code for software. Slack for team hand-offs.</p></div>
+    <div class="card"><h4>Prompt</h4><p>Role, context and why, task, inputs, constraints, format. An example beats a description. "Say if you don't know."</p></div>
+    <div class="card"><h4>Save usage</h4><p>New chat per topic. Sonnet by default. Default effort. Attach less. Edit, don't argue.</p></div>
+  </div>
+  <h3>Ten prompts to keep handy</h3>
+  <div class="tbl"><table>
+    <tbody>
+      <tr><td>"Before you start, ask me up to 5 questions."</td></tr>
+      <tr><td>"If the material doesn't say, tell me rather than guess."</td></tr>
+      <tr><td>"Quote the relevant passages first, then answer."</td></tr>
+      <tr><td>"Lead with the answer in 3 lines, then the detail."</td></tr>
+      <tr><td>"Give me the actual Excel file, not instructions."</td></tr>
+      <tr><td>"List your assumptions."</td></tr>
+      <tr><td>"Act as a sceptical [role] and give me the 5 strongest objections."</td></tr>
+      <tr><td>"Compare the options in a table, then recommend one."</td></tr>
+      <tr><td>"Turn what we just did into a reusable skill."</td></tr>
+      <tr><td>"Summarise this chat as a handover note for a fresh chat."</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="ch prose" id="roadmap">
+  <span class="chno">Chapter 28 · Mastery</span>
+  <h2>30-day learning path</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Week</th><th>Focus</th><th>Do this</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1</strong></td><td>Foundations</td><td>Write your personal instructions. Practise the six prompt blocks on real tasks. Try each model on the same question to feel the difference.</td></tr>
+      <tr><td><strong>2</strong></td><td>Context and outputs</td><td>Build one Project for a recurring job. Ask for real files (a spreadsheet, a deck). Make and share one artifact.</td></tr>
+      <tr><td><strong>3</strong></td><td>Reach</td><td>Connect two apps you use daily. Run one Research report. Review your memory.</td></tr>
+      <tr><td><strong>4</strong></td><td>Delegate</td><td>Turn one chore into a skill. Run it in Cowork, then schedule it as draft-only. Optional: build a tiny tool with Claude Code in Plan mode.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note graph"><b>Final takeaway</b><p>Stop starting from zero. Put context in Projects, methods in skills and preferences in your instructions. Ask for finished outputs, connect Claude to your real sources, and delegate multi-step work. Then spend your own time checking and deciding.</p></div>
+  <h3>Official resources</h3>
+  <ul>
+    <li>Help center: <a href="https://support.claude.com" target="_blank" rel="noopener">support.claude.com</a></li>
+    <li>Plans and pricing: <a href="https://claude.com/pricing" target="_blank" rel="noopener">claude.com/pricing</a></li>
+    <li>Prompting best practices: <a href="https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices" target="_blank" rel="noopener">platform.claude.com · prompt engineering</a></li>
+    <li>Connectors: <a href="https://claude.com/docs/connectors/overview" target="_blank" rel="noopener">claude.com/docs/connectors</a></li>
+    <li>Skills: <a href="https://support.claude.com/en/articles/12512180" target="_blank" rel="noopener">support.claude.com · Skills</a></li>
+    <li>Claude Code docs: <a href="https://code.claude.com/docs" target="_blank" rel="noopener">code.claude.com/docs</a></li>
+    <li>Developer platform docs: <a href="https://platform.claude.com/docs" target="_blank" rel="noopener">platform.claude.com/docs</a></li>
+    <li>Anthropic news (new launches): <a href="https://www.anthropic.com/news" target="_blank" rel="noopener">anthropic.com/news</a></li>
+  </ul>
+</section>
+
+<section class="ch prose" id="glossary">
+  <span class="chno">Chapter 29 · Mastery</span>
+  <h2>Glossary</h2>
+  <div class="tbl"><table>
+    <tbody>
+      <tr><td><strong>Agent</strong></td><td>Claude working through many steps on its own toward a goal, using tools.</td></tr>
+      <tr><td><strong>Artifact</strong></td><td>A standalone output (document, deck, design, app) that lives outside the chat and can be shared.</td></tr>
+      <tr><td><strong>CLAUDE.md</strong></td><td>A project instructions file that Claude Code reads every session.</td></tr>
+      <tr><td><strong>Connector</strong></td><td>A link that lets Claude use another app's data or actions.</td></tr>
+      <tr><td><strong>Context window</strong></td><td>Everything Claude can see at once in a conversation.</td></tr>
+      <tr><td><strong>Cowork</strong></td><td>Claude's agent for multi-step knowledge work on files and apps.</td></tr>
+      <tr><td><strong>Effort</strong></td><td>How hard Claude works on each reply, from Low to Max.</td></tr>
+      <tr><td><strong>Hook</strong></td><td>An automatic action in Claude Code that runs at a fixed moment.</td></tr>
+      <tr><td><strong>Incognito</strong></td><td>A chat that isn't saved to history or used for memory.</td></tr>
+      <tr><td><strong>MCP</strong></td><td>Model Context Protocol: the open standard that connectors are built on.</td></tr>
+      <tr><td><strong>Memory</strong></td><td>Facts Claude keeps from past chats, which you can view and edit.</td></tr>
+      <tr><td><strong>Plan mode</strong></td><td>A Claude Code mode where Claude proposes a plan and changes nothing until you approve.</td></tr>
+      <tr><td><strong>Project</strong></td><td>A workspace with shared knowledge files and instructions.</td></tr>
+      <tr><td><strong>Prompt injection</strong></td><td>Hidden instructions in content (web pages, emails) that try to steer an AI.</td></tr>
+      <tr><td><strong>Research</strong></td><td>Claude's mode for long, multi-source investigations with citations.</td></tr>
+      <tr><td><strong>Skill</strong></td><td>A packaged set of instructions and files that teaches Claude a specific job.</td></tr>
+      <tr><td><strong>Style</strong></td><td>A preset or custom setting that changes the tone and format of replies.</td></tr>
+      <tr><td><strong>Subagent</strong></td><td>A helper agent with its own separate context. Only its summary returns.</td></tr>
+      <tr><td><strong>TAT</strong></td><td>Turnaround time: how long a truck spends inside the plant. Used in this guide's examples.</td></tr>
+      <tr><td><strong>Token</strong></td><td>The unit Claude measures text in, roughly ¾ of a word.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="foot">Checked against claude.com/pricing, the Claude help center (support.claude.com), Anthropic's news page, the Claude Code docs (code.claude.com) and the Claude Developer Platform docs on 11 October 2026. Some details could not be confirmed on an Anthropic page: exact message limits per plan (Anthropic doesn't publish them), the full list of Office add-ins and their availability dates, and connector limits on the Free plan. Menu names in the apps may differ slightly from the ones used here. Example prompts and outputs are illustrative.</p>
+</section>
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-powershell.min.js"></script>
+<script>
+// Copy buttons
+document.querySelectorAll(".code button").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var code = btn.closest(".code").querySelector("code");
+    var text = code.innerText;
+    function done(){ btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = "Copy"; }, 1400); }
+    function fallback(){
+      var r = document.createRange(); r.selectNodeContents(code);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "Selected: press Ctrl+C";
+    }
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch(e){ fallback(); }
+  });
+});
+// Highlight the current chapter in the rail
+var links = Array.prototype.slice.call(document.querySelectorAll(".rail a"));
+var map = {};
+links.forEach(function(a){ map[a.getAttribute("href").slice(1)] = a; });
+if ("IntersectionObserver" in window){
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting){
+        links.forEach(function(a){ a.classList.remove("on"); });
+        var a = map[e.target.id]; if (a) a.classList.add("on");
+      }
+    });
+  }, {rootMargin:"-20% 0px -70% 0px"});
+  document.querySelectorAll("section.ch").forEach(function(s){ io.observe(s); });
+}
+// Collapse contents on phones
+if (window.matchMedia("(max-width:900px)").matches){ document.getElementById("toc").removeAttribute("open"); }
+</script>

@@ -1,0 +1,2149 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Vector Search &amp; RAG Notes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: white contents panel on the left (sticky on desktop), airy reading column on the right; each topic is a white lesson card on a soft grey-blue page. Light theme only. */
+:root{
+  color-scheme:light;
+  --bg:#F4F6F9; --surface:#FFFFFF; --soft:#F8FAFC; --ink:#1D2633; --muted:#556070; --line:#E2E6EC; --line-strong:#CBD3DD;
+  --accent:#0E7C74; --accent-strong:#0A5F59; --accent-ink:#FFFFFF; --accent-soft:#E3F3F1;
+  --blue:#2B5DB8; --blue-soft:#EAF1FB;
+  --code-bg:#F2F4F7; --code-ink:#24292F;
+  --good:#1E7A46; --good-soft:#E8F5EE; --warn:#A8520F; --warn-soft:#FDF1E5;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 16px rgba(16,24,40,.05);
+  --f-display:"Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:20px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17.5px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:var(--accent-strong);text-underline-offset:2px}
+a:hover{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.25;text-wrap:balance;margin:0;color:var(--ink)}
+code,pre,kbd{font-family:var(--f-mono);font-size:.84em}
+:not(pre)>code{background:var(--code-bg);color:var(--code-ink);padding:.1em .38em;border-radius:5px;border:1px solid var(--line)}
+pre{background:var(--code-bg);color:var(--code-ink);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;line-height:1.55;margin:0 0 12px}
+pre.mermaid{background:var(--surface);text-align:center;padding:18px}
+pre.ascii{font-size:.8em;background:var(--soft)}
+#progress{position:fixed;left:0;top:env(safe-area-inset-top,0px);height:3px;width:0;background:var(--accent);z-index:30;transition:width .1s linear}
+.shell{display:grid;grid-template-columns:1fr;gap:32px;max-width:1260px;margin:0 auto;padding-block:32px 96px}
+@media (min-width:1040px){.shell{grid-template-columns:280px minmax(0,1fr)}}
+.rail{min-width:0}
+@media (min-width:1040px){.rail nav{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto}}
+.rail details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 14px 10px;box-shadow:var(--shadow)}
+.rail summary{font-family:var(--f-display);font-weight:700;cursor:pointer;font-size:1rem;padding:2px 4px}
+.rail label{display:block;margin:12px 4px 4px;font-family:var(--f-display);font-size:.78rem;font-weight:600;color:var(--muted)}
+.rail input{width:100%;margin:0 0 8px;padding:9px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--soft);color:var(--ink);font:inherit;font-size:.92rem}
+#toc{list-style:none;margin:0;padding:0;font-family:var(--f-display);font-size:.86rem;line-height:1.35}
+#toc li.h{margin-top:14px;font-weight:700}
+#toc li.t{padding-left:6px}
+#toc a{color:var(--muted);text-decoration:none;display:block;padding:5px 8px;border-radius:6px}
+#toc li.h a{color:var(--ink)}
+#toc a:hover{background:var(--soft);color:var(--accent-strong)}
+#toc a.active{background:var(--accent-soft);color:var(--accent-strong);font-weight:600}
+main{min-width:0;max-width:880px}
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px clamp(18px,4vw,36px);margin-bottom:40px;box-shadow:var(--shadow)}
+.eyebrow{display:inline-block;font-family:var(--f-display);font-size:.74rem;font-weight:700;letter-spacing:.04em;color:var(--accent-strong);background:var(--accent-soft);padding:3px 10px;border-radius:99px}
+.hero h1{font-size:clamp(1.9rem,4.6vw,2.7rem);font-weight:800;letter-spacing:-.015em;margin:12px 0 12px}
+.hero p{max-width:65ch;color:var(--muted);margin:0 0 10px;font-size:1.05rem}
+.howto{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:20px}
+.howto div{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:.95rem;color:var(--muted)}
+.howto b{font-family:var(--f-display);color:var(--ink)}
+section.part{margin-bottom:64px}
+section.part>h2{font-size:clamp(1.55rem,3.4vw,2rem);font-weight:800;letter-spacing:-.01em;padding-top:8px;margin-bottom:8px}
+section.part>h2::after{content:"";display:block;width:56px;height:4px;border-radius:2px;background:var(--accent);margin-top:10px}
+section.part>.intro{color:var(--muted);max-width:65ch;margin:0 0 24px;font-size:1.05rem}
+.topic{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px clamp(18px,3.4vw,32px) 20px;margin-bottom:24px;min-width:0;box-shadow:var(--shadow)}
+.topic>header h3{font-size:1.45rem;font-weight:700;margin:10px 0 10px}
+.topic>header .src{margin:0;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:10px 14px;max-width:68ch}
+.topic>header .src::before{content:"From your notes";display:block;font-family:var(--f-display);font-size:.72rem;font-weight:700;letter-spacing:.04em;color:var(--accent-strong);margin-bottom:2px}
+.pipe{list-style:none;display:flex;flex-wrap:wrap;gap:5px;padding:0;margin:14px 0 6px;font-family:var(--f-display);font-size:.7rem}
+.pipe li{padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted);background:var(--surface)}
+.pipe li.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.topic h4{font-size:.95rem;font-weight:700;color:var(--accent-strong);margin:24px 0 10px;padding-top:18px;border-top:1px solid var(--line)}
+.topic p,.topic li{max-width:70ch}
+.topic p{margin:0 0 10px}
+.topic ul,.topic ol{margin:0 0 10px;padding-left:1.3em}
+.topic li{margin-bottom:5px}
+.topic li::marker{color:var(--accent)}
+.analogy{background:var(--blue-soft);border-radius:10px;padding:12px 16px;margin:10px 0 12px;max-width:70ch}
+.analogy::before{content:"Analogy";display:block;font-family:var(--f-display);font-weight:700;font-size:.74rem;letter-spacing:.04em;color:var(--blue);margin-bottom:2px}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:22px;padding-top:4px}
+.split>div{min-width:0;border:1px solid var(--line);border-radius:12px;padding:4px 16px 8px}
+.split>div:first-child{background:var(--warn-soft);border-color:#F3D9BF}
+.split>div:last-child:not(:first-child){background:var(--good-soft);border-color:#C9E6D5}
+.split h4{border-top:0;padding-top:0;margin-top:12px}
+.split>div:first-child h4{color:var(--warn)}
+.split>div:last-child:not(:first-child) h4{color:var(--good)}
+.mist li::marker{color:var(--warn)}
+.best li::marker{color:var(--good)}
+.callout{border-radius:10px;padding:12px 16px;margin:12px 0;max-width:74ch}
+.callout.good{background:var(--good-soft);border:1px solid #C9E6D5}
+.callout.warn{background:var(--warn-soft);border:1px solid #F3D9BF}
+.callout b:first-child{font-family:var(--f-display)}
+.tbl{overflow-x:auto;margin:10px 0 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;line-height:1.45;font-variant-numeric:tabular-nums}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font-family:var(--f-display);background:#EEF2F6;font-weight:700;font-size:.85rem;white-space:nowrap}
+tr:nth-child(even) td{background:var(--soft)}
+tr:last-child td{border-bottom:none}
+.qa ol{padding-left:0;list-style:none;counter-reset:q}
+.qa li{counter-increment:q;position:relative;padding:10px 0 10px 40px;margin:0;border-bottom:1px solid var(--line);max-width:none}
+.qa li:last-child{border-bottom:0}
+.qa li::before{content:"Q" counter(q);position:absolute;left:0;top:11px;font-family:var(--f-display);font-size:.72rem;font-weight:700;color:var(--accent-strong);background:var(--accent-soft);border-radius:6px;padding:2px 6px}
+.qa li b{font-family:var(--f-display);font-weight:600}
+.qa li span{display:block;color:var(--muted);margin-top:2px}
+.refs ul{font-size:.95rem}
+.lab{border:1.5px solid var(--accent);background:var(--surface)}
+.lab>header .eyebrow::after{content:" · hands-on lab"}
+.compare{border-top:4px solid var(--accent)}
+.figure{margin:10px 0 16px;overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px}
+.figure pre.mermaid{border:0;margin:0}
+.core{background:var(--accent);color:var(--accent-ink);border-radius:16px;padding:24px 28px;box-shadow:var(--shadow)}
+.core p{font-size:1.2rem;max-width:60ch;margin:0}
+.week{border-top:4px solid var(--accent)}
+.daygrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:8px 0 12px}
+.daygrid div{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:.95rem;min-width:0}
+.daygrid b{font-family:var(--f-display);display:block;color:var(--accent-strong)}
+.tools{display:flex;flex-wrap:wrap;gap:6px;list-style:none;padding:0!important}
+.tools li{background:var(--accent-soft);color:var(--accent-strong);border-radius:6px;padding:2px 9px;font-family:var(--f-mono);font-size:.8rem}
+.tools li::marker{content:""}
+#totop{position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:25;
+  font-family:var(--f-display);font-weight:600;font-size:.88rem;background:var(--surface);color:var(--accent-strong);border:1px solid var(--line-strong);
+  border-radius:99px;padding:10px 16px;box-shadow:var(--shadow);cursor:pointer}
+#totop:hover{background:var(--accent-soft)}
+footer{color:var(--muted);font-size:.9rem;border-top:1px solid var(--line);padding-top:16px}
+</style>
+
+<div id="progress" aria-hidden="true"></div>
+<button id="totop" type="button" hidden>Back to top</button>
+<div class="shell">
+<aside class="rail">
+  <nav aria-label="Contents">
+    <details id="tocbox" open>
+      <summary>Contents</summary>
+      <label for="tocfilter" class="eyebrow" style="display:block;margin-top:10px">Find a topic</label>
+      <input id="tocfilter" type="search" placeholder="e.g. HNSW, overlap, NDCG">
+      <ol id="toc"></ol>
+    </details>
+  </nav>
+</aside>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Study notes · document search &amp; RAG</div>
+  <h1>Vector Embeddings, Vector Databases &amp; Chunking</h1>
+  <p>Beginner-friendly notes for every topic in the source document, in the same order: embeddings, similarity, indexes, vector databases, parsing, chunking, RAG evaluation and production concerns. Each topic shows where it sits in a RAG pipeline, with examples built around PDF knowledge bases and document chatbots.</p>
+  <div class="howto">
+    <div><b>Pipeline strip.</b> The highlighted chip under each title shows which pipeline stage the topic belongs to.</div>
+    <div><b>Source notes.</b> The italic line quotes what the source document says, so you can trace every card back to it.</div>
+    <div><b>Labs.</b> Dashed cards are the hands-on exercises from the document, expanded into runnable steps.</div>
+  </div>
+</header>
+
+<section class="part" id="s1">
+<h2>1. Vector Embeddings</h2>
+<p class="intro">Embeddings turn text, images and audio into lists of numbers so a computer can measure "how similar in meaning" two things are. Everything else in a RAG system depends on this step.</p>
+
+<article class="topic" id="vector" data-stage="embed">
+<header><div class="eyebrow">1.1</div><h3>Vector</h3><p class="src">A list of numbers representing content such as text, image, audio, or video.</p></header>
+<h4>What is it?</h4>
+<p>A vector is an ordered list of numbers, for example <code>[0.12, -0.48, 0.91]</code>. Each number is a coordinate, so the whole vector is a point in a space. In AI systems, a vector is a numeric "fingerprint" of a piece of content.</p>
+<p>Vectors exist because computers cannot compare meaning directly, but they can compare numbers very quickly.</p>
+<p class="analogy">GPS coordinates for meaning. Two cafés on the same street have nearby coordinates. Two sentences that mean nearly the same thing get nearby vectors.</p>
+<h4>Why is it important?</h4>
+<ul>
+<li>Every later step (similarity, indexing, the vector database, retrieval) works on vectors, not on raw text.</li>
+<li>If the vectors are built from bad text or from mixed models, the "distances" between them stop meaning anything and search returns nonsense.</li>
+</ul>
+<h4>Where is it used?</h4>
+<ul><li>Semantic search over PDFs and wikis</li><li>RAG chatbots</li><li>Image search ("find similar products")</li><li>Recommendations (songs, articles)</li><li>Duplicate and near-duplicate detection</li></ul>
+<h4>How does it work?</h4>
+<ol><li>Raw content goes into an embedding model.</li><li>The model outputs a fixed-length list of floats.</li><li>You store the list (usually as <code>float32</code>, 4 bytes per number) with an ID that points back to the source text.</li></ol>
+<h4>Example</h4>
+<pre><code>import numpy as np
+refund   = np.array([0.81, 0.10, 0.05])   # "How do I get a refund?"
+money_bk = np.array([0.78, 0.15, 0.02])   # "Can I get my money back?"
+weather  = np.array([0.02, 0.05, 0.93])   # "Will it rain tomorrow?"
+print(np.linalg.norm(refund - money_bk))  # 0.07  (close)
+print(np.linalg.norm(refund - weather))   # 1.16  (far)</code></pre>
+<h4>Diagram</h4>
+<pre class="ascii">  dimension 2
+     ^
+     |   * "refund policy"
+     |  * "get my money back"
+     |
+     |                    * "weather forecast"
+     +--------------------------------&gt; dimension 1
+  Close points = similar meaning (real vectors have hundreds of dimensions)</pre>
+<div class="split">
+<div><h4>Common mistakes</h4><ul class="mist"><li>Trying to read meaning into a single dimension. Individual numbers are not human-interpretable.</li><li>Storing vectors as <code>float64</code>, which doubles memory for no quality gain.</li><li>Losing the link from vector back to its source text and page.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Use <code>float32</code> NumPy arrays.</li><li>Always store an ID plus source text and metadata next to each vector.</li></ul></div>
+</div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What is a vector in the context of AI search?</b><span>A fixed-length list of numbers that represents content so similarity can be computed mathematically.</span></li>
+<li><b>Why not search raw text directly?</b><span>Raw text matching only finds exact words; vectors let you compare meaning, including synonyms and paraphrases.</span></li>
+<li><b>How much memory does one 768-dim float32 vector take?</b><span>768 × 4 bytes = 3,072 bytes, about 3 KB.</span></li>
+<li><b>Can you interpret dimension 42 of an embedding?</b><span>Generally no. Meaning is spread across all dimensions together.</span></li>
+<li><b>What must you store alongside a vector?</b><span>A stable ID, the original text (or a pointer to it) and metadata such as source file and page.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul>
+<li><a href="https://www.3blue1brown.com/topics/linear-algebra" target="_blank" rel="noopener">3Blue1Brown – Essence of Linear Algebra</a> (visual intuition for vectors)</li>
+<li><a href="https://jalammar.github.io/illustrated-word2vec/" target="_blank" rel="noopener">Jay Alammar – The Illustrated Word2vec</a></li>
+<li><a href="https://numpy.org/doc/stable/user/absolute_beginners.html" target="_blank" rel="noopener">NumPy – absolute beginners guide</a></li>
+</ul></section>
+</article>
+
+<article class="topic" id="dimension" data-stage="embed store">
+<header><div class="eyebrow">1.2</div><h3>Dimension</h3><p class="src">The length of a vector. Example: a 768-dimensional embedding contains 768 numbers.</p></header>
+<h4>What is it?</h4>
+<p>The dimension is how many numbers are in each vector. It is fixed by the embedding model: every vector from the same model has the same length.</p>
+<p class="analogy">A form with 768 boxes. More boxes let you describe something in more detail, but every form takes more paper to store.</p>
+<h4>Why is it important?</h4>
+<ul><li>Your index and database column are created for one dimension. Insert a 1536-dim vector into a 768-dim collection and you get a dimension-mismatch error.</li>
+<li>Dimension drives memory, storage and search speed.</li></ul>
+<h4>How does it work? Common sizes</h4>
+<div class="tbl"><table><tr><th>Model</th><th>Dimension</th><th>Memory for 1M vectors (float32)</th></tr>
+<tr><td>all-MiniLM-L6-v2</td><td>384</td><td>≈ 1.5 GB</td></tr>
+<tr><td>BAAI/bge-base-en-v1.5, all-mpnet-base-v2</td><td>768</td><td>≈ 3.1 GB</td></tr>
+<tr><td>OpenAI text-embedding-3-small</td><td>1536</td><td>≈ 6.1 GB</td></tr>
+<tr><td>OpenAI text-embedding-3-large</td><td>3072</td><td>≈ 12.3 GB</td></tr></table></div>
+<p>Formula: <code>memory ≈ N × d × 4 bytes</code> (plus index overhead).</p>
+<p><b>Trade-off:</b> higher dimension can capture more nuance, but returns diminish and cost grows linearly. Some models (Matryoshka-trained, including OpenAI's text-embedding-3 family via the <code>dimensions</code> parameter) let you shorten vectors with a small quality loss.</p>
+<h4>Example</h4>
+<pre><code>from sentence_transformers import SentenceTransformer
+m = SentenceTransformer("all-MiniLM-L6-v2")
+v = m.encode("Refunds are processed within 5 days.")
+print(v.shape)   # (384,)</code></pre>
+<div class="split">
+<div><h4>Common mistakes</h4><ul class="mist"><li>Switching models without recreating the collection.</li><li>Assuming a bigger dimension always means better retrieval.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Do the memory math before choosing a model.</li><li>Record the dimension in your collection config and versioning notes.</li></ul></div>
+</div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What determines embedding dimension?</b><span>The model architecture; you cannot choose it freely except with models that support truncation.</span></li>
+<li><b>Estimate RAM for 10M 768-dim vectors.</b><span>10M × 768 × 4 ≈ 30.7 GB raw, before index overhead.</span></li>
+<li><b>Is 3072 always better than 768?</b><span>No. Test on your own data; a well-matched smaller model often wins and is cheaper.</span></li>
+<li><b>How can you reduce memory without changing models?</b><span>Quantization, or dimension truncation for Matryoshka-style models.</span></li>
+<li><b>What happens if query and index dimensions differ?</b><span>The search fails with an error; if they match by coincidence but come from different models, results are silently wrong.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul>
+<li><a href="https://platform.openai.com/docs/guides/embeddings" target="_blank" rel="noopener">OpenAI – Embeddings guide</a> (dimensions parameter)</li>
+<li><a href="https://arxiv.org/abs/2205.13147" target="_blank" rel="noopener">Matryoshka Representation Learning (paper)</a></li>
+</ul></section>
+</article>
+
+<article class="topic" id="embedding-model" data-stage="embed query">
+<header><div class="eyebrow">1.3</div><h3>Embedding model</h3><p class="src">Converts raw content into a dense numeric vector that captures meaning.</p></header>
+<h4>What is it?</h4>
+<p>A neural network (usually a transformer encoder) trained so that content with similar meaning produces vectors that are close together. It is the "translator" from human content to numbers.</p>
+<p class="analogy">A librarian who has read millions of books and can place any new page on a giant map, right next to pages about the same subject.</p>
+<h4>Why is it important?</h4>
+<p>It sets the ceiling for retrieval quality. A model that doesn't understand your domain (legal, medical, code) will place unrelated chunks near each other, and no index or reranker can fully fix that.</p>
+<h4>Where is it used?</h4>
+<p>At ingestion time (embedding every chunk) and at query time (embedding the user question). Popular options:</p>
+<div class="tbl"><table><tr><th>Type</th><th>Examples</th><th>Good for</th></tr>
+<tr><td>Open source, local</td><td>all-MiniLM-L6-v2, BAAI/bge-base-en-v1.5, intfloat/e5-base-v2, nomic-embed-text</td><td>Privacy, no per-call cost, learning</td></tr>
+<tr><td>Hosted API</td><td>OpenAI text-embedding-3-small/large, Cohere Embed, Voyage AI</td><td>Quick start, strong quality, no GPU needed</td></tr>
+<tr><td>Multilingual</td><td>bge-m3, multilingual-e5</td><td>Mixed-language document sets</td></tr></table></div>
+<h4>When should I use which?</h4>
+<ul><li>Start with a small, fast model (MiniLM or bge-small) to build the pipeline.</li><li>Shortlist models from the MTEB leaderboard, then pick using <i>your</i> evaluation set.</li><li>Use an API when you can't host models; use local models when data must not leave your servers.</li></ul>
+<h4>How does it work?</h4>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart LR
+  T["Text chunk"] --> K["Tokenizer: text to token IDs"]
+  K --> E["Transformer encoder"]
+  E --> P["Pooling: mean or CLS token"]
+  P --> N["Normalize to unit length"]
+  N --> V["Vector, e.g. 768 floats"]</pre>
+<ul><li><b>Bi-encoder:</b> query and document are embedded separately, so documents can be embedded once in advance. This is what embedding models are.</li>
+<li><b>Contrastive training:</b> the model is shown (question, correct passage) pairs and learns to pull them together and push wrong passages apart.</li>
+<li><b>Asymmetric prefixes:</b> some models expect <code>"query: "</code> / <code>"passage: "</code> (E5) or an instruction on the query (BGE). Skipping them lowers quality.</li></ul>
+<h4>Example</h4>
+<pre><code>from sentence_transformers import SentenceTransformer
+model = SentenceTransformer("BAAI/bge-base-en-v1.5")
+chunks = ["Employees get 20 days of paid leave.", "The VPN requires MFA."]
+doc_vecs = model.encode(chunks, normalize_embeddings=True, batch_size=32)
+q_vec = model.encode("Represent this sentence for searching relevant passages: how many vacation days?",
+                     normalize_embeddings=True)
+print(doc_vecs @ q_vec)   # higher score for the leave-policy chunk</code></pre>
+<div class="split">
+<div><h4>Common mistakes</h4><ul class="mist"><li>Picking the #1 leaderboard model without testing on your documents.</li><li>Forgetting query/passage prefixes.</li><li>Embedding one text per API call instead of batching.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Batch requests; cache embeddings by content hash.</li><li>Pin the exact model name and version.</li><li>Consider fine-tuning only after a baseline evaluation shows a domain gap.</li></ul></div>
+</div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Bi-encoder vs cross-encoder?</b><span>Bi-encoders embed texts separately (fast, indexable); cross-encoders read query and document together (accurate, slow), so they are used for reranking.</span></li>
+<li><b>How do you choose an embedding model?</b><span>Shortlist by language, domain, max tokens, dimension, cost and license; then compare Recall@k on your own evaluation set.</span></li>
+<li><b>What is pooling?</b><span>Combining per-token outputs into one vector, typically by averaging (mean pooling) or using the CLS token.</span></li>
+<li><b>Why might you fine-tune an embedding model?</b><span>When domain vocabulary (e.g. internal product codes, legal terms) is poorly represented and evaluation shows retrieval gaps.</span></li>
+<li><b>What is asymmetric search?</b><span>Short queries vs long passages; models handle it with separate prefixes or instructions for each side.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul>
+<li><a href="https://www.sbert.net/" target="_blank" rel="noopener">Sentence-Transformers documentation</a></li>
+<li><a href="https://huggingface.co/spaces/mteb/leaderboard" target="_blank" rel="noopener">MTEB leaderboard (Hugging Face)</a></li>
+<li><a href="https://platform.openai.com/docs/guides/embeddings" target="_blank" rel="noopener">OpenAI – Embeddings guide</a></li>
+<li><a href="https://docs.cohere.com/docs/embeddings" target="_blank" rel="noopener">Cohere – Embeddings docs</a></li>
+</ul></section>
+</article>
+
+<article class="topic" id="dense-vector" data-stage="embed">
+<header><div class="eyebrow">1.4</div><h3>Dense vector</h3><p class="src">Most values are non-zero; captures semantic meaning.</p></header>
+<h4>What is it?</h4>
+<p>A compact vector (hundreds to a few thousand dimensions) where almost every value is a non-zero float. Produced by neural embedding models.</p>
+<p class="analogy">A paint colour mixed from many pigments. Every pigment contributes a little, and similar colours have similar mixes.</p>
+<h4>Why is it important?</h4>
+<p>Dense vectors understand paraphrase: "car" and "automobile", or "cancel my plan" and "end subscription", land close together even with zero shared words.</p>
+<h4>When should I use it?</h4>
+<ul><li>Natural-language questions over documents.</li><li><b>Weak spot:</b> exact identifiers such as error codes (<code>E-4012</code>), SKUs, names and rare acronyms. Pair with sparse/keyword search (hybrid) for these.</li></ul>
+<h4>Example</h4>
+<pre><code>dense = [0.021, -0.113, 0.087, 0.004, -0.056, ...]   # 768 values, nearly all non-zero</code></pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why are dense vectors good at synonyms?</b><span>They were trained so that texts used in similar contexts get similar vectors, regardless of exact wording.</span></li>
+<li><b>Where do dense vectors fail?</b><span>Exact-match needs: IDs, codes, rare names, numbers.</span></li>
+<li><b>Typical dimension range?</b><span>About 384 to 3072.</span></li>
+<li><b>How are dense vectors searched at scale?</b><span>With ANN indexes such as HNSW or IVF.</span></li>
+<li><b>Can a dense vector be "explained"?</b><span>Not directly; that is a reason to keep a keyword channel for debuggable matches.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="sparse-vector" data-stage="embed">
+<header><div class="eyebrow">1.5</div><h3>Sparse vector</h3><p class="src">Most values are zero; often reflects keyword or term-frequency signals.</p></header>
+<h4>What is it?</h4>
+<p>A very long vector (one slot per vocabulary word, often 30,000+) where almost all values are zero. Only the words present in the text get a weight. Stored as <code>{term_id: weight}</code> to save space.</p>
+<p class="analogy">A book's index at the back: thousands of possible words, but each page only appears under a handful of them.</p>
+<h4>Where is it used?</h4>
+<ul><li>Classic keyword search: TF-IDF and BM25 (Elasticsearch, OpenSearch, Postgres full-text).</li><li>Learned sparse models such as SPLADE, which add related terms with weights.</li><li>The keyword half of hybrid search.</li></ul>
+<h4>Example</h4>
+<pre><code>text   = "reset password error E-4012"
+sparse = {"reset": 1.2, "password": 1.8, "error": 0.6, "e-4012": 4.7}   # every other term = 0</code></pre>
+<div class="tbl compare"><table><tr><th>Aspect</th><th>Dense vector</th><th>Sparse vector</th></tr>
+<tr><td>Size</td><td>384–3072 dims, all filled</td><td>Vocabulary-size dims, mostly zero</td></tr>
+<tr><td>Captures</td><td>Meaning, synonyms, paraphrase</td><td>Exact terms and their importance</td></tr>
+<tr><td>Strong at</td><td>"How do I get my money back?"</td><td>"Error E-4012", "Form W-9", names</td></tr>
+<tr><td>Weak at</td><td>Rare IDs, exact codes</td><td>Synonyms, different wording</td></tr>
+<tr><td>Explainable</td><td>Hard</td><td>Easy (which words matched)</td></tr>
+<tr><td>Typical tools</td><td>Sentence-Transformers, OpenAI, FAISS, Chroma, pgvector</td><td>BM25, Elasticsearch, OpenSearch, SPLADE</td></tr></table></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What is BM25?</b><span>A keyword ranking function that scores documents by term frequency, inverse document frequency and document length normalization.</span></li>
+<li><b>Why combine dense and sparse?</b><span>They fail on different queries; hybrid search covers both meaning and exact terms.</span></li>
+<li><b>What is SPLADE?</b><span>A neural model that outputs sparse vectors, adding weighted expansion terms while staying index-friendly.</span></li>
+<li><b>How are sparse vectors stored efficiently?</b><span>As inverted indexes or index/value pairs, not as full arrays.</span></li>
+<li><b>Which handles a typo better?</b><span>Dense usually does; pure keyword matching misses misspelled terms unless fuzzy matching is added.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul>
+<li><a href="https://www.elastic.co/blog/practical-bm25-part-2-the-bm25-algorithm-and-its-variables" target="_blank" rel="noopener">Elastic – Practical BM25</a></li>
+<li><a href="https://arxiv.org/abs/2107.05720" target="_blank" rel="noopener">SPLADE (paper)</a></li>
+</ul></section>
+</article>
+
+<article class="topic" id="semantic-search" data-stage="query retrieve">
+<header><div class="eyebrow">1.6</div><h3>Semantic search</h3><p class="src">Retrieves results based on meaning rather than exact keyword matching.</p></header>
+<h4>What is it?</h4>
+<p>Search where the query and documents are both embedded, and results are the documents whose vectors are closest to the query vector.</p>
+<p class="analogy">Asking a knowledgeable colleague instead of using Ctrl+F. They understand what you mean even if you use different words from the document.</p>
+<h4>Why is it important?</h4>
+<p>Users rarely phrase questions with the same words the document uses. Without semantic search, "How do I get my money back?" never finds the page titled "Refund policy".</p>
+<h4>Where is it used?</h4>
+<ul><li>Internal knowledge-base search and HR/IT helpdesk bots</li><li>Customer-support article suggestions</li><li>The retrieval step of every RAG chatbot</li></ul>
+<h4>How does it work?</h4>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart LR
+  subgraph Offline
+    D["PDF chunks"] --> E1["Embed"] --> I["Vector index"]
+  end
+  Q["User question"] --> E2["Embed with same model"] --> S["Find nearest vectors"]
+  I --> S --> R["Top-k chunks"]</pre>
+<h4>Example</h4>
+<p>Query: <i>"Can I work from another country?"</i> → top result: <i>"Remote work outside the home country requires HR approval for stays over 30 days."</i> (no shared keywords besides "work").</p>
+<div class="split">
+<div><h4>Common mistakes</h4><ul class="mist"><li>Expecting it to match exact codes and IDs reliably.</li><li>Always returning results, even when nothing relevant exists. Consider a score threshold or an "I don't know" path.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Combine with keyword search (hybrid) for production.</li><li>Show sources so users can verify.</li></ul></div>
+</div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Semantic vs lexical search?</b><span>Semantic compares meaning via vectors; lexical compares literal terms.</span></li>
+<li><b>Why must the query use the same model as the documents?</b><span>Vectors from different models live in different spaces and cannot be compared.</span></li>
+<li><b>How do you handle "no good answer"?</b><span>Use a similarity threshold, reranker scores, or let the LLM say the context lacks the answer.</span></li>
+<li><b>Name a case where semantic search loses to keyword search.</b><span>Searching for a part number or an exact error code.</span></li>
+<li><b>What is the output of semantic search?</b><span>A ranked list of IDs with similarity scores (top-k).</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul>
+<li><a href="https://www.sbert.net/examples/sentence_transformer/applications/semantic-search/README.html" target="_blank" rel="noopener">SBERT – Semantic search example</a></li>
+<li><a href="https://www.pinecone.io/learn/" target="_blank" rel="noopener">Pinecone Learn – vector search articles</a></li>
+</ul></section>
+</article>
+
+<article class="topic" id="token-limit" data-stage="chunk embed">
+<header><div class="eyebrow">1.7</div><h3>Token limit</h3><p class="src">Every embedding model has a maximum input length; chunks must fit within it.</p></header>
+<h4>What is it?</h4>
+<p>The largest number of tokens (word pieces) an embedding model will read. A token is roughly ¾ of an English word, or about 4 characters.</p>
+<p class="analogy">A scanner tray that fits only one page. Feed it three pages stacked together and only the first is scanned.</p>
+<h4>Why is it important?</h4>
+<p>Text past the limit is <b>silently truncated</b> by many libraries (Sentence-Transformers does this) or rejected with an error by APIs. Truncated chunks lose their ending, so facts in the second half become unsearchable.</p>
+<div class="tbl"><table><tr><th>Model</th><th>Max input (tokens)</th></tr>
+<tr><td>all-MiniLM-L6-v2</td><td>256 (trained on 128)</td></tr>
+<tr><td>bge-base-en-v1.5</td><td>512</td></tr>
+<tr><td>OpenAI text-embedding-3-small / large</td><td>8,191</td></tr></table></div>
+<h4>Example: counting tokens</h4>
+<pre><code>from transformers import AutoTokenizer
+tok = AutoTokenizer.from_pretrained("BAAI/bge-base-en-v1.5")
+n = len(tok.encode(chunk_text))
+if n &gt; 512:
+    print("Chunk too long, will be truncated:", n)</code></pre>
+<div class="split">
+<div><h4>Common mistakes</h4><ul class="mist"><li>Measuring chunk size in characters or words and assuming it fits.</li><li>Using a long-context model and creating huge chunks just because it allows them.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Count tokens with the model's own tokenizer.</li><li>Keep chunks well under the limit; a limit is not a target.</li></ul></div>
+</div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What happens when a chunk exceeds the token limit?</b><span>It is truncated or rejected; either way content is lost from the index.</span></li>
+<li><b>Rough characters-per-token for English?</b><span>About 4.</span></li>
+<li><b>Why not just use 8k-token chunks?</b><span>Large chunks dilute meaning and waste LLM context; retrieval precision drops.</span></li>
+<li><b>Embedding token limit vs LLM context window?</b><span>The first limits one chunk being embedded; the second limits everything sent to the LLM in one request.</span></li>
+<li><b>How do you enforce the limit in a pipeline?</b><span>Use a token-based splitter and assert token counts before embedding.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul>
+<li><a href="https://github.com/openai/tiktoken" target="_blank" rel="noopener">tiktoken (OpenAI tokenizer)</a></li>
+<li><a href="https://huggingface.co/docs/transformers/main_classes/tokenizer" target="_blank" rel="noopener">Hugging Face – Tokenizers</a></li>
+</ul></section>
+</article>
+
+<article class="topic" id="model-consistency" data-stage="embed query ops">
+<header><div class="eyebrow">1.8</div><h3>Model consistency</h3><p class="src">Use the same embedding model for indexing and querying. Changing models requires re-embedding the corpus.</p></header>
+<h4>What is it?</h4>
+<p>The rule that document vectors and query vectors must come from the same model, same version and same preprocessing (prefixes, normalization).</p>
+<p class="analogy">Two maps must use the same coordinate system. Plotting a London address on a map of Tokyo gives a point, but it's meaningless.</p>
+<h4>Why is it important?</h4>
+<p>Different models create different spaces. Even if two models both output 768 numbers, the numbers mean different things. Mixing them gives random-looking results with no error message.</p>
+<h4>How does it work?</h4>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart LR
+  A["Corpus embedded with Model A v1"] --> IDX["Index A"]
+  Q1["Query embedded with Model A v1"] --> IDX
+  Q2["Query embedded with Model B"] -. wrong space .-> IDX
+  B["Switch to Model B"] --> R["Re-embed whole corpus into Index B"] --> SW["Swap traffic when evaluated"]</pre>
+<h4>Best practices</h4>
+<ul class="best"><li>Store <code>embedding_model</code> and version in collection metadata and check it at query time.</li><li>When upgrading, build a new index in parallel (blue-green), evaluate, then switch.</li></ul>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>You switched embedding models and quality collapsed. Why?</b><span>Old document vectors were not re-embedded; queries and documents are now in different spaces.</span></li>
+<li><b>Can two models with the same dimension share an index?</b><span>No; equal length does not mean the same space.</span></li>
+<li><b>How do you upgrade models with zero downtime?</b><span>Re-embed into a new index, evaluate, then flip an alias.</span></li>
+<li><b>What else must stay consistent besides the model name?</b><span>Model version, prefixes/instructions, normalization and text preprocessing.</span></li>
+<li><b>How do you prevent accidental mixing?</b><span>Store model ID per collection and validate it in the query service.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="multimodal" data-stage="embed">
+<header><div class="eyebrow">1.9</div><h3>Multimodal embeddings</h3><p class="src">Can represent text, images, audio, or combined modalities.</p></header>
+<h4>What is it?</h4>
+<p>Models that put different content types into <b>one shared space</b>, so a text query like "red running shoes" lands near photos of red running shoes.</p>
+<p class="analogy">A bilingual dictionary, but between words and pictures.</p>
+<h4>Where is it used?</h4>
+<ul><li>Text-to-image product search, photo libraries</li><li>Retrieving charts, diagrams and scanned figures inside PDFs</li><li>Page-image retrieval for visually rich documents (e.g. ColPali-style approaches)</li><li>Audio search (CLAP-style models)</li></ul>
+<h4>When should I use it?</h4>
+<p>When important information lives in images (diagrams, slides, scanned forms). For plain-text PDFs, a text model is simpler and cheaper.</p>
+<h4>Example</h4>
+<pre><code>from sentence_transformers import SentenceTransformer
+from PIL import Image
+clip = SentenceTransformer("clip-ViT-B-32")
+img_vec = clip.encode(Image.open("figure_3_network_diagram.png"))
+txt_vec = clip.encode("diagram of the office network")
+# compare with cosine similarity, same as text-only search</code></pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What is CLIP?</b><span>A model trained on image–caption pairs so images and text share one embedding space.</span></li>
+<li><b>How would you make PDF charts searchable?</b><span>Embed the chart images with a multimodal model, or caption them with a vision LLM and embed the caption.</span></li>
+<li><b>Can you mix CLIP vectors with text-only model vectors?</b><span>No; they come from different models.</span></li>
+<li><b>Main trade-off of multimodal models?</b><span>Broader coverage, but often weaker on pure-text retrieval than specialised text models.</span></li>
+<li><b>Give a RAG use case.</b><span>A maintenance bot that retrieves the exact wiring diagram from a manual when asked about a fault.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul>
+<li><a href="https://arxiv.org/abs/2103.00020" target="_blank" rel="noopener">CLIP (paper)</a></li>
+<li><a href="https://www.sbert.net/examples/sentence_transformer/applications/image-search/README.html" target="_blank" rel="noopener">SBERT – Image search</a></li>
+</ul></section>
+</article>
+
+<article class="topic lab" id="lab1" data-stage="embed">
+<header><div class="eyebrow">1.10</div><h3>Lab 1 · Embed 20 sentences</h3><p class="src">Embed 20 sentences, inspect dimensions, and check that similar sentences have closer vectors.</p></header>
+<h4>Goal</h4><p>See with your own eyes that meaning becomes geometry.</p>
+<h4>Steps</h4>
+<ol><li>Write 20 sentences in 4 topics (5 each): refunds, passwords, holidays, weather.</li><li>Embed them with <code>all-MiniLM-L6-v2</code>.</li><li>Print the shape and a 20×20 cosine-similarity matrix.</li><li>For each sentence, check that its nearest neighbour is from the same topic.</li></ol>
+<pre><code>import numpy as np
+from sentence_transformers import SentenceTransformer
+
+sentences = [
+  "How do I get a refund?", "Can I get my money back?", "Refunds take 5 days.",
+  "Return the item for a refund.", "What is the refund policy?",
+  "I forgot my password.", "How do I reset my login?", "My account is locked.",
+  "Change my password please.", "Password reset link expired.",
+  # ... 5 holiday sentences, 5 weather sentences
+]
+model = SentenceTransformer("all-MiniLM-L6-v2")
+E = model.encode(sentences, normalize_embeddings=True)
+print(E.shape)                    # (20, 384)
+S = E @ E.T                       # cosine similarity matrix (vectors are normalized)
+np.fill_diagonal(S, -1)
+for i, s in enumerate(sentences):
+    j = S[i].argmax()
+    print(f"{s!r:40} -&gt; {sentences[j]!r}  ({S[i, j]:.2f})")</code></pre>
+<h4>Expected output</h4>
+<ul><li><code>(20, 384)</code></li><li>Nearest neighbours within the same topic, with scores roughly 0.5–0.8; cross-topic scores mostly below 0.2.</li><li>Bonus: plot <code>S</code> with <code>matplotlib.pyplot.imshow</code>; you should see 4 bright blocks on the diagonal.</li></ul>
+</article>
+</section>
+
+<section class="part" id="s2">
+<h2>2. Similarity and Search</h2>
+<p class="intro">Once content is a vector, "how relevant is this chunk?" becomes "how close are these two vectors?". This section covers the three standard ways to measure closeness and the two ways to search (exact and approximate).</p>
+
+<article class="topic" id="dot-product" data-stage="retrieve">
+<header><div class="eyebrow">2.1</div><h3>Dot product</h3><p class="src">Measures alignment between two vectors; commonly used for relevance scoring.</p></header>
+<h4>What is it?</h4>
+<p>Multiply matching positions and add them up: <code>a · b = a₁b₁ + a₂b₂ + … + aₙbₙ</code>. Bigger means more aligned. It depends on both direction <i>and</i> length (magnitude).</p>
+<p class="analogy">Two people pushing a cart. If they push in the same direction the effect adds up (large positive); at right angles it's zero; in opposite directions it's negative. Stronger pushers (longer vectors) make the number bigger.</p>
+<h4>Why is it important?</h4>
+<p>It is the cheapest similarity to compute, and hardware is optimised for it. Many indexes use "inner product" (IP) as their native metric.</p>
+<h4>Example</h4>
+<pre><code>a = np.array([1, 2, 3]); b = np.array([2, 4, 6]); c = np.array([3, 2, 1])
+a @ b   # 28
+a @ c   # 10</code></pre>
+<h4>When should I use it?</h4>
+<ul><li>When vectors are normalized (then it equals cosine), or the model card says it was trained for dot product.</li><li>Avoid on un-normalized vectors from a cosine-trained model: long chunks may win just because their vectors are longer.</li></ul>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Formula for dot product?</b><span>Sum of element-wise products.</span></li>
+<li><b>Why is dot product sensitive to magnitude?</b><span>Scaling a vector by 2 doubles the score even though direction is unchanged.</span></li>
+<li><b>What is MIPS?</b><span>Maximum Inner Product Search: finding vectors with the largest dot product to the query.</span></li>
+<li><b>When does dot product equal cosine similarity?</b><span>When both vectors have unit length.</span></li>
+<li><b>Can dot product be negative?</b><span>Yes, when vectors point in broadly opposite directions.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="cosine" data-stage="retrieve">
+<header><div class="eyebrow">2.2</div><h3>Cosine similarity</h3><p class="src">Measures the angle between vectors; useful when direction matters more than magnitude.</p></header>
+<h4>What is it?</h4>
+<p><code>cos(a, b) = (a · b) / (‖a‖ × ‖b‖)</code>. Range −1 to 1. 1 = same direction, 0 = unrelated, −1 = opposite. Length is ignored.</p>
+<p class="analogy">Two arrows on a compass. Only the angle between them matters, not how long the arrows are.</p>
+<h4>Why is it important?</h4>
+<p>It is the default metric for most text embedding models, and it removes the effect of text length on scores.</p>
+<h4>Example</h4>
+<pre><code>def cosine(a, b): return a @ b / (np.linalg.norm(a) * np.linalg.norm(b))
+cosine(a, b)   # 1.00  -&gt; b is just a scaled copy of a
+cosine(a, c)   # 0.71</code></pre>
+<div class="split">
+<div><h4>Common mistakes</h4><ul class="mist"><li>Treating 0.8 as a universal "relevant" threshold. Score ranges differ per model.</li><li>Confusing cosine <i>similarity</i> (higher is better) with cosine <i>distance</i> = 1 − similarity (lower is better), which Chroma and pgvector return.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Normalize once at ingestion, then use dot product for speed.</li><li>Calibrate thresholds on your own evaluation set.</li></ul></div>
+</div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Range of cosine similarity?</b><span>−1 to 1 (text embeddings usually fall between about 0 and 1).</span></li>
+<li><b>Why prefer cosine over raw dot product for text?</b><span>It ignores vector length, so scores are not biased by magnitude.</span></li>
+<li><b>Cosine distance in pgvector?</b><span>The <code>&lt;=&gt;</code> operator returns 1 − cosine similarity.</span></li>
+<li><b>How do you get cosine in FAISS?</b><span>L2-normalize vectors, then use an inner-product index.</span></li>
+<li><b>Is a fixed threshold portable across models?</b><span>No; recalibrate per model.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="euclidean" data-stage="retrieve">
+<header><div class="eyebrow">2.3</div><h3>Euclidean distance</h3><p class="src">Measures straight-line distance; smaller distance means greater similarity.</p></header>
+<h4>What is it?</h4>
+<p><code>‖a − b‖ = √Σ(aᵢ − bᵢ)²</code>, also called L2 distance. 0 means identical. Unlike the two scores above, <b>smaller is better</b>.</p>
+<p class="analogy">Measuring with a ruler how far apart two pins are on a map.</p>
+<h4>Example</h4>
+<pre><code>np.linalg.norm(a - b)   # 3.74 -&gt; "far", although cosine said identical direction</code></pre>
+<p>For unit vectors, <code>‖a − b‖² = 2 − 2·cos(a, b)</code>, so L2 and cosine give the same ranking.</p>
+<div class="tbl compare"><table><tr><th>Metric</th><th>Measures</th><th>Better when</th><th>Magnitude matters?</th><th>Typical use</th></tr>
+<tr><td>Dot product</td><td>Alignment × length</td><td>Higher</td><td>Yes</td><td>Normalized vectors, models trained for IP</td></tr>
+<tr><td>Cosine similarity</td><td>Angle only</td><td>Higher</td><td>No</td><td>Default for text embeddings</td></tr>
+<tr><td>Euclidean (L2)</td><td>Straight-line gap</td><td>Lower</td><td>Yes</td><td>FAISS default, clustering, images</td></tr></table></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Is lower or higher Euclidean distance better?</b><span>Lower.</span></li>
+<li><b>Relationship between L2 and cosine for unit vectors?</b><span>‖a−b‖² = 2 − 2cos, so rankings match.</span></li>
+<li><b>Default metric in Chroma?</b><span>Squared L2, unless you configure cosine or inner product.</span></li>
+<li><b>Why might L2 mislead for un-normalized text vectors?</b><span>Two texts with the same direction but different lengths look far apart.</span></li>
+<li><b>Which metric does IVF k-means clustering use?</b><span>Typically L2 for computing centroids.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul>
+<li><a href="https://www.pinecone.io/learn/vector-similarity/" target="_blank" rel="noopener">Pinecone – Vector similarity explained</a></li>
+<li><a href="https://github.com/facebookresearch/faiss/wiki/MetricType-and-distances" target="_blank" rel="noopener">FAISS wiki – Metric types and distances</a></li>
+</ul></section>
+</article>
+
+<article class="topic" id="normalization" data-stage="embed retrieve">
+<header><div class="eyebrow">2.4</div><h3>Normalization</h3><p class="src">Converts vectors to unit length; after normalization, cosine similarity and dot product often produce the same ranking.</p></header>
+<h4>What is it?</h4>
+<p>Divide a vector by its own length so its length becomes exactly 1: <code>v̂ = v / ‖v‖</code>. Direction is kept; size is removed.</p>
+<p class="analogy">Resizing every arrow to 1 metre so you only compare which way they point.</p>
+<h4>Why is it important?</h4>
+<p>After normalization, dot product <i>equals</i> cosine similarity, and L2 gives the same ranking. You can then use the fastest metric (inner product) and get cosine results.</p>
+<h4>Example</h4>
+<pre><code>import faiss
+X = embeddings.astype("float32")
+faiss.normalize_L2(X)                 # in-place, every row now has length 1
+index = faiss.IndexFlatIP(X.shape[1]) # inner product == cosine now
+index.add(X)
+q = model.encode(["refund policy"]).astype("float32"); faiss.normalize_L2(q)
+scores, ids = index.search(q, 5)</code></pre>
+<div class="split">
+<div><h4>Common mistakes</h4><ul class="mist"><li>Normalizing documents but forgetting to normalize the query.</li><li>Normalizing when the model was trained for un-normalized dot product (check the model card).</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Use <code>normalize_embeddings=True</code> in Sentence-Transformers.</li><li>Assert <code>np.allclose(np.linalg.norm(X, axis=1), 1)</code> in tests.</li></ul></div>
+</div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What does L2 normalization do?</b><span>Scales a vector to length 1 without changing its direction.</span></li>
+<li><b>Why normalize before using an IP index?</b><span>So inner product equals cosine similarity.</span></li>
+<li><b>Does normalization change ranking under cosine?</b><span>No; cosine already ignores length.</span></li>
+<li><b>Are OpenAI embeddings normalized?</b><span>Yes, they are returned at unit length per OpenAI's docs.</span></li>
+<li><b>What bug appears if only documents are normalized?</b><span>Scores and ranking become inconsistent with cosine, especially with dot product or L2.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="top-k" data-stage="retrieve rerank">
+<header><div class="eyebrow">2.5</div><h3>Top-k retrieval</h3><p class="src">Returns the k most similar results, such as top 5 or top 10 chunks.</p></header>
+<h4>What is it?</h4>
+<p>The search returns only the <code>k</code> best-scoring chunks, ranked. <code>k</code> is a setting you choose.</p>
+<p class="analogy">Asking a librarian for "your 5 best books on this" rather than every book that mentions the subject.</p>
+<h4>Why is it important?</h4>
+<ul><li><b>k too small:</b> the right chunk may sit at rank 6 and be missed (retrieval failure).</li><li><b>k too large:</b> more noise, higher LLM cost and latency, and the model may get distracted.</li></ul>
+<h4>How does it work? Typical pattern</h4>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart LR
+  Q["Query"] --> R["Retrieve top 30-50 (cheap)"] --> RR["Rerank (accurate)"] --> C["Keep top 3-8 for the LLM"]</pre>
+<h4>Example</h4>
+<pre><code>results = collection.query(query_texts=["parental leave duration"], n_results=5)
+for doc, dist in zip(results["documents"][0], results["distances"][0]):
+    print(round(dist, 3), doc[:80])</code></pre>
+<div class="split">
+<div><h4>Common mistakes</h4><ul class="mist"><li>Using the same k for retrieval and for the LLM context.</li><li>Applying filters after top-k and ending up with fewer than k results.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Pick k using Recall@k on your evaluation set.</li><li>Retrieve wide, rerank, then send few.</li></ul></div>
+</div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>How do you pick k?</b><span>Measure Recall@k for several values and balance it against latency and context cost.</span></li>
+<li><b>Why retrieve 50 but send 5?</b><span>Wide retrieval maximises recall; reranking then restores precision.</span></li>
+<li><b>Top-k vs similarity threshold?</b><span>Top-k always returns k items; a threshold returns only items above a score and can return none.</span></li>
+<li><b>What does a larger k cost in ANN search?</b><span>More candidates to explore, slightly higher latency.</span></li>
+<li><b>How does k relate to the context window?</b><span>k × chunk size must fit within the LLM's budget along with the prompt and answer.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="exact-search" data-stage="retrieve">
+<header><div class="eyebrow">2.6</div><h3>Exact search</h3><p class="src">Compares the query with every stored vector; accurate but slower at scale.</p></header>
+<h4>What is it?</h4>
+<p>Brute force: compute the similarity between the query and <i>every</i> stored vector, then sort. It always finds the true nearest neighbours (100% recall).</p>
+<p class="analogy">Reading every single page in the library to find the best match.</p>
+<h4>When should I use it?</h4>
+<ul><li>Small collections (up to roughly 100k vectors on CPU, more on GPU).</li><li>As the <b>ground truth</b> to measure ANN recall.</li><li>After a strict metadata filter leaves only a few thousand candidates.</li></ul>
+<p>Cost grows linearly: 1M vectors × 768 dims ≈ 768M multiply-adds per query.</p>
+<pre><code>scores = doc_matrix @ query_vec          # one score per document
+top_idx = np.argsort(-scores)[:5]</code></pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Time complexity of exact search?</b><span>O(N × d) per query.</span></li>
+<li><b>Why keep exact search around if you use ANN?</b><span>To compute ground truth and measure ANN recall.</span></li>
+<li><b>When is exact search good enough in production?</b><span>Small or heavily pre-filtered collections where latency is still acceptable.</span></li>
+<li><b>Which FAISS index does exact search?</b><span><code>IndexFlatL2</code> or <code>IndexFlatIP</code>.</span></li>
+<li><b>How can exact search be sped up without approximation?</b><span>Batching queries, GPU, matrix multiplication libraries, pre-filtering.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="ann" data-stage="store retrieve">
+<header><div class="eyebrow">2.7</div><h3>Approximate Nearest Neighbor (ANN)</h3><p class="src">Trades a small amount of accuracy for much faster retrieval.</p></header>
+<h4>What is it?</h4>
+<p>Algorithms that look at only a smart subset of vectors and return <i>almost</i> the true nearest neighbours, often 95–99% of them, in a fraction of the time.</p>
+<p class="analogy">Instead of reading every book, go to the right shelf section first and only browse there.</p>
+<h4>Where is it used?</h4><p>Inside every vector database: HNSW (Chroma, pgvector, Qdrant, Weaviate, Milvus), IVF and IVF-PQ (FAISS, Milvus), ScaNN, DiskANN, Annoy.</p>
+<div class="tbl compare"><table><tr><th>Aspect</th><th>Exact search</th><th>ANN search</th></tr>
+<tr><td>Recall</td><td>100%</td><td>Usually 90–99%, tunable</td></tr>
+<tr><td>Speed at 10M+ vectors</td><td>Slow (linear scan)</td><td>Milliseconds</td></tr>
+<tr><td>Build step</td><td>None</td><td>Graph building or clustering (training)</td></tr>
+<tr><td>Memory</td><td>Raw vectors only</td><td>Raw vectors + index structures (or compressed)</td></tr>
+<tr><td>Best for</td><td>Small data, ground truth, filtered subsets</td><td>Large data, low-latency apps</td></tr>
+<tr><td>Examples</td><td>FAISS IndexFlat, NumPy</td><td>HNSW, IVF, IVF-PQ, ScaNN</td></tr></table></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why is ANN acceptable for RAG?</b><span>Missing 1–2% of neighbours rarely changes answers, and a reranker further reduces the impact.</span></li>
+<li><b>Name three ANN families.</b><span>Graph-based (HNSW), clustering-based (IVF), and compression-based (PQ).</span></li>
+<li><b>How do you measure ANN quality?</b><span>Recall@k versus exact search results.</span></li>
+<li><b>What knob trades speed for recall in HNSW?</b><span><code>efSearch</code>.</span></li>
+<li><b>Where can ANN struggle?</b><span>Highly selective metadata filters and frequent deletes.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul>
+<li><a href="https://ann-benchmarks.com/" target="_blank" rel="noopener">ANN-Benchmarks</a></li>
+<li><a href="https://www.pinecone.io/learn/series/faiss/" target="_blank" rel="noopener">Pinecone – Faiss: The Missing Manual</a></li>
+</ul></section>
+</article>
+
+<article class="topic lab" id="lab2" data-stage="retrieve">
+<header><div class="eyebrow">2.8</div><h3>Lab 2 · Brute-force search with NumPy</h3><p class="src">Implement brute-force search with NumPy and compare cosine similarity with dot product.</p></header>
+<pre><code>import numpy as np
+from sentence_transformers import SentenceTransformer
+model = SentenceTransformer("all-MiniLM-L6-v2")
+docs = open("faq.txt").read().split("\n\n")        # one FAQ answer per paragraph
+D = model.encode(docs, normalize_embeddings=False)  # keep raw to see the difference
+q = model.encode("how long do refunds take", normalize_embeddings=False)
+
+def top_k(scores, k=5): return np.argsort(-scores)[:k]
+dot = D @ q
+cos = dot / (np.linalg.norm(D, axis=1) * np.linalg.norm(q))
+print("dot   :", top_k(dot)); print("cosine:", top_k(cos))
+
+Dn = D / np.linalg.norm(D, axis=1, keepdims=True); qn = q / np.linalg.norm(q)
+print("dot after normalize:", top_k(Dn @ qn))      # identical to cosine ranking</code></pre>
+<h4>Expected output</h4>
+<ul><li>Cosine and normalized-dot rankings are identical.</li><li>Raw dot may differ slightly; this model outputs nearly unit-length vectors, so differences are small. Multiply one doc vector by 3 to see dot product rank it unfairly high.</li></ul>
+</article>
+</section>
+
+<section class="part" id="s3">
+<h2>3. Vector Indexes</h2>
+<p class="intro">An index is the data structure that makes search fast. Choosing one is a trade-off between recall, latency and memory.</p>
+
+<article class="topic" id="flat" data-stage="store retrieve">
+<header><div class="eyebrow">3.1</div><h3>Flat index</h3><p class="src">Exact brute-force search; suitable for small datasets and as a quality baseline.</p></header>
+<h4>What is it?</h4><p>A plain list of all vectors, searched exhaustively. No training, no graph. In FAISS: <code>IndexFlatL2</code>, <code>IndexFlatIP</code>.</p>
+<p class="analogy">A shoebox of index cards you flip through one by one.</p>
+<h4>When should I use it?</h4><ul><li>Prototypes and small corpora (a few thousand PDFs' worth of chunks).</li><li>As the recall baseline when testing HNSW or IVF.</li><li>Not for tens of millions of vectors with tight latency budgets.</li></ul>
+<pre><code>index = faiss.IndexFlatIP(384); index.add(X); D, I = index.search(Q, 10)</code></pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Does a flat index need training?</b><span>No.</span></li>
+<li><b>Recall of a flat index?</b><span>100% by definition.</span></li>
+<li><b>Memory of a flat index?</b><span>N × d × 4 bytes, no extra structures.</span></li>
+<li><b>Why start a project with Flat?</b><span>Simple, correct and gives a quality baseline.</span></li>
+<li><b>When does Flat become a problem?</b><span>When latency at your corpus size exceeds your budget.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="hnsw" data-stage="store retrieve">
+<header><div class="eyebrow">3.2</div><h3>HNSW (Hierarchical Navigable Small World)</h3><p class="src">Graph-based ANN index; fast and widely used, but memory-intensive.</p></header>
+<h4>What is it?</h4><p>A multi-layer graph where each vector is a node linked to its nearby neighbours. Upper layers have few nodes and long links (motorways); the bottom layer has every node and short links (local streets).</p>
+<p class="analogy">Driving across a country: take the motorway to the right region, then main roads, then local streets to the exact house.</p>
+<h4>How does it work?</h4>
+<ol><li>Start at an entry point on the top layer.</li><li>Greedily move to whichever neighbour is closer to the query.</li><li>When no neighbour is closer, drop down a layer and repeat.</li><li>On the bottom layer, keep a candidate list of size <code>efSearch</code> and return the best k.</li></ol>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart TB
+  subgraph L2["Layer 2: few nodes, long jumps"]
+    A2((A)) --- F2((F))
+  end
+  subgraph L1["Layer 1"]
+    A1((A)) --- C1((C)) --- F1((F)) --- H1((H))
+  end
+  subgraph L0["Layer 0: every vector"]
+    A0((A)) --- B0((B)) --- C0((C)) --- D0((D)) --- E0((E)) --- F0((F)) --- G0((G)) --- H0((H))
+  end
+  F2 --> F1 --> F0</pre>
+<div class="tbl"><table><tr><th>Parameter</th><th>Meaning</th><th>Raise it to</th><th>Cost</th></tr>
+<tr><td><code>M</code></td><td>Links per node</td><td>Improve recall</td><td>More memory, slower build</td></tr>
+<tr><td><code>efConstruction</code></td><td>Candidate list size while building</td><td>Better graph quality</td><td>Slower build</td></tr>
+<tr><td><code>efSearch</code></td><td>Candidate list size while querying</td><td>Higher recall</td><td>Higher latency</td></tr></table></div>
+<p>Defaults: pgvector <code>m=16, ef_construction=64</code>, <code>hnsw.ef_search=40</code>. FAISS: <code>IndexHNSWFlat(d, 32)</code>, then set <code>index.hnsw.efSearch</code>.</p>
+<div class="split">
+<div><h4>Common mistakes</h4><ul class="mist"><li>Leaving <code>efSearch</code> below k (you cannot get more results than candidates).</li><li>Forgetting memory overhead of links (roughly M × 2 × 4 bytes per vector on the bottom layer).</li><li>Heavy delete workloads without periodic rebuilds.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Tune <code>efSearch</code> first; it needs no rebuild.</li><li>Measure recall against a Flat index.</li></ul></div>
+</div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why is HNSW fast?</b><span>Hierarchical greedy graph traversal visits only a small fraction of nodes, roughly logarithmic in N.</span></li>
+<li><b>What does M control?</b><span>Number of neighbour links per node: recall vs memory.</span></li>
+<li><b>Which parameter can you change at query time?</b><span><code>efSearch</code>.</span></li>
+<li><b>HNSW's main drawback?</b><span>High RAM usage, and deletes/updates are costlier than inserts.</span></li>
+<li><b>Does HNSW need training?</b><span>No; it is built incrementally as vectors are inserted.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul>
+<li><a href="https://arxiv.org/abs/1603.09320" target="_blank" rel="noopener">Malkov &amp; Yashunin – HNSW paper</a></li>
+<li><a href="https://www.pinecone.io/learn/series/faiss/hnsw/" target="_blank" rel="noopener">Pinecone – HNSW explained</a></li>
+<li><a href="https://github.com/pgvector/pgvector#hnsw" target="_blank" rel="noopener">pgvector – HNSW options</a></li>
+</ul></section>
+</article>
+
+<article class="topic" id="ivf" data-stage="store retrieve">
+<header><div class="eyebrow">3.3</div><h3>IVF (Inverted File Index)</h3><p class="src">Partitions vectors into clusters and searches relevant clusters; useful for large datasets.</p></header>
+<h4>What is it?</h4><p>k-means groups all vectors into <code>nlist</code> clusters, each with a centroid. At query time, only the <code>nprobe</code> clusters with the nearest centroids are searched.</p>
+<p class="analogy">A library split into subject rooms. You check only the 2–3 rooms whose topic best matches your question.</p>
+<h4>How does it work?</h4>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart LR
+  T["Train: k-means on sample vectors"] --> C["nlist centroids"]
+  C --> A["Assign each vector to nearest centroid list"]
+  Q["Query"] --> N["Find nprobe nearest centroids"] --> S["Scan only those lists"] --> K["Top-k"]</pre>
+<ul><li><code>nlist</code>: number of clusters; a common rule is about √N to 4√N.</li><li><code>nprobe</code>: clusters searched per query; higher means better recall, slower.</li><li>Requires a <b>training</b> step on representative data.</li><li>Often combined with PQ (IVF-PQ) for very large, memory-tight datasets.</li></ul>
+<pre><code>nlist = 1024
+quantizer = faiss.IndexFlatIP(d)
+index = faiss.IndexIVFFlat(quantizer, d, nlist, faiss.METRIC_INNER_PRODUCT)
+index.train(X_sample); index.add(X)
+index.nprobe = 16
+D, I = index.search(Q, 10)</code></pre>
+<div class="tbl compare"><table><tr><th>Aspect</th><th>Flat</th><th>HNSW</th><th>IVF</th></tr>
+<tr><td>Type</td><td>Exact</td><td>Graph ANN</td><td>Cluster ANN</td></tr>
+<tr><td>Recall</td><td>100%</td><td>Very high (95–99%+)</td><td>Good; depends on nprobe</td></tr>
+<tr><td>Query speed</td><td>Slow at scale</td><td>Very fast</td><td>Fast</td></tr>
+<tr><td>Memory</td><td>Vectors only</td><td>Vectors + graph links (highest)</td><td>Vectors + centroids (low; lower still with PQ)</td></tr>
+<tr><td>Training needed</td><td>No</td><td>No</td><td>Yes (k-means)</td></tr>
+<tr><td>Insert / delete</td><td>Easy</td><td>Inserts easy, deletes costly</td><td>Easy, but clusters drift with new data</td></tr>
+<tr><td>Key knobs</td><td>None</td><td>M, efConstruction, efSearch</td><td>nlist, nprobe</td></tr>
+<tr><td>Use when</td><td>&lt;100k vectors, baselines</td><td>Default for most apps</td><td>Very large datasets, memory limits</td></tr></table></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What are nlist and nprobe?</b><span>Number of clusters, and number of clusters searched per query.</span></li>
+<li><b>Why does IVF need training?</b><span>It must learn cluster centroids with k-means.</span></li>
+<li><b>Why can IVF miss a true neighbour?</b><span>The neighbour may sit in a cluster that wasn't probed (near a cluster boundary).</span></li>
+<li><b>When choose IVF over HNSW?</b><span>Very large data where HNSW memory is too costly, especially with PQ compression.</span></li>
+<li><b>What happens if data distribution changes a lot?</b><span>Clusters become unbalanced; retrain the index.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul>
+<li><a href="https://github.com/facebookresearch/faiss/wiki/Faiss-indexes" target="_blank" rel="noopener">FAISS wiki – Index types</a></li>
+<li><a href="https://github.com/facebookresearch/faiss/wiki/Guidelines-to-choose-an-index" target="_blank" rel="noopener">FAISS wiki – Guidelines to choose an index</a></li>
+</ul></section>
+</article>
+
+<article class="topic" id="recall" data-stage="retrieve eval">
+<header><div class="eyebrow">3.4</div><h3>Recall (index recall)</h3><p class="src">Percentage of true nearest neighbors found by an ANN index.</p></header>
+<h4>What is it?</h4><p><code>recall@k = |ANN top-k ∩ exact top-k| / k</code>. If exact search finds 10 neighbours and HNSW returns 9 of them, recall@10 = 0.9.</p>
+<p>Note the two meanings of "recall" in this document: here it measures the <b>index</b> against exact search. In section 7, Recall@k measures <b>retrieval</b> against human-labelled correct chunks.</p>
+<pre><code>def index_recall(ann_ids, exact_ids):
+    return np.mean([len(set(a) &amp; set(e)) / len(e) for a, e in zip(ann_ids, exact_ids)])</code></pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>How do you compute ANN recall?</b><span>Compare ANN results to exact (Flat) results for the same queries.</span></li>
+<li><b>Index recall vs retrieval Recall@k?</b><span>Index recall uses exact search as truth; retrieval Recall@k uses labelled relevant chunks.</span></li>
+<li><b>What recall is "good"?</b><span>Commonly 0.95+, but judge by end-to-end answer quality.</span></li>
+<li><b>How do you raise HNSW recall?</b><span>Increase efSearch, or M and efConstruction with a rebuild.</span></li>
+<li><b>Can 100% index recall still give bad answers?</b><span>Yes, if the embedding model or chunking is poor.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="index-latency" data-stage="retrieve">
+<header><div class="eyebrow">3.5</div><h3>Latency</h3><p class="src">Time required to return search results.</p></header>
+<h4>What is it?</h4><p>Wall-clock time from sending a query to receiving results. Report <b>p50</b> (typical), <b>p95</b> and <b>p99</b> (slow tail), not just the average. Throughput (QPS) is how many queries per second you can serve.</p>
+<pre><code>import time
+times = []
+for q in queries:
+    t = time.perf_counter(); index.search(q[None], 10); times.append(time.perf_counter() - t)
+print("p50 ms", np.percentile(times, 50)*1000, "p95 ms", np.percentile(times, 95)*1000)</code></pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why report p95 instead of the mean?</b><span>Users feel the slow tail; averages hide it.</span></li>
+<li><b>Latency vs throughput?</b><span>Time per query vs queries handled per second.</span></li>
+<li><b>Which HNSW parameter most affects query latency?</b><span>efSearch.</span></li>
+<li><b>Should you include embedding time?</b><span>Yes for end-to-end latency; query embedding can dominate with remote APIs.</span></li>
+<li><b>One way to cut latency without losing recall?</b><span>Keep the index in RAM, batch queries, or use a GPU.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="quantization" data-stage="store">
+<header><div class="eyebrow">3.6</div><h3>Quantization</h3><p class="src">Compresses vectors to reduce memory usage, usually with some quality loss.</p></header>
+<h4>What is it?</h4><p>Storing each vector with fewer bits. Like saving a photo as a compressed JPEG instead of a raw image.</p>
+<div class="tbl"><table><tr><th>Method</th><th>How</th><th>768-dim vector size</th><th>Compression</th><th>Quality loss</th></tr>
+<tr><td>None (float32)</td><td>4 bytes per value</td><td>3,072 B</td><td>1×</td><td>None</td></tr>
+<tr><td>float16 / halfvec</td><td>2 bytes per value</td><td>1,536 B</td><td>2×</td><td>Negligible</td></tr>
+<tr><td>Scalar (int8)</td><td>Map each value to 0–255</td><td>768 B</td><td>4×</td><td>Small</td></tr>
+<tr><td>Product quantization (PQ, m=96)</td><td>Split into 96 sub-vectors, store a 1-byte codebook ID each</td><td>96 B</td><td>32×</td><td>Moderate</td></tr>
+<tr><td>Binary</td><td>1 bit per value (sign)</td><td>96 B</td><td>32×</td><td>Larger; rescore needed</td></tr></table></div>
+<h4>Best practices</h4><ul class="best"><li>Over-fetch with the compressed index (e.g. top 100), then <b>rescore</b> with full-precision vectors to recover quality.</li><li>Measure Recall@k before and after.</li></ul>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What is product quantization?</b><span>Splitting vectors into sub-vectors and replacing each with the ID of its nearest codebook centroid.</span></li>
+<li><b>Scalar vs product quantization?</b><span>Scalar compresses each number (≈4×); PQ compresses groups of numbers (often 16–64×).</span></li>
+<li><b>How do you recover quality lost to quantization?</b><span>Rescoring top candidates with original vectors.</span></li>
+<li><b>When is quantization worth it?</b><span>When memory or cost limits are hit at large scale.</span></li>
+<li><b>What does IVF-PQ combine?</b><span>Cluster-based search with compressed vector storage.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://www.pinecone.io/learn/series/faiss/product-quantization/" target="_blank" rel="noopener">Pinecone – Product quantization</a></li><li><a href="https://huggingface.co/blog/embedding-quantization" target="_blank" rel="noopener">Hugging Face – Embedding quantization</a></li></ul></section>
+</article>
+
+<article class="topic" id="index-params" data-stage="store retrieve">
+<header><div class="eyebrow">3.7</div><h3>Index parameters</h3><p class="src">Settings affect speed, memory usage, and recall.</p></header>
+<h4>What is it?</h4><p>The knobs that decide where an index sits on the speed / memory / recall triangle. You cannot maximise all three at once.</p>
+<div class="tbl"><table><tr><th>Index</th><th>Parameter</th><th>Higher value gives</th><th>At the cost of</th><th>Rebuild needed?</th></tr>
+<tr><td>HNSW</td><td>M</td><td>Recall</td><td>Memory, build time</td><td>Yes</td></tr>
+<tr><td>HNSW</td><td>efConstruction</td><td>Graph quality</td><td>Build time</td><td>Yes</td></tr>
+<tr><td>HNSW</td><td>efSearch</td><td>Recall</td><td>Query latency</td><td>No</td></tr>
+<tr><td>IVF</td><td>nlist</td><td>Smaller clusters, faster scans</td><td>Need higher nprobe for same recall; training time</td><td>Yes</td></tr>
+<tr><td>IVF</td><td>nprobe</td><td>Recall</td><td>Query latency</td><td>No</td></tr>
+<tr><td>PQ</td><td>m (sub-quantizers)</td><td>Accuracy</td><td>Memory</td><td>Yes</td></tr>
+<tr><td>Any</td><td>Metric (cosine / IP / L2)</td><td colspan="3">Must match how the model was trained; fixed at creation</td></tr></table></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Name the speed/memory/recall triangle.</b><span>Improving one usually costs one of the others.</span></li>
+<li><b>Which parameters are query-time tunable?</b><span>efSearch (HNSW) and nprobe (IVF).</span></li>
+<li><b>How do you tune parameters?</b><span>Sweep values, plot recall vs latency, pick the cheapest setting meeting your recall target.</span></li>
+<li><b>Can you change the distance metric later?</b><span>Generally no; recreate the index.</span></li>
+<li><b>Why tune on realistic queries?</b><span>Random vectors behave differently from real query distributions.</span></li>
+</ol></section>
+</article>
+
+<article class="topic lab" id="lab3" data-stage="store retrieve eval">
+<header><div class="eyebrow">3.8</div><h3>Lab 3 · Flat vs HNSW</h3><p class="src">Compare flat and HNSW indexes using FAISS or Chroma; measure recall and latency.</p></header>
+<pre><code>import faiss, numpy as np, time
+d, N, Nq, k = 384, 200_000, 500, 10
+X = np.random.rand(N, d).astype("float32"); faiss.normalize_L2(X)   # or real embeddings
+Q = X[np.random.choice(N, Nq)] + 0.01*np.random.randn(Nq, d).astype("float32"); faiss.normalize_L2(Q)
+
+flat = faiss.IndexFlatIP(d); flat.add(X)
+t = time.perf_counter(); _, I_true = flat.search(Q, k); t_flat = (time.perf_counter()-t)/Nq
+
+hnsw = faiss.IndexHNSWFlat(d, 32, faiss.METRIC_INNER_PRODUCT)
+hnsw.hnsw.efConstruction = 128; hnsw.add(X)
+for ef in [16, 32, 64, 128, 256]:
+    hnsw.hnsw.efSearch = ef
+    t = time.perf_counter(); _, I = hnsw.search(Q, k); t_h = (time.perf_counter()-t)/Nq
+    rec = np.mean([len(set(a) &amp; set(b))/k for a, b in zip(I, I_true)])
+    print(f"efSearch={ef:4} recall@10={rec:.3f} ms/query={t_h*1000:.3f}  (flat {t_flat*1000:.3f})")</code></pre>
+<h4>Expected output</h4><p>A table where recall rises toward 1.0 as <code>efSearch</code> grows, while HNSW stays many times faster per query than Flat. Exact numbers depend on your machine and data; use real embeddings for meaningful recall figures, since random vectors are harder than real text. Plot recall (y) against latency (x) to see the trade-off curve.</p>
+</article>
+</section>
+
+<section class="part" id="s4">
+<h2>4. Vector Databases</h2>
+<p class="intro">A vector database wraps an index with everything an application needs: storage, IDs, metadata, filters, updates, deletes, isolation, and often keyword search and reranking hooks.</p>
+
+<article class="topic" id="collection" data-stage="store">
+<header><div class="eyebrow">4.1</div><h3>Collection / Index</h3><p class="src">Container for vectors and associated metadata.</p></header>
+<h4>What is it?</h4><p>A named container, like a table, holding records of <code>{id, vector, text, metadata}</code>. It is created with a fixed dimension and distance metric.</p>
+<p class="analogy">A filing cabinet dedicated to one kind of document, with a fixed size of folder.</p>
+<div class="tbl"><table><tr><th>Product</th><th>Name for it</th></tr>
+<tr><td>Chroma, Qdrant, Milvus</td><td>Collection</td></tr><tr><td>Pinecone</td><td>Index (with namespaces inside)</td></tr>
+<tr><td>pgvector</td><td>A Postgres table with a <code>vector(d)</code> column</td></tr><tr><td>Weaviate</td><td>Collection (formerly "class")</td></tr></table></div>
+<h4>When should I use separate collections?</h4><ul><li>Different embedding models or dimensions.</li><li>Very different content that is never searched together.</li><li>Not one per tiny user group; use metadata filters or namespaces instead.</li></ul>
+<pre><code>import chromadb
+client = chromadb.PersistentClient(path="./kb")
+col = client.get_or_create_collection("hr_policies", metadata={"hnsw:space": "cosine"})</code></pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What does a record in a collection contain?</b><span>ID, vector, optionally the text, and metadata.</span></li>
+<li><b>What is fixed when creating a collection?</b><span>Vector dimension and distance metric (and in some DBs, index type).</span></li>
+<li><b>Collection vs namespace?</b><span>Collections are separate containers; namespaces partition data within one.</span></li>
+<li><b>Why not one collection per document?</b><span>Overhead and no cross-document search; use metadata instead.</span></li>
+<li><b>How is a "collection" represented in pgvector?</b><span>A table with a vector column plus an index on it.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://docs.trychroma.com/" target="_blank" rel="noopener">Chroma docs</a></li><li><a href="https://qdrant.tech/documentation/concepts/collections/" target="_blank" rel="noopener">Qdrant – Collections</a></li></ul></section>
+</article>
+
+<article class="topic" id="metadata" data-stage="chunk store">
+<header><div class="eyebrow">4.2</div><h3>Metadata</h3><p class="src">Additional fields such as document ID, page number, section title, source, owner, and date.</p></header>
+<h4>What is it?</h4><p>Structured fields stored next to each vector. The vector says <i>what it means</i>; metadata says <i>where it came from and who may see it</i>.</p>
+<p class="analogy">The label on a library book's spine: author, shelf, year, which branch owns it.</p>
+<h4>Why is it important?</h4><ul><li><b>Citations:</b> "Source: Leave_Policy.pdf, page 4".</li><li><b>Filtering:</b> only 2024 policies, only the Finance team's files.</li><li><b>Maintenance:</b> delete every chunk of <code>doc_id=123</code> when the file changes.</li><li><b>Security:</b> owner / access-group fields for permission checks.</li></ul>
+<pre><code>{
+  "doc_id": "hr-leave-2024", "source": "Leave_Policy_2024.pdf", "page": 4,
+  "section": "3.2 Parental leave", "doc_type": "policy", "owner": "hr",
+  "tenant_id": "acme", "created_at": "2024-03-01", "chunk_id": "hr-leave-2024#0012"
+}</code></pre>
+<div class="split"><div><h4>Common mistakes</h4><ul class="mist"><li>Storing dates as free text (filters then fail).</li><li>No <code>doc_id</code>, so updating a file means guessing which chunks to delete.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Keep a consistent schema; use ISO dates or Unix timestamps.</li><li>Only store fields you will filter on or display.</li></ul></div></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why store page numbers?</b><span>For citations and for users to verify answers.</span></li>
+<li><b>Which metadata enables document updates?</b><span>A stable <code>doc_id</code> on every chunk.</span></li>
+<li><b>How does metadata support security?</b><span>Owner, tenant or ACL fields let you filter results to what the user may access.</span></li>
+<li><b>Should you store the full text as metadata?</b><span>Store it as the document field or in a separate store; avoid duplicating huge blobs.</span></li>
+<li><b>How should dates be stored?</b><span>As numbers or ISO strings so range filters work.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="metadata-filtering" data-stage="retrieve">
+<header><div class="eyebrow">4.3</div><h3>Metadata filtering</h3><p class="src">Restricts search using metadata conditions, such as document type or date range.</p></header>
+<h4>What is it?</h4><p>Adding a condition such as <code>doc_type = "policy" AND year &gt;= 2024</code> so only matching vectors are considered.</p>
+<p class="analogy">"Show me the closest restaurants, but only ones that are open now and vegetarian."</p>
+<h4>How does it work?</h4>
+<div class="tbl"><table><tr><th>Strategy</th><th>How</th><th>Risk</th></tr>
+<tr><td>Post-filter</td><td>Find top-k, then drop non-matching</td><td>May return fewer than k (even zero)</td></tr>
+<tr><td>Pre-filter</td><td>Filter first, then search only the matching set</td><td>Can be slow if the filtered set is large and unindexed</td></tr>
+<tr><td>Filtered ANN (in-index)</td><td>Index traversal skips non-matching nodes</td><td>Very selective filters can still hurt recall; DB-dependent</td></tr></table></div>
+<pre><code>col.query(query_texts=["maternity leave length"], n_results=5,
+          where={"$and": [{"doc_type": "policy"}, {"year": {"$gte": 2024}}]})</code></pre>
+<pre><code>-- pgvector
+SELECT id, content FROM chunks
+WHERE doc_type = 'policy' AND year &gt;= 2024
+ORDER BY embedding &lt;=&gt; $1 LIMIT 5;</code></pre>
+<p>In pgvector with an approximate index, a strict <code>WHERE</code> can return fewer than 5 rows. Raise <code>hnsw.ef_search</code>, add a B-tree index on the filter column, or use iterative index scans (pgvector 0.8+).</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Pre- vs post-filtering?</b><span>Pre narrows candidates before search; post removes results after search and can leave fewer than k.</span></li>
+<li><b>Why can filters lower ANN recall?</b><span>The graph path may pass through mostly filtered-out nodes, so good matches are not reached.</span></li>
+<li><b>Name a use of date filters in RAG.</b><span>Answering only from the current version of a policy.</span></li>
+<li><b>Is metadata filtering enough for multi-tenant security?</b><span>Only if enforced server-side on every query; never trust a client-supplied filter.</span></li>
+<li><b>How do you speed up filtered search in Postgres?</b><span>Index the filter columns and consider partitioning.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://qdrant.tech/documentation/concepts/filtering/" target="_blank" rel="noopener">Qdrant – Filtering</a></li><li><a href="https://docs.trychroma.com/docs/querying-collections/metadata-filtering" target="_blank" rel="noopener">Chroma – Metadata filtering</a></li><li><a href="https://github.com/pgvector/pgvector#filtering" target="_blank" rel="noopener">pgvector – Filtering</a></li></ul></section>
+</article>
+
+<article class="topic" id="upsert" data-stage="store ops">
+<header><div class="eyebrow">4.4</div><h3>Upsert</h3><p class="src">Inserts a new record or updates an existing record using the same ID.</p></header>
+<h4>What is it?</h4><p>"Update or insert": if the ID exists, replace it; otherwise add it. Running the same ingestion twice gives the same result (idempotent).</p>
+<p class="analogy">Saving a file with the same name: it overwrites rather than creating "copy (2)".</p>
+<h4>Why is it important?</h4><p>Without upsert and stable IDs, re-running ingestion creates duplicate chunks, and the LLM sees the same passage three times.</p>
+<pre><code>import hashlib
+def chunk_id(doc_id, i): return f"{doc_id}#{i:04d}"
+col.upsert(ids=[chunk_id("hr-leave-2024", i) for i in range(len(chunks))],
+           documents=chunks, metadatas=metas)</code></pre>
+<pre><code>-- pgvector
+INSERT INTO chunks (id, doc_id, content, embedding) VALUES ($1, $2, $3, $4)
+ON CONFLICT (id) DO UPDATE SET content = EXCLUDED.content, embedding = EXCLUDED.embedding;</code></pre>
+<p class="callout warn"><b>Watch out.</b> If a document shrinks from 30 chunks to 25, upserting 25 leaves chunks 26–30 behind as stale data. Delete by <code>doc_id</code> first, or delete leftover IDs.</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What makes ingestion idempotent?</b><span>Deterministic IDs plus upsert.</span></li>
+<li><b>How should chunk IDs be generated?</b><span>From stable inputs such as doc_id and chunk index, or a content hash.</span></li>
+<li><b>Upsert vs add in Chroma?</b><span><code>add</code> fails/ignores existing IDs; <code>upsert</code> replaces them.</span></li>
+<li><b>Why can upsert alone leave stale data?</b><span>Old chunks with IDs no longer produced are never overwritten.</span></li>
+<li><b>Does upsert re-embed text?</b><span>Only if you pass new text or vectors; cache embeddings by hash to save cost.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="delete" data-stage="store ops">
+<header><div class="eyebrow">4.5</div><h3>Delete</h3><p class="src">Removes a vector and its metadata.</p></header>
+<h4>What is it?</h4><p>Removing records by ID or by metadata filter. Needed when documents are removed, replaced, or must be erased for legal reasons (e.g. GDPR requests).</p>
+<pre><code>col.delete(where={"doc_id": "hr-leave-2023"})     # all chunks of one document
+col.delete(ids=["hr-leave-2024#0026", "hr-leave-2024#0027"])</code></pre>
+<p>In HNSW-based systems, deletes are often <b>soft</b> (marked as tombstones) and space is reclaimed later by compaction or rebuild. In Postgres, run <code>VACUUM</code>.</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>How do you remove a whole document?</b><span>Delete by <code>doc_id</code> metadata filter.</span></li>
+<li><b>What is a tombstone?</b><span>A marker that hides a deleted item until the index is compacted.</span></li>
+<li><b>Why might the index stay large after deletes?</b><span>Soft deletes keep space until compaction or rebuild.</span></li>
+<li><b>What risk do missing deletes create?</b><span>Stale or retracted content appears in answers.</span></li>
+<li><b>How do you prove a deletion for compliance?</b><span>Log the delete, query by ID to confirm absence, and handle backups too.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="namespace" data-stage="store retrieve ops">
+<header><div class="eyebrow">4.6</div><h3>Namespace / Partition</h3><p class="src">Separates data by tenant, team, environment, or document type.</p></header>
+<h4>What is it?</h4><p>A logical division inside a collection or database so searches only touch one slice. Pinecone calls it a namespace; Weaviate has multi-tenancy; Milvus has partitions; Postgres has table partitioning or a <code>tenant_id</code> column.</p>
+<p class="analogy">Separate drawers in one cabinet: one per customer.</p>
+<h4>Why is it important?</h4><ul><li><b>Isolation:</b> customer A must never see customer B's chunks.</li><li><b>Speed:</b> searching a small partition is faster.</li><li><b>Housekeeping:</b> drop a whole tenant or a staging environment in one call.</li></ul>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Namespace vs metadata filter?</b><span>A namespace physically or logically separates data; a filter selects within shared data.</span></li>
+<li><b>When use per-tenant collections?</b><span>Few large tenants with strict isolation or different models.</span></li>
+<li><b>How do you separate dev and prod data?</b><span>Different namespaces, collections or databases per environment.</span></li>
+<li><b>What is the risk with a shared collection?</b><span>A missing tenant filter leaks data across customers.</span></li>
+<li><b>How do namespaces help deletion?</b><span>You can delete a whole tenant's data at once.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://weaviate.io/developers/weaviate/manage-data/multi-tenancy" target="_blank" rel="noopener">Weaviate – Multi-tenancy</a></li><li><a href="https://docs.pinecone.io/" target="_blank" rel="noopener">Pinecone docs (namespaces)</a></li></ul></section>
+</article>
+
+<article class="topic" id="hybrid" data-stage="retrieve">
+<header><div class="eyebrow">4.7</div><h3>Hybrid search</h3><p class="src">Combines keyword/BM25 search with vector similarity search.</p></header>
+<h4>What is it?</h4><p>Run keyword search and vector search on the same query, then merge both ranked lists into one.</p>
+<p class="analogy">Asking two experts: one who remembers exact wording, one who understands ideas. You trust results both agree on most.</p>
+<h4>Why is it important?</h4><p>Real questions mix both needs: "What does error E-4012 mean when resetting my password?". The code needs keywords; the intent needs semantics. Hybrid search is one of the most reliable quality wins in production RAG.</p>
+<h4>How does it work?</h4>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart LR
+  Q["User query"] --> B["BM25 keyword search"] --> L1["Ranked list A"]
+  Q --> V["Vector search"] --> L2["Ranked list B"]
+  L1 --> F["Fusion: RRF or weighted scores"]
+  L2 --> F --> T["Merged top-k"] --> RR["Optional reranker"]</pre>
+<p><b>Reciprocal Rank Fusion (RRF):</b> <code>score(d) = Σ 1 / (60 + rank_in_list)</code>. It uses ranks, not raw scores, so BM25 and cosine don't need comparable scales.</p>
+<pre><code>def rrf(lists, k=60):
+    scores = {}
+    for ranked in lists:
+        for rank, doc_id in enumerate(ranked, start=1):
+            scores[doc_id] = scores.get(doc_id, 0) + 1 / (k + rank)
+    return sorted(scores, key=scores.get, reverse=True)
+
+rrf([["A", "C", "D"], ["B", "E", "A"]])   # A wins: 1/61 + 1/63 = 0.0323</code></pre>
+<div class="tbl compare"><table><tr><th>Aspect</th><th>Keyword search (BM25)</th><th>Vector search</th><th>Hybrid search</th></tr>
+<tr><td>Matches on</td><td>Exact terms</td><td>Meaning</td><td>Both</td></tr>
+<tr><td>Synonyms / paraphrase</td><td>Poor</td><td>Strong</td><td>Strong</td></tr>
+<tr><td>Codes, IDs, names</td><td>Strong</td><td>Weak</td><td>Strong</td></tr>
+<tr><td>Explainability</td><td>High</td><td>Low</td><td>Medium</td></tr>
+<tr><td>Setup effort</td><td>Low</td><td>Medium (embeddings)</td><td>Higher (two indexes + fusion)</td></tr>
+<tr><td>Tools</td><td>Elasticsearch, OpenSearch, Postgres FTS, rank_bm25</td><td>FAISS, Chroma, pgvector, Qdrant</td><td>Weaviate, Qdrant, Elasticsearch, OpenSearch, Pinecone, pgvector + FTS</td></tr>
+<tr><td>Best for</td><td>Logs, legal citations, part numbers</td><td>Natural questions</td><td>Production RAG over mixed documents</td></tr></table></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why does hybrid beat pure vector search?</b><span>It recovers exact-term matches (IDs, names) that embeddings miss.</span></li>
+<li><b>Explain RRF.</b><span>Each document scores the sum of 1/(k + rank) across lists; k is usually 60.</span></li>
+<li><b>Why not just add BM25 and cosine scores?</b><span>They are on different scales; you would need normalization and weight tuning.</span></li>
+<li><b>What is the alpha parameter in some hybrid APIs?</b><span>The weight between keyword (0) and vector (1) contributions.</span></li>
+<li><b>How do you build hybrid search in Postgres?</b><span>Combine a <code>tsvector</code> full-text query with a pgvector query and fuse with RRF in SQL or code.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf" target="_blank" rel="noopener">Cormack et al. – Reciprocal Rank Fusion (paper)</a></li><li><a href="https://weaviate.io/developers/weaviate/search/hybrid" target="_blank" rel="noopener">Weaviate – Hybrid search</a></li><li><a href="https://www.anthropic.com/news/contextual-retrieval" target="_blank" rel="noopener">Anthropic – Contextual Retrieval (BM25 + embeddings + reranking)</a></li></ul></section>
+</article>
+
+<article class="topic" id="reranking" data-stage="rerank">
+<header><div class="eyebrow">4.8</div><h3>Reranking</h3><p class="src">Reorders initial retrieval results using a more accurate but slower model.</p></header>
+<h4>What is it?</h4><p>A second pass: take the top 20–50 candidates and score each one by reading the query and chunk <b>together</b> (a cross-encoder), then keep the best few.</p>
+<p class="analogy">Recruiting: a keyword scan of 1,000 CVs picks 30, then a human reads those 30 carefully and picks 5 for interview.</p>
+<div class="tbl"><table><tr><th></th><th>Bi-encoder (embedding)</th><th>Cross-encoder (reranker)</th></tr>
+<tr><td>Input</td><td>Query and chunk separately</td><td>Query + chunk as one pair</td></tr>
+<tr><td>Speed</td><td>Very fast; chunks pre-embedded</td><td>Slow; one model call per pair</td></tr>
+<tr><td>Accuracy</td><td>Good</td><td>Better</td></tr>
+<tr><td>Role</td><td>Recall (find candidates)</td><td>Precision (order them)</td></tr></table></div>
+<pre><code>from sentence_transformers import CrossEncoder
+reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+cands = retrieve(query, k=30)
+scores = reranker.predict([(query, c.text) for c in cands])
+top5 = [c for _, c in sorted(zip(scores, cands), key=lambda x: -x[0])][:5]</code></pre>
+<p>Options: <code>BAAI/bge-reranker-base</code>, Cohere Rerank, Voyage rerank, or an LLM as a judge.</p>
+<div class="split"><div><h4>Common mistakes</h4><ul class="mist"><li>Reranking only 5 candidates (nothing to reorder).</li><li>Reranking 500 candidates and blowing the latency budget.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Rerank 20–50, keep 3–8.</li><li>Measure NDCG before and after; keep it only if it helps.</li></ul></div></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why not use a cross-encoder for all retrieval?</b><span>It would need one model call per document per query; far too slow.</span></li>
+<li><b>Which metric shows reranker value?</b><span>NDCG or MRR, since reranking changes order more than membership.</span></li>
+<li><b>Typical candidate count?</b><span>20–100 depending on latency budget.</span></li>
+<li><b>Can reranking fix a retrieval failure?</b><span>No; it can only reorder chunks that were retrieved.</span></li>
+<li><b>What does a reranker score represent?</b><span>Estimated relevance of that chunk to that query.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://www.sbert.net/docs/cross_encoder/usage/usage.html" target="_blank" rel="noopener">SBERT – Cross-encoder usage</a></li><li><a href="https://docs.cohere.com/docs/rerank-overview" target="_blank" rel="noopener">Cohere – Rerank overview</a></li></ul></section>
+</article>
+
+<article class="topic" id="query-rewriting" data-stage="query">
+<header><div class="eyebrow">4.9</div><h3>Query rewriting</h3><p class="src">Modifies the user query before retrieval to improve matching.</p></header>
+<h4>What is it?</h4><p>Using rules or an LLM to turn the raw user question into a better search query (or several).</p>
+<p class="analogy">A reference librarian who rephrases "that thing about time off for babies" into "parental leave policy".</p>
+<div class="tbl"><table><tr><th>Technique</th><th>Example</th></tr>
+<tr><td>Conversational condensing</td><td>Chat history + "what about contractors?" → "Does the parental leave policy apply to contractors?"</td></tr>
+<tr><td>Expansion / synonyms</td><td>"PTO" → "PTO paid time off annual leave"</td></tr>
+<tr><td>Multi-query</td><td>Generate 3 phrasings, retrieve for each, fuse with RRF</td></tr>
+<tr><td>Decomposition</td><td>"Compare 2023 and 2024 leave policy" → two sub-queries</td></tr>
+<tr><td>HyDE</td><td>LLM writes a hypothetical answer; embed that instead of the question</td></tr></table></div>
+<pre><code>prompt = f"""Rewrite the last user message as a standalone search query.
+History: {history}
+Last message: {user_msg}
+Query:"""
+search_query = llm(prompt)</code></pre>
+<p><b>When not to use:</b> when latency is tight and queries are already well-formed; every rewrite adds an LLM call and can drift from user intent.</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why rewrite follow-up questions?</b><span>"What about contractors?" has no searchable subject without the history.</span></li>
+<li><b>What is HyDE?</b><span>Hypothetical Document Embeddings: embed an LLM-generated draft answer, which often sits closer to real passages.</span></li>
+<li><b>Risk of rewriting?</b><span>Added latency and possible change of meaning.</span></li>
+<li><b>How do you merge results from multiple rewrites?</b><span>Reciprocal Rank Fusion.</span></li>
+<li><b>How do you evaluate rewriting?</b><span>Ablation: Recall@k with and without it on the same eval set.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://arxiv.org/abs/2212.10496" target="_blank" rel="noopener">HyDE (paper)</a></li><li><a href="https://python.langchain.com/docs/how_to/MultiQueryRetriever/" target="_blank" rel="noopener">LangChain – MultiQueryRetriever</a></li></ul></section>
+</article>
+
+<article class="topic lab" id="lab4" data-stage="store retrieve">
+<header><div class="eyebrow">4.10</div><h3>Lab 4 · CRUD + filtered top-k</h3><p class="src">Implement add, update, delete, metadata-filtered search, and top-k search in Chroma or pgvector.</p></header>
+<h4>Chroma version</h4>
+<pre><code>import chromadb
+client = chromadb.PersistentClient(path="./kb")
+col = client.get_or_create_collection("policies", metadata={"hnsw:space": "cosine"})
+
+# add
+col.add(ids=["leave#0", "vpn#0"],
+        documents=["Employees get 20 days paid leave.", "VPN access requires MFA."],
+        metadatas=[{"doc_type": "hr", "year": 2024}, {"doc_type": "it", "year": 2023}])
+# update (same ID)
+col.upsert(ids=["leave#0"], documents=["Employees get 22 days paid leave."],
+           metadatas=[{"doc_type": "hr", "year": 2025}])
+# filtered top-k
+r = col.query(query_texts=["vacation days"], n_results=3, where={"doc_type": "hr"})
+print(r["ids"], r["distances"])
+# delete
+col.delete(ids=["vpn#0"])
+print(col.count())   # 1</code></pre>
+<h4>pgvector version</h4>
+<pre><code>CREATE EXTENSION IF NOT EXISTS vector;
+CREATE TABLE chunks (
+  id text PRIMARY KEY, doc_id text, doc_type text, year int,
+  content text, embedding vector(384));
+CREATE INDEX ON chunks USING hnsw (embedding vector_cosine_ops);
+
+INSERT INTO chunks VALUES ('leave#0','leave','hr',2024,'Employees get 20 days paid leave.', $1)
+ON CONFLICT (id) DO UPDATE SET content = EXCLUDED.content, embedding = EXCLUDED.embedding;
+
+SELECT id, content, embedding &lt;=&gt; $q AS distance
+FROM chunks WHERE doc_type = 'hr' ORDER BY embedding &lt;=&gt; $q LIMIT 3;
+
+DELETE FROM chunks WHERE doc_id = 'vpn';</code></pre>
+<h4>Expected output</h4><p>The filtered query returns only HR chunks with the updated 22-day text; count drops after delete. pgvector operators: <code>&lt;-&gt;</code> L2, <code>&lt;#&gt;</code> negative inner product, <code>&lt;=&gt;</code> cosine distance.</p>
+</article>
+</section>
+
+<section class="part" id="s5">
+<h2>5. Document Parsing</h2>
+<p class="intro">"Garbage in, garbage out" starts here. If the text extracted from a PDF is scrambled, no embedding model or index can fix it.</p>
+
+<article class="topic" id="parsing" data-stage="upload parse">
+<header><div class="eyebrow">5.1</div><h3>Parsing / Extraction</h3><p class="src">Converts PDFs, Word files, HTML, or scans into clean text.</p></header>
+<h4>What is it?</h4><p>Reading a file format and pulling out its text, ideally with structure: headings, paragraphs, lists, tables, page numbers.</p>
+<p class="analogy">Translating a beautifully printed magazine into a plain, well-organised manuscript.</p>
+<h4>Why is it important?</h4><p>PDFs store characters at positions on a page, not sentences in order. A naive extraction can merge two columns line by line, drop tables, or repeat headers on every page.</p>
+<div class="tbl"><table><tr><th>Format</th><th>Common tools</th></tr>
+<tr><td>Digital PDF</td><td>pypdf, PyMuPDF (fitz), pdfplumber</td></tr>
+<tr><td>Complex PDF (tables, layout)</td><td>Docling, Unstructured, LlamaParse, Azure Document Intelligence, AWS Textract</td></tr>
+<tr><td>Word (.docx)</td><td>python-docx, Unstructured, Docling</td></tr>
+<tr><td>HTML</td><td>BeautifulSoup, trafilatura</td></tr>
+<tr><td>Scans / images</td><td>OCR: Tesseract, PaddleOCR, cloud OCR</td></tr></table></div>
+<pre><code>import pymupdf   # older code: import fitz
+doc = pymupdf.open("Leave_Policy.pdf")
+pages = [{"page": i+1, "text": p.get_text("text")} for i, p in enumerate(doc)]</code></pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why is PDF extraction hard?</b><span>PDFs store positioned glyphs, not logical reading order or structure.</span></li>
+<li><b>What should a parser output besides text?</b><span>Page numbers, headings/section structure, and tables.</span></li>
+<li><b>How do you check parsing quality?</b><span>Eyeball samples, diff against source, and track retrieval metrics per document type.</span></li>
+<li><b>Name a structure-preserving parser.</b><span>Docling or Unstructured, which output elements like Title, NarrativeText, Table.</span></li>
+<li><b>Why keep page numbers from parsing?</b><span>For citations in answers.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://pymupdf.readthedocs.io/" target="_blank" rel="noopener">PyMuPDF docs</a></li><li><a href="https://docs.unstructured.io/" target="_blank" rel="noopener">Unstructured docs</a></li><li><a href="https://github.com/docling-project/docling" target="_blank" rel="noopener">Docling (GitHub)</a></li></ul></section>
+</article>
+
+<article class="topic" id="ocr" data-stage="parse">
+<header><div class="eyebrow">5.2</div><h3>OCR (Optical Character Recognition)</h3><p class="src">Required for scanned documents and image-based PDFs.</p></header>
+<h4>What is it?</h4><p>Software that recognises characters in an image and turns them into text. A scanned PDF is just pictures of pages; without OCR it has no searchable text at all.</p>
+<p class="analogy">Someone retyping a photocopied letter into a computer.</p>
+<h4>When should I use it?</h4><p>When <code>page.get_text()</code> returns empty or near-empty text for a page that visibly has content. Don't OCR digital PDFs; native text is more accurate and faster.</p>
+<pre><code>import pytesseract
+from PIL import Image
+for page in doc:
+    if len(page.get_text().strip()) &lt; 20:                 # likely scanned
+        pix = page.get_pixmap(dpi=300)
+        img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+        text = pytesseract.image_to_string(img)</code></pre>
+<div class="split"><div><h4>Common mistakes</h4><ul class="mist"><li>Low-resolution renders (use ~300 DPI).</li><li>Ignoring OCR errors like "0" vs "O", "rn" vs "m", which break keyword search for codes.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Deskew and denoise images first.</li><li>Store OCR confidence and flag low-confidence pages for review.</li></ul></div></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>How do you detect that a PDF needs OCR?</b><span>No or very little extractable text per page.</span></li>
+<li><b>Name OCR tools.</b><span>Tesseract, PaddleOCR, EasyOCR, Azure/AWS/Google document OCR.</span></li>
+<li><b>Best DPI for OCR?</b><span>Around 300.</span></li>
+<li><b>How do OCR errors affect RAG?</b><span>Misspelled terms hurt keyword search and slightly shift embeddings.</span></li>
+<li><b>What about handwriting?</b><span>Needs specialised models or cloud services; accuracy is lower.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://github.com/tesseract-ocr/tesseract" target="_blank" rel="noopener">Tesseract OCR</a></li><li><a href="https://github.com/PaddlePaddle/PaddleOCR" target="_blank" rel="noopener">PaddleOCR</a></li></ul></section>
+</article>
+
+<article class="topic" id="layout" data-stage="parse">
+<header><div class="eyebrow">5.3</div><h3>Layout awareness</h3><p class="src">Important for multi-column documents, tables, headers, footers, and forms.</p></header>
+<h4>What is it?</h4><p>Understanding the visual structure of a page, so text is read in the right order and tables, headers and form fields are recognised as such.</p>
+<h4>Example: what goes wrong without it</h4>
+<pre class="ascii">Page (two columns)                    Naive extraction (line by line across)
++--------------------+----------------+
+| Leave is granted   | Sick days need |   "Leave is granted Sick days need
+| after 6 months of  | a doctor's     |    after 6 months of a doctor's
+| service.           | note.          |    service. note."
++--------------------+----------------+</pre>
+<ul><li><b>Multi-column:</b> read column by column.</li><li><b>Tables:</b> keep rows and headers together (see 6.9).</li><li><b>Headers/footers:</b> detect and remove repeated page furniture.</li><li><b>Forms:</b> extract key-value pairs ("Employee name: Jane Doe").</li></ul>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why does a two-column PDF break naive parsing?</b><span>Lines from both columns get interleaved.</span></li>
+<li><b>How do layout-aware parsers work?</b><span>They detect blocks/regions (often with vision models) and order them logically.</span></li>
+<li><b>Why remove headers/footers?</b><span>They repeat on every chunk and add noise to embeddings.</span></li>
+<li><b>How should forms be represented?</b><span>As key-value pairs, possibly as structured metadata.</span></li>
+<li><b>How do you validate layout handling?</b><span>Spot-check tricky pages and compare extracted text to the visual page.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="parser-tradeoffs" data-stage="parse">
+<header><div class="eyebrow">5.4</div><h3>Parser trade-offs</h3><p class="src">Lightweight parsers are faster but may struggle with complex layouts; heavier parsers handle more formats but may be slower.</p></header>
+<div class="tbl compare"><table><tr><th>Aspect</th><th>Lightweight (pypdf, PyMuPDF, pdfplumber)</th><th>Heavy / ML-based (Docling, Unstructured hi_res, LlamaParse, cloud document AI)</th></tr>
+<tr><td>Speed</td><td>Very fast (many pages per second)</td><td>Slower; may need GPU or API calls</td></tr>
+<tr><td>Cost</td><td>Free, local</td><td>Compute or per-page fees</td></tr>
+<tr><td>Layouts &amp; tables</td><td>Weak to moderate</td><td>Strong</td></tr>
+<tr><td>Scans</td><td>No (needs separate OCR)</td><td>Often built in</td></tr>
+<tr><td>Output</td><td>Plain text</td><td>Structured elements, Markdown, tables</td></tr>
+<tr><td>Best for</td><td>Clean digital reports, prototypes</td><td>Mixed, scanned, table-heavy corpora</td></tr></table></div>
+<p><b>Practical approach:</b> route by document. Use a fast parser by default; send pages that fail quality checks (little text, many tables, scans) to a heavier parser.</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>How do you choose a parser?</b><span>Test candidates on a sample of your hardest documents and compare text quality and speed.</span></li>
+<li><b>What is a routing parser strategy?</b><span>Use cheap parsing by default, escalate difficult pages to heavier tools.</span></li>
+<li><b>Why version the parser?</b><span>Output changes alter chunks, which may require re-indexing.</span></li>
+<li><b>When is PyMuPDF enough?</b><span>Clean, single-column digital PDFs.</span></li>
+<li><b>Hidden cost of cloud parsers?</b><span>Per-page pricing, latency and sending documents to a third party.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="cleaning" data-stage="clean">
+<header><div class="eyebrow">5.5</div><h3>Text cleaning</h3><p class="src">Remove repeated headers/footers, broken line breaks, page artifacts, and boilerplate.</p></header>
+<h4>What is it?</h4><p>Post-processing extracted text so only meaningful content remains, joined into natural sentences.</p>
+<p class="analogy">Tidying photocopies: cut off page numbers and letterheads, tape broken sentences back together.</p>
+<h4>How does it work?</h4>
+<pre><code>import re, collections
+def clean_pages(pages):
+    # 1. lines repeated on most pages = header/footer
+    first_last = collections.Counter(l.strip() for p in pages for l in (p.splitlines()[:2] + p.splitlines()[-2:]))
+    furniture = {l for l, c in first_last.items() if c &gt;= 0.6 * len(pages) and l}
+    out = []
+    for p in pages:
+        lines = [l for l in p.splitlines() if l.strip() not in furniture]
+        t = "\n".join(lines)
+        t = re.sub(r"(\w)-\n(\w)", r"\1\2", t)          # infor-\nmation -&gt; information
+        t = re.sub(r"(?&lt;![.\n:])\n(?!\n)", " ", t)     # join wrapped lines
+        t = re.sub(r"^\s*Page \d+( of \d+)?\s*$", "", t, flags=re.M)
+        t = re.sub(r"[ \t]+", " ", t)
+        out.append(t.strip())
+    return out</code></pre>
+<div class="split"><div><h4>Common mistakes</h4><ul class="mist"><li>Over-cleaning: removing headings, numbers or bullet structure that chunking needs.</li><li>Joining table rows into one long sentence.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Keep paragraph breaks (<code>\n\n</code>); recursive chunking uses them.</li><li>Normalize Unicode (<code>unicodedata.normalize("NFKC", t)</code>) and ligatures like "ﬁ".</li></ul></div></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why remove headers and footers?</b><span>They repeat in every chunk, adding noise and false matches.</span></li>
+<li><b>How do you detect them automatically?</b><span>Lines appearing at the same position on most pages.</span></li>
+<li><b>What is the danger of aggressive cleaning?</b><span>Losing structure (headings, lists) and facts (numbers).</span></li>
+<li><b>Why fix hyphenated line breaks?</b><span>"infor-mation" won't match "information" in keyword search.</span></li>
+<li><b>Where does cleaning sit in the pipeline?</b><span>After parsing, before chunking.</span></li>
+</ol></section>
+</article>
+
+<article class="topic lab" id="lab5" data-stage="parse clean">
+<header><div class="eyebrow">5.6</div><h3>Lab 5 · Clean PDF vs scanned PDF</h3><p class="src">Parse one clean digital PDF and one scanned/complex PDF; compare text quality.</p></header>
+<ol><li>Pick a digital report and a scanned (or two-column, table-heavy) PDF.</li><li>Extract both with PyMuPDF; for the scan, add Tesseract OCR; optionally also run Docling.</li><li>Save outputs as <code>.txt</code> / <code>.md</code> side by side.</li><li>Score quality: characters extracted per page, % of dictionary words, tables intact (yes/no), reading order correct (yes/no).</li></ol>
+<pre><code>import pymupdf
+from docling.document_converter import DocumentConverter
+fast = "\n".join(p.get_text() for p in pymupdf.open("scan.pdf"))
+rich = DocumentConverter().convert("scan.pdf").document.export_to_markdown()
+print(len(fast), len(rich))</code></pre>
+<h4>Expected output</h4><p>The digital PDF is near-perfect with any parser. The scan yields little or no text without OCR; the heavier parser keeps tables as Markdown and fixes reading order. Write a short table of findings: this justifies your parser choice later.</p>
+</article>
+</section>
+
+<section class="part" id="s6">
+<h2>6. Chunking Logic</h2>
+<p class="intro">Chunking decides what a "search result" is. It is one of the highest-impact and most tunable parts of any RAG system.</p>
+
+<article class="topic" id="chunk" data-stage="chunk">
+<header><div class="eyebrow">6.1</div><h3>Chunk</h3><p class="src">A smaller piece of a document that is embedded and retrieved independently.</p></header>
+<h4>What is it?</h4><p>A passage cut from a document (a few paragraphs, a section, a table) that gets its own vector and can be returned on its own.</p>
+<p class="analogy">Index cards made from a textbook. You hand the student the 3 cards that answer the question, not the whole book.</p>
+<h4>Why is it important?</h4><ul><li>A 200-page PDF embedded as one vector becomes a blurry average of every topic in it.</li><li>LLM context is limited and costs money; you want to send only relevant passages.</li><li>Small units make citations precise ("page 14, section 3.2").</li></ul>
+<h4>Where does it fit?</h4>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart LR
+  P["Parsed and cleaned text"] --> C["Chunker"] --> C1["Chunk 1 + metadata"] & C2["Chunk 2 + metadata"] & C3["Chunk N + metadata"]
+  C1 & C2 & C3 --> E["Embed each"] --> DB["Vector DB"]</pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why not embed whole documents?</b><span>One vector can't represent many topics well, and whole documents don't fit LLM context.</span></li>
+<li><b>What makes a good chunk?</b><span>Self-contained, about one idea, within token limits, with metadata for citation.</span></li>
+<li><b>Is a chunk always text?</b><span>Mostly, but it can be a table, an image caption, or a code block.</span></li>
+<li><b>What happens if chunks cut mid-sentence?</b><span>Meaning is split; overlap or sentence-aware splitting helps.</span></li>
+<li><b>Which chunk settings should you tune first?</b><span>Size and overlap, using an evaluation set.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="chunk-size" data-stage="chunk">
+<header><div class="eyebrow">6.2</div><h3>Chunk size (too small vs too large)</h3><p class="src">Number of tokens or characters per chunk. Too small: loses surrounding context. Too large: dilutes meaning and may exceed embedding model limits.</p></header>
+<h4>What is it?</h4><p>The target length of each chunk, measured in tokens (preferred) or characters.</p>
+<p class="analogy">Photo zoom. Too close and you can't tell what you're looking at; too far and the detail you need is a tiny speck.</p>
+<div class="tbl compare"><table><tr><th></th><th>Too small (e.g. 50–100 tokens)</th><th>Balanced (≈ 300–600)</th><th>Too large (e.g. 2000+)</th></tr>
+<tr><td>Meaning</td><td>Fragments; pronouns lose their subject ("It must be approved…")</td><td>One coherent idea</td><td>Many topics averaged together</td></tr>
+<tr><td>Retrieval precision</td><td>High per chunk but often missing context</td><td>Good</td><td>Low; vectors become vague</td></tr>
+<tr><td>Number of vectors</td><td>Very many (cost, memory)</td><td>Moderate</td><td>Few</td></tr>
+<tr><td>LLM context use</td><td>Need many chunks</td><td>Efficient</td><td>Wasteful; irrelevant text included</td></tr>
+<tr><td>Token-limit risk</td><td>None</td><td>Low</td><td>May exceed embedding limits and be truncated</td></tr></table></div>
+<h4>Example</h4>
+<p>Too small: <i>"It must be approved by a manager."</i> (What must?) · Too large: an entire 10-page HR policy where leave, expenses and IT rules are mixed into one vector.</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Tokens or characters for chunk size?</b><span>Tokens, because model limits and costs are in tokens.</span></li>
+<li><b>Symptom of chunks too small?</b><span>Retrieved snippets lack the subject or conditions needed to answer.</span></li>
+<li><b>Symptom of chunks too large?</b><span>Relevant chunks rank low because their vectors mix many topics.</span></li>
+<li><b>Does the best size depend on the question type?</b><span>Yes: factoid lookups prefer smaller chunks; "explain" questions prefer larger.</span></li>
+<li><b>How do you find the right size?</b><span>Run experiments over several sizes and compare Recall@k.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="overlap" data-stage="chunk">
+<header><div class="eyebrow">6.3</div><h3>Overlap</h3><p class="src">Repeated text between adjacent chunks to preserve context across boundaries.</p></header>
+<h4>What is it?</h4><p>The last N tokens of one chunk are repeated at the start of the next, so a sentence or idea cut at a boundary still appears whole in at least one chunk.</p>
+<pre class="ascii">Text:    [==========================================================]
+Chunk 1: [==============]
+Chunk 2:            [==============]          overlap = shared part
+Chunk 3:                       [==============]
+                    ^^^^       ^^^^
+                    repeated tokens keep boundary sentences intact</pre>
+<p>Rule of thumb from the source: <b>10–20%</b>. For 500-token chunks: 50–100 tokens overlap. Stride = size − overlap.</p>
+<div class="split"><div><h4>Common mistakes</h4><ul class="mist"><li>Overlap ≥ 50%: storage doubles and the same passage appears twice in results.</li><li>Zero overlap with fixed-size splitting, which cuts sentences in half.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>De-duplicate overlapping neighbours before sending to the LLM.</li><li>With structure-aware chunking, less overlap is needed.</li></ul></div></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why add overlap?</b><span>To keep information that spans a boundary retrievable in one chunk.</span></li>
+<li><b>Cost of overlap?</b><span>More chunks, more storage and embedding cost, possible duplicate results.</span></li>
+<li><b>Typical overlap?</b><span>10–20% of chunk size.</span></li>
+<li><b>What is stride?</b><span>Chunk size minus overlap: how far the window moves each step.</span></li>
+<li><b>When can overlap be zero?</b><span>When chunks follow natural boundaries like sections or full paragraphs.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="fixed-chunking" data-stage="chunk">
+<header><div class="eyebrow">6.4</div><h3>Fixed-size chunking</h3><p class="src">Splits by token or character count; simple and effective baseline.</p></header>
+<h4>What is it?</h4><p>Cut every N tokens, with an optional overlap, ignoring sentence and section boundaries.</p>
+<p class="analogy">Slicing a loaf into equal slices regardless of where the raisins are.</p>
+<pre><code>import tiktoken
+enc = tiktoken.get_encoding("cl100k_base")
+def fixed_chunks(text, size=500, overlap=75):
+    ids = enc.encode(text)
+    step = size - overlap
+    return [enc.decode(ids[i:i+size]) for i in range(0, len(ids), step)]</code></pre>
+<p><b>Use when:</b> you need a quick baseline, or text has no structure (transcripts, logs). <b>Avoid when:</b> documents have clear sections and tables.</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Main advantage?</b><span>Simple, fast, predictable sizes.</span></li>
+<li><b>Main drawback?</b><span>Cuts through sentences, tables and sections.</span></li>
+<li><b>Why is it still a good baseline?</b><span>It often performs surprisingly well and is easy to compare against.</span></li>
+<li><b>How do you reduce boundary damage?</b><span>Add 10–20% overlap.</span></li>
+<li><b>Characters vs tokens here?</b><span>Tokens give consistent embedding-limit safety.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="recursive-chunking" data-stage="chunk">
+<header><div class="eyebrow">6.5</div><h3>Recursive chunking</h3><p class="src">Splits using separators such as paragraphs, sentences, then words.</p></header>
+<h4>What is it?</h4><p>Try to split on the biggest natural boundary first (blank lines between paragraphs). If a piece is still too big, split it on the next boundary (newline, then sentence end, then space).</p>
+<p class="analogy">Cutting a document with scissors: first between chapters, then between paragraphs only where needed, and between words only as a last resort.</p>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart TD
+  A["Text block"] --> B{"Fits chunk size?"}
+  B -- yes --> K["Keep as chunk"]
+  B -- no --> S1["Split on blank line"] --> B2{"Each piece fits?"}
+  B2 -- no --> S2["Split on newline, then '. ', then space"] --> B3{"Fits?"}
+  B2 -- yes --> M["Merge small neighbours up to size"]
+  B3 -- yes --> M --> K</pre>
+<pre><code>from langchain_text_splitters import RecursiveCharacterTextSplitter
+splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+    chunk_size=500, chunk_overlap=75, separators=["\n\n", "\n", ". ", " ", ""])
+chunks = splitter.split_text(clean_text)</code></pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>How does recursive splitting choose where to cut?</b><span>It tries separators in priority order, falling back to finer ones only when needed.</span></li>
+<li><b>Why is it a good default?</b><span>It respects paragraphs and sentences while still controlling size.</span></li>
+<li><b>What must parsing preserve for it to work?</b><span>Paragraph breaks (<code>\n\n</code>).</span></li>
+<li><b>LlamaIndex equivalent?</b><span><code>SentenceSplitter</code>.</span></li>
+<li><b>When does it fall short?</b><span>Tables and deeply structured documents where headings matter.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://python.langchain.com/docs/concepts/text_splitters/" target="_blank" rel="noopener">LangChain – Text splitters</a></li><li><a href="https://docs.llamaindex.ai/en/stable/module_guides/loading/node_parsers/modules/" target="_blank" rel="noopener">LlamaIndex – Node parsers</a></li></ul></section>
+</article>
+
+<article class="topic" id="structure-chunking" data-stage="chunk">
+<header><div class="eyebrow">6.6</div><h3>Structure-aware chunking</h3><p class="src">Uses headings, sections, tables, and document hierarchy.</p></header>
+<h4>What is it?</h4><p>Split along the document's own structure: each section or subsection becomes a chunk (split further only if too long), and the heading path travels with it.</p>
+<p class="analogy">Cutting a manual along its table of contents instead of with a ruler.</p>
+<pre><code>from langchain_text_splitters import MarkdownHeaderTextSplitter
+md = docling_markdown   # parser output with # headings
+splitter = MarkdownHeaderTextSplitter([("#", "h1"), ("##", "h2"), ("###", "h3")])
+sections = splitter.split_text(md)
+# each section.metadata -&gt; {"h1": "HR Handbook", "h2": "3. Leave", "h3": "3.2 Parental leave"}</code></pre>
+<p><b>Tip:</b> prepend the heading path to the chunk text before embedding: <code>"HR Handbook &gt; 3. Leave &gt; 3.2 Parental leave\n\n…"</code>. A chunk that never says "parental leave" in its body then still matches.</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What input does structure-aware chunking need?</b><span>A parser that preserves headings (Markdown, HTML, or structured elements).</span></li>
+<li><b>Why add heading paths to chunk text?</b><span>It gives the chunk its missing context and improves retrieval.</span></li>
+<li><b>What if a section is huge?</b><span>Split it recursively, keeping the heading path on each piece.</span></li>
+<li><b>What if a section is tiny?</b><span>Merge it with siblings under the same parent.</span></li>
+<li><b>Best document types for this method?</b><span>Manuals, policies, contracts, documentation sites.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="semantic-chunking" data-stage="chunk">
+<header><div class="eyebrow">6.7</div><h3>Semantic chunking</h3><p class="src">Groups sentences by meaning; test it rather than assuming it is always better.</p></header>
+<h4>What is it?</h4><p>Embed each sentence, then start a new chunk wherever the meaning shifts sharply (similarity between consecutive sentences drops below a threshold).</p>
+<p class="analogy">Splitting a conversation transcript whenever the topic changes.</p>
+<h4>How does it work?</h4><ol><li>Split text into sentences.</li><li>Embed each sentence (or small window).</li><li>Compute similarity between neighbours.</li><li>Cut where similarity falls below a percentile (e.g. the lowest 5%).</li></ol>
+<pre><code>from langchain_experimental.text_splitter import SemanticChunker
+from langchain_huggingface import HuggingFaceEmbeddings
+chunker = SemanticChunker(HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"),
+                          breakpoint_threshold_type="percentile")
+chunks = chunker.split_text(clean_text)</code></pre>
+<p class="callout warn"><b>Test it.</b> Semantic chunking costs an embedding call per sentence at ingestion, produces uneven chunk sizes, and in several published comparisons does not beat a well-tuned recursive splitter. Adopt it only if your evaluation set shows a gain.</p>
+<div class="tbl compare"><table><tr><th>Aspect</th><th>Fixed-size</th><th>Recursive</th><th>Structure-aware</th><th>Semantic</th><th>Parent-child</th></tr>
+<tr><td>Splits on</td><td>Token count</td><td>Paragraph → sentence → word</td><td>Headings, sections, tables</td><td>Meaning shifts</td><td>Small child for search, big parent for context</td></tr>
+<tr><td>Respects sentences</td><td>No</td><td>Mostly</td><td>Yes</td><td>Yes</td><td>Depends on base splitter</td></tr>
+<tr><td>Chunk size</td><td>Uniform</td><td>Near-uniform</td><td>Varies with sections</td><td>Uneven</td><td>Two levels</td></tr>
+<tr><td>Ingestion cost</td><td>Lowest</td><td>Low</td><td>Low (needs good parser)</td><td>High (embeds every sentence)</td><td>Medium (more records)</td></tr>
+<tr><td>Best for</td><td>Baselines, logs, transcripts</td><td>General default</td><td>Manuals, policies, docs</td><td>Unstructured text with topic drift</td><td>Precise search + rich answers</td></tr>
+<tr><td>Tools</td><td>tiktoken, any splitter</td><td>LangChain RecursiveCharacterTextSplitter, LlamaIndex SentenceSplitter</td><td>MarkdownHeaderTextSplitter, Docling, Unstructured</td><td>LangChain SemanticChunker, LlamaIndex SemanticSplitterNodeParser</td><td>LangChain ParentDocumentRetriever, LlamaIndex HierarchicalNodeParser</td></tr></table></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>How does semantic chunking decide boundaries?</b><span>Drops in embedding similarity between consecutive sentences.</span></li>
+<li><b>Is semantic chunking always better?</b><span>No; measure it against recursive chunking on your data.</span></li>
+<li><b>Main cost?</b><span>Many embedding calls at ingestion and variable chunk sizes.</span></li>
+<li><b>What parameter controls chunk granularity?</b><span>The breakpoint threshold (percentile, standard deviation, etc.).</span></li>
+<li><b>Can it produce oversized chunks?</b><span>Yes; add a maximum size fallback.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://github.com/FullStackRetrieval-com/RetrievalTutorials" target="_blank" rel="noopener">Greg Kamradt – 5 Levels of Text Splitting (notebook)</a></li><li><a href="https://research.trychroma.com/evaluating-chunking" target="_blank" rel="noopener">Chroma Research – Evaluating chunking strategies</a></li></ul></section>
+</article>
+
+<article class="topic" id="parent-child" data-stage="chunk retrieve">
+<header><div class="eyebrow">6.8</div><h3>Parent-child chunking</h3><p class="src">Retrieves a small child chunk but returns its larger parent section for context.</p></header>
+<h4>What is it?</h4><p>Two levels: small <b>child</b> chunks (100–200 tokens) are embedded for precise matching; each points to a larger <b>parent</b> (a section, 1,000–2,000 tokens) which is what gets sent to the LLM.</p>
+<p class="analogy">A search engine finds the exact sentence, then you open the whole page it came from.</p>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart LR
+  Q["Query"] --> S["Search child vectors"] --> C["Child #17 matches"]
+  C --> P["Look up parent_id = section 3.2"] --> L["Send full section to LLM"]</pre>
+<pre><code>from llama_index.core.node_parser import HierarchicalNodeParser, get_leaf_nodes
+parser = HierarchicalNodeParser.from_defaults(chunk_sizes=[2048, 512, 128])
+nodes = parser.get_nodes_from_documents(docs)
+leaves = get_leaf_nodes(nodes)    # embed these; use AutoMergingRetriever at query time</code></pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What problem does parent-child solve?</b><span>Small chunks retrieve precisely but lack context; parents restore it.</span></li>
+<li><b>What links child to parent?</b><span>A <code>parent_id</code> in the child's metadata.</span></li>
+<li><b>Where are parents stored?</b><span>In a document store or key-value store; they need no vectors.</span></li>
+<li><b>Risk?</b><span>Large parents eat context; several children from one parent must be de-duplicated.</span></li>
+<li><b>What is auto-merging retrieval?</b><span>If enough children of one parent are retrieved, return the parent instead.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://python.langchain.com/docs/how_to/parent_document_retriever/" target="_blank" rel="noopener">LangChain – Parent document retriever</a></li><li><a href="https://docs.llamaindex.ai/en/stable/examples/retrievers/auto_merging_retriever/" target="_blank" rel="noopener">LlamaIndex – Auto-merging retriever</a></li></ul></section>
+</article>
+
+<article class="topic" id="tables" data-stage="parse chunk">
+<header><div class="eyebrow">6.9</div><h3>Table handling</h3><p class="src">Tables need special handling; avoid splitting them mid-row.</p></header>
+<h4>Why is it important?</h4><p>A row like <code>| Grade 5 | 25 days |</code> means nothing without its header <code>| Grade | Annual leave |</code>. Splitting mid-table, or flattening it into a sentence soup, destroys the answer.</p>
+<h4>How to handle tables</h4><ol>
+<li>Extract tables as structured objects (Docling, pdfplumber, Unstructured) and convert to Markdown or HTML.</li>
+<li>Keep small tables as one chunk.</li>
+<li>Split large tables by groups of rows, <b>repeating the header row</b> in every piece.</li>
+<li>Add a one-line description ("Table 4: Annual leave days by grade, 2024") or an LLM summary, embed that, and return the full table.</li>
+<li>For numeric questions over big tables, consider loading them into SQL instead of embedding.</li></ol>
+<pre><code>def split_table(header, rows, rows_per_chunk=20, caption=""):
+    for i in range(0, len(rows), rows_per_chunk):
+        yield "\n".join([caption, header, "|---|---|"] + rows[i:i+rows_per_chunk])</code></pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why repeat headers when splitting tables?</b><span>Each piece must be understandable on its own.</span></li>
+<li><b>Best text format for tables in RAG?</b><span>Markdown or HTML, which LLMs read well.</span></li>
+<li><b>How do you make tables findable by meaning?</b><span>Embed a caption or summary that describes the table.</span></li>
+<li><b>When use SQL instead?</b><span>Large numeric tables needing aggregation or exact lookup.</span></li>
+<li><b>What breaks if a parser flattens tables?</b><span>Row/column relationships are lost, causing wrong answers.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="chunk-metadata" data-stage="chunk store">
+<header><div class="eyebrow">6.10</div><h3>Chunk metadata</h3><p class="src">Store source file, page, heading, section path, document type, timestamp, and chunk ID.</p></header>
+<pre><code>{
+  "chunk_id": "hr-handbook-v7#0042",
+  "doc_id": "hr-handbook", "source_file": "HR_Handbook_v7.pdf",
+  "page": 14, "heading": "3.2 Parental leave",
+  "section_path": "HR Handbook &gt; 3. Leave &gt; 3.2 Parental leave",
+  "doc_type": "policy", "timestamp": "2025-01-15T00:00:00Z",
+  "parent_id": "hr-handbook-v7#sec-3.2", "chunk_index": 42, "token_count": 486,
+  "content_hash": "9f2c…", "parser_version": "docling-2.x", "chunker_version": "rec-500-75"
+}</code></pre>
+
+<div class="tbl"><table><tr><th>Field</th><th>Used for</th></tr>
+<tr><td>source_file, page</td><td>Citations shown to users</td></tr><tr><td>heading, section_path</td><td>Context prefix, display, structure-aware filters</td></tr>
+<tr><td>doc_type, timestamp</td><td>Filtering ("only current policies")</td></tr><tr><td>chunk_id, doc_id</td><td>Upsert, delete, de-duplication</td></tr>
+<tr><td>content_hash, versions</td><td>Incremental updates and re-index decisions</td></tr></table></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Which fields enable citations?</b><span>Source file, page and heading.</span></li>
+<li><b>Why store a content hash?</b><span>To skip re-embedding unchanged chunks.</span></li>
+<li><b>Why store chunker version?</b><span>To know which chunks must be rebuilt after chunking logic changes.</span></li>
+<li><b>How does section_path help retrieval?</b><span>Prepending it gives the chunk context it doesn't state itself.</span></li>
+<li><b>What is chunk_index for?</b><span>Ordering, fetching neighbouring chunks, and deterministic IDs.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="starting-point" data-stage="chunk eval">
+<header><div class="eyebrow">6.11</div><h3>Practical starting point</h3><p class="src">Use recursive or structure-aware chunking around 400–512 tokens with 10–20% overlap, then tune using evaluation results.</p></header>
+<div class="callout good"><b>Default recipe.</b> Structure-aware split on headings (if the parser gives you them), then recursive split inside sections to ~400–512 tokens, overlap 40–100 tokens, heading path prefixed to each chunk, tables kept whole or split with repeated headers.</div>
+<p>Then run the experiment in Lab 6. Typical adjustments:</p>
+<ul><li>Short factual Q&amp;A (FAQ, policies) → try 200–300 tokens.</li><li>Long explanations, legal reasoning → try 800–1,000 tokens or parent-child.</li><li>Small-limit models (MiniLM, 256 tokens) → cap chunks at ~200–250 tokens.</li></ul>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Your default chunking settings for a new project?</b><span>Recursive or structure-aware, ~400–512 tokens, 10–20% overlap.</span></li>
+<li><b>Why "then tune"?</b><span>The best settings depend on documents and questions; only evaluation shows it.</span></li>
+<li><b>Which model constraint can override the default?</b><span>A small embedding token limit.</span></li>
+<li><b>How many tokens is 15% overlap of 500?</b><span>75.</span></li>
+<li><b>What would make you move to parent-child?</b><span>Small chunks retrieve well but answers lack context.</span></li>
+</ol></section>
+</article>
+
+<article class="topic lab" id="lab6" data-stage="chunk eval">
+<header><div class="eyebrow">6.12</div><h3>Lab 6 · Chunk size × overlap grid</h3><p class="src">Run experiments across chunk sizes and overlap values, then compare retrieval quality.</p></header>
+<pre><code>import itertools, numpy as np
+sizes, overlaps = [200, 400, 512, 800], [0.0, 0.1, 0.2]
+results = []
+for size, ov in itertools.product(sizes, overlaps):
+    splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        chunk_size=size, chunk_overlap=int(size * ov))
+    chunks = build_chunks(docs, splitter)            # keep source + page per chunk
+    index = build_index(chunks, model)               # e.g. FAISS IndexFlatIP
+    r5 = recall_at_k(index, eval_set, k=5)           # see section 7
+    results.append((size, ov, len(chunks), r5))
+for row in sorted(results, key=lambda r: -r[3]): print(row)</code></pre>
+<p><b>Matching rule:</b> because chunk boundaries change between runs, judge a hit by "retrieved chunk contains the expected answer passage (or overlaps its page and key sentence)" rather than by chunk ID.</p>
+<h4>Expected output</h4>
+<div class="tbl"><table><tr><th>size</th><th>overlap</th><th>#chunks</th><th>Recall@5</th></tr>
+<tr><td>512</td><td>0.1</td><td>1,840</td><td>0.86 (example)</td></tr><tr><td>400</td><td>0.2</td><td>2,610</td><td>0.84 (example)</td></tr><tr><td>200</td><td>0.0</td><td>4,950</td><td>0.71 (example)</td></tr></table></div>
+<p>Numbers above are illustrative. Your table tells you which setting to keep; pick the cheapest one within ~1–2 points of the best.</p>
+</article>
+</section>
+
+<section class="part" id="s7">
+<h2>7. RAG and Retrieval Evaluation</h2>
+<p class="intro">RAG connects retrieval to an LLM. Evaluation tells you whether a change actually helped, and whether a bad answer came from retrieval or from generation.</p>
+
+<article class="topic" id="rag" data-stage="retrieve generate">
+<header><div class="eyebrow">7.1</div><h3>RAG (Retrieval-Augmented Generation)</h3><p class="src">Retrieves relevant chunks and provides them to an LLM as context.</p></header>
+<h4>What is it?</h4><p>Instead of relying on what the LLM memorised during training, you first <b>retrieve</b> passages from your own documents and <b>augment</b> the prompt with them, then the LLM <b>generates</b> an answer grounded in those passages.</p>
+<p class="analogy">An open-book exam. The student (LLM) is smart, but answers from the pages you hand them, and cites them.</p>
+<h4>Why is it important?</h4><ul><li>LLMs don't know your private or recent documents.</li><li>Grounding reduces hallucination and enables citations.</li><li>Updating knowledge = updating the index, not retraining a model.</li></ul>
+<h4>Where is it used?</h4><p>HR/IT policy chatbots, customer-support assistants, legal and contract Q&amp;A, engineering documentation search, "chat with your PDFs" tools.</p>
+<h4>When should I use it?</h4><ul><li>Use RAG when answers live in documents that change or are private.</li><li>Not needed if the whole corpus fits comfortably in the context window and cost is fine (just include it).</li><li>Fine-tuning teaches style/format, not fresh facts; it complements rather than replaces RAG.</li></ul>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart LR
+  U["User question"] --> R["Retriever: top-k chunks"] --> P["Prompt = instructions + chunks + question"] --> L["LLM"] --> A["Answer with citations"]</pre>
+<pre><code>SYSTEM = """Answer only from the context. If the answer is not in the context,
+say you don't know. Cite sources as [file, page]."""
+context = "\n\n".join(f"[{c.meta['source_file']}, p.{c.meta['page']}]\n{c.text}" for c in top_chunks)
+answer = llm(system=SYSTEM, user=f"Context:\n{context}\n\nQuestion: {question}")</code></pre>
+<div class="split"><div><h4>Common mistakes</h4><ul class="mist"><li>No instruction to refuse when context is missing, so the LLM guesses.</li><li>Evaluating only final answers, never retrieval.</li></ul></div>
+<div><h4>Best practices</h4><ul class="best"><li>Show citations in the UI.</li><li>Log question, retrieved IDs, scores and answer for every request.</li></ul></div></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>RAG vs fine-tuning?</b><span>RAG injects knowledge at query time; fine-tuning changes model weights, better for style or task behaviour.</span></li>
+<li><b>How does RAG reduce hallucination?</b><span>The model answers from supplied evidence and can be told to refuse without it.</span></li>
+<li><b>Two halves of a RAG system?</b><span>Retrieval (find chunks) and generation (write the answer).</span></li>
+<li><b>How do you add citations?</b><span>Include source metadata with each chunk and instruct the model to cite.</span></li>
+<li><b>When is RAG unnecessary?</b><span>When all needed content fits in the prompt cheaply, or the task needs no external facts.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://arxiv.org/abs/2005.11401" target="_blank" rel="noopener">Lewis et al. – RAG (original paper)</a></li><li><a href="https://python.langchain.com/docs/tutorials/rag/" target="_blank" rel="noopener">LangChain – Build a RAG app</a></li><li><a href="https://docs.llamaindex.ai/en/stable/getting_started/starter_example/" target="_blank" rel="noopener">LlamaIndex – Starter tutorial</a></li></ul></section>
+</article>
+
+<article class="topic" id="context-window" data-stage="generate">
+<header><div class="eyebrow">7.2</div><h3>Context window</h3><p class="src">Maximum text an LLM can process in one request.</p></header>
+<h4>What is it?</h4><p>The total token budget for one LLM call: system prompt + retrieved chunks + chat history + question + the answer it writes.</p>
+<p class="analogy">The size of the desk. Everything the student uses for this question must fit on it at once.</p>
+<div class="tbl"><table><tr><th>Budget item (example)</th><th>Tokens</th></tr>
+<tr><td>System instructions</td><td>300</td></tr><tr><td>Chat history (condensed)</td><td>500</td></tr>
+<tr><td>6 chunks × 500 tokens</td><td>3,000</td></tr><tr><td>Question</td><td>50</td></tr><tr><td>Reserved for answer</td><td>800</td></tr>
+<tr><td><b>Total</b></td><td><b>4,650</b></td></tr></table></div>
+<p>Large windows (100k+ tokens) don't remove the need for retrieval: cost and latency scale with tokens, and models can miss facts buried in the middle of long prompts ("lost in the middle").</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What counts toward the context window?</b><span>All input tokens plus the generated output.</span></li>
+<li><b>Why not stuff 100 chunks into a long-context model?</b><span>Higher cost and latency, and attention to relevant facts drops.</span></li>
+<li><b>What is "lost in the middle"?</b><span>Models use information at the start and end of a prompt better than in the middle.</span></li>
+<li><b>How do you fit long chat histories?</b><span>Summarise or condense history into a standalone question.</span></li>
+<li><b>Where to place the most relevant chunk?</b><span>Near the start (or end) of the context, not buried in the middle.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://arxiv.org/abs/2307.03172" target="_blank" rel="noopener">Lost in the Middle (paper)</a></li></ul></section>
+</article>
+
+<article class="topic" id="failures" data-stage="retrieve generate eval">
+<header><div class="eyebrow">7.3</div><h3>Retrieval failure vs generation failure</h3><p class="src">Retrieval failure: the correct chunk was not retrieved. Generation failure: the correct chunk was retrieved but the LLM did not use it correctly.</p></header>
+<h4>Why is it important?</h4><p>Both produce a wrong answer, but the fixes are completely different. Diagnose before you change anything.</p>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart TD
+  W["Wrong answer"] --> Q{"Was the correct chunk in the retrieved top-k?"}
+  Q -- no --> RF["Retrieval failure"]
+  Q -- yes --> GF["Generation failure"]
+  RF --> F1["Fix: parsing, chunking, embedding model, hybrid search, query rewriting, larger k"]
+  GF --> F2["Fix: prompt, chunk order, fewer noisy chunks, reranking, stronger LLM"]</pre>
+<div class="tbl compare"><table><tr><th></th><th>Retrieval failure</th><th>Generation failure</th></tr>
+<tr><td>Symptom</td><td>"I don't know" or an answer from the wrong passage</td><td>Correct passage in context but answer is wrong, incomplete or hallucinated</td></tr>
+<tr><td>How to detect</td><td>Recall@k on eval set; inspect retrieved chunks</td><td>Compare answer to the retrieved passage; faithfulness checks</td></tr>
+<tr><td>Typical causes</td><td>Bad parsing, poor chunk size, wrong model, keyword-only terms, k too small</td><td>Unclear prompt, too much noise, lost-in-the-middle, weak model</td></tr></table></div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>First question when debugging a wrong RAG answer?</b><span>Was the correct chunk retrieved?</span></li>
+<li><b>Can reranking fix retrieval failure?</b><span>No, only if the chunk was already in the candidate list.</span></li>
+<li><b>A generation-failure fix?</b><span>Tighter prompt, fewer and better-ordered chunks, or a stronger LLM.</span></li>
+<li><b>How do you log for this diagnosis?</b><span>Store retrieved chunk IDs and scores with every answer.</span></li>
+<li><b>What is faithfulness?</b><span>Whether every claim in the answer is supported by the retrieved context.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="eval-set" data-stage="eval">
+<header><div class="eyebrow">7.4</div><h3>Evaluation set</h3><p class="src">Real questions paired with the document passages that should answer them.</p></header>
+<h4>What is it?</h4><p>A fixed list of test questions, each labelled with where the answer lives (document, page, passage) and ideally a reference answer.</p>
+<p class="analogy">An answer key for a practice exam. Without it you can't tell whether studying a new way helped.</p>
+<pre><code>{"id": "q017", "question": "How many weeks of parental leave do new fathers get?",
+ "expected_doc": "HR_Handbook_v7.pdf", "expected_page": 14,
+ "expected_passage": "Secondary caregivers are entitled to 6 weeks of paid leave",
+ "answer": "6 weeks paid", "type": "factoid"}</code></pre>
+<ul><li>Use <b>real</b> user questions (search logs, support tickets) where possible, with their real phrasing.</li><li>Cover question types: factoid, multi-hop, table lookup, "not in documents".</li><li>LLM-generated synthetic questions are fine for volume, but review them by hand.</li></ul>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why build an eval set before optimising?</b><span>Without a baseline you cannot tell if a change helps.</span></li>
+<li><b>Where do good questions come from?</b><span>Real users: logs, tickets, SMEs.</span></li>
+<li><b>Why include unanswerable questions?</b><span>To test that the system says "I don't know" instead of hallucinating.</span></li>
+<li><b>Risk of only synthetic questions?</b><span>They copy document wording, overstating retrieval quality.</span></li>
+<li><b>How big should it be to start?</b><span>20–50 questions, growing over time.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://docs.ragas.io/" target="_blank" rel="noopener">Ragas – RAG evaluation framework</a></li><li><a href="https://github.com/beir-cellar/beir" target="_blank" rel="noopener">BEIR benchmark</a></li></ul></section>
+</article>
+
+<article class="topic" id="recall-at-k" data-stage="eval">
+<header><div class="eyebrow">7.5</div><h3>Recall@k</h3><p class="src">Whether the correct chunk appears in the top-k retrieved results.</p></header>
+<h4>What is it?</h4><p>For each question: 1 if a correct chunk is in the top k, else 0. Average across questions. Recall@5 = 0.8 means 80% of questions had the answer somewhere in the top 5.</p>
+<pre><code>def recall_at_k(retrieve, eval_set, k=5):
+    hits = 0
+    for ex in eval_set:
+        chunks = retrieve(ex["question"], k)
+        hits += any(ex["expected_passage"][:60].lower() in c.text.lower() for c in chunks)
+    return hits / len(eval_set)</code></pre>
+<p>Recall@k is the most important retrieval metric for RAG: if the chunk isn't retrieved, the LLM can't use it.</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Define Recall@k.</b><span>Fraction of questions where a relevant chunk appears in the top k results.</span></li>
+<li><b>Does Recall@k care about order within k?</b><span>No; that's what NDCG/MRR measure.</span></li>
+<li><b>Recall@5 = 0.6. What next?</b><span>Inspect misses; try hybrid search, chunking changes, or a better embedding model.</span></li>
+<li><b>Why is Recall@10 ≥ Recall@5 always?</b><span>A larger k includes all smaller-k results.</span></li>
+<li><b>How do you define a "hit" with changing chunk boundaries?</b><span>Match by passage text or page, not chunk ID.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="ndcg" data-stage="eval">
+<header><div class="eyebrow">7.6</div><h3>NDCG (Normalized Discounted Cumulative Gain)</h3><p class="src">Measures ranking quality; gives higher credit when correct results appear earlier.</p></header>
+<h4>What is it?</h4><p>A score from 0 to 1 that rewards relevant results more when they appear near the top.</p>
+<ul><li><code>DCG@k = Σ rel_i / log₂(i + 1)</code> for positions i = 1…k.</li><li><code>NDCG@k = DCG@k / IDCG@k</code>, where IDCG is the DCG of the perfect ordering.</li></ul>
+<h4>Worked example (one relevant chunk)</h4>
+<div class="tbl"><table><tr><th>Relevant chunk at rank</th><th>DCG</th><th>NDCG</th></tr>
+<tr><td>1</td><td>1 / log₂2 = 1.00</td><td>1.00</td></tr><tr><td>2</td><td>1 / log₂3 = 0.63</td><td>0.63</td></tr>
+<tr><td>3</td><td>1 / log₂4 = 0.50</td><td>0.50</td></tr><tr><td>Not in top k</td><td>0</td><td>0</td></tr></table></div>
+<pre><code>from sklearn.metrics import ndcg_score
+ndcg_score([[0, 0, 1, 0, 0]], [[0.9, 0.8, 0.7, 0.6, 0.5]], k=5)   # 0.5</code></pre>
+<p>Related: <b>MRR</b> (Mean Reciprocal Rank) = average of 1/rank of the first correct result.</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Why NDCG and not just Recall@k?</b><span>It also rewards putting the right chunk first.</span></li>
+<li><b>What does the log discount do?</b><span>Reduces credit for results lower in the list.</span></li>
+<li><b>NDCG vs MRR?</b><span>MRR looks only at the first relevant result; NDCG handles multiple and graded relevance.</span></li>
+<li><b>Which component is NDCG best for evaluating?</b><span>Rerankers.</span></li>
+<li><b>NDCG if the only relevant chunk is at rank 2?</b><span>About 0.63.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://en.wikipedia.org/wiki/Discounted_cumulative_gain" target="_blank" rel="noopener">Wikipedia – Discounted cumulative gain</a></li></ul></section>
+</article>
+
+<article class="topic" id="ablation" data-stage="eval">
+<header><div class="eyebrow">7.7</div><h3>Ablation testing</h3><p class="src">Change one variable at a time—chunk size, overlap, embedding model, hybrid search, reranker—and measure impact.</p></header>
+<h4>What is it?</h4><p>Controlled experiments: keep everything fixed, change one setting, rerun the same eval set, record the metric.</p>
+<p class="analogy">Cooking: change only the salt, taste; change only the cooking time, taste. Change both and you won't know which helped.</p>
+<div class="tbl"><table><tr><th>Run</th><th>Change from baseline</th><th>Recall@5</th><th>NDCG@5</th><th>p95 latency</th></tr>
+<tr><td>Baseline</td><td>Recursive 512/50, bge-base, vector only</td><td>0.78</td><td>0.61</td><td>120 ms</td></tr>
+<tr><td>A</td><td>+ Hybrid (BM25 + RRF)</td><td>0.85</td><td>0.66</td><td>140 ms</td></tr>
+<tr><td>B</td><td>+ Reranker (top 30 → 5)</td><td>0.78</td><td>0.72</td><td>310 ms</td></tr>
+<tr><td>C</td><td>Chunk size 300</td><td>0.74</td><td>0.60</td><td>120 ms</td></tr></table></div>
+<p>Values are illustrative. Note how B leaves recall unchanged but improves order, exactly as expected from a reranker.</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>What is an ablation study?</b><span>Measuring the effect of changing or removing one component at a time.</span></li>
+<li><b>Why one variable at a time?</b><span>To attribute changes in metrics to a specific cause.</span></li>
+<li><b>What must stay fixed?</b><span>Eval set, metrics, and all other settings.</span></li>
+<li><b>Why track latency too?</b><span>A quality gain may not be worth a large speed or cost penalty.</span></li>
+<li><b>How do you handle small eval sets?</b><span>Treat small differences as noise; grow the set over time.</span></li>
+</ol></section>
+</article>
+
+<article class="topic lab" id="lab7" data-stage="eval">
+<header><div class="eyebrow">7.8</div><h3>Lab 7 · Build and run your eval set</h3><p class="src">Create 20–50 real questions from your documents, record expected passages, and measure retrieval quality.</p></header>
+<ol><li>Pick 5–10 documents you know well.</li><li>Write 20–50 questions in a user's words, mixing factoid, table, multi-part and 3–5 unanswerable ones.</li><li>For each, copy the exact supporting passage and page into <code>eval.jsonl</code>.</li><li>Run your baseline retriever; compute Recall@1/5/10, MRR and NDCG@5.</li><li>List every miss with what was retrieved instead, and label the cause (parsing, chunking, vocabulary, ambiguity).</li></ol>
+<h4>Expected output</h4><p>A metrics table plus a "miss log". The miss log is the most valuable artefact: it tells you which ablation to run next.</p>
+</article>
+</section>
+
+<section class="part" id="s8">
+<h2>8. Production Considerations</h2>
+<p class="intro">A demo answers questions over a fixed folder. A production system survives changing documents, many customers, model upgrades, partial failures and a budget.</p>
+
+<article class="topic" id="reindexing" data-stage="ops">
+<header><div class="eyebrow">8.1</div><h3>Re-indexing</h3><p class="src">Required when changing embedding models, major chunking logic, or parser output.</p></header>
+<h4>What is it?</h4><p>Rebuilding the whole vector index from source documents because the vectors or chunks themselves have changed.</p>
+<div class="tbl"><table><tr><th>Change</th><th>Re-parse</th><th>Re-chunk</th><th>Re-embed</th></tr>
+<tr><td>New parser / parser upgrade changing output</td><td>Yes</td><td>Yes</td><td>Yes</td></tr><tr><td>New chunk size/strategy</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>New embedding model</td><td>No</td><td>No</td><td>Yes</td></tr><tr><td>New index params (e.g. HNSW M)</td><td>No</td><td>No</td><td>No (rebuild index only)</td></tr>
+<tr><td>Metadata-only fix</td><td>No</td><td>No</td><td>No (update metadata)</td></tr></table></div>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart LR
+  S["Source docs (kept in object storage)"] --> B["Build index v2 in parallel"]
+  B --> E["Run eval set on v2"] --> D{"Better than v1?"}
+  D -- yes --> A["Point alias 'live' to v2"] --> R["Keep v1 for rollback, then delete"]
+  D -- no --> X["Discard v2"]</pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Which changes force a full re-embed?</b><span>New embedding model, chunking changes, or parser output changes.</span></li>
+<li><b>How do you re-index without downtime?</b><span>Blue-green: build alongside, evaluate, switch an alias.</span></li>
+<li><b>Why keep raw source documents?</b><span>You cannot re-parse or re-chunk from vectors alone.</span></li>
+<li><b>How do you estimate re-index cost?</b><span>Total tokens × embedding price, plus compute time.</span></li>
+<li><b>Does changing efSearch require re-indexing?</b><span>No; it is query-time.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="incremental" data-stage="ops">
+<header><div class="eyebrow">8.2</div><h3>Incremental updates</h3><p class="src">Add, update, or delete only affected document chunks.</p></header>
+<h4>How does it work?</h4>
+<pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart TD
+  F["File event: new, changed, deleted"] --> H{"Content hash changed?"}
+  H -- unchanged --> N["Skip"]
+  H -- new or changed --> P["Parse, clean, chunk"] --> C["Hash each chunk; embed only new hashes"]
+  C --> U["Upsert new chunks"] --> D["Delete chunks of this doc_id not in new set"]
+  F -- deleted --> X["Delete where doc_id = X"]</pre>
+<pre><code>def sync_document(doc_id, path):
+    new_chunks = chunk(clean(parse(path)))
+    new_ids = {f"{doc_id}#{i:04d}" for i in range(len(new_chunks))}
+    old_ids = set(col.get(where={"doc_id": doc_id})["ids"])
+    col.upsert(ids=sorted(new_ids), documents=new_chunks, metadatas=[{"doc_id": doc_id}]*len(new_chunks))
+    if old_ids - new_ids: col.delete(ids=list(old_ids - new_ids))</code></pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>How do you detect changed documents?</b><span>File hash or modified timestamp compared with stored values.</span></li>
+<li><b>How do you avoid re-embedding unchanged text?</b><span>Cache embeddings keyed by chunk content hash.</span></li>
+<li><b>What leaves stale chunks behind?</b><span>Upserting new chunks without deleting old IDs that no longer exist.</span></li>
+<li><b>Push or pull updates?</b><span>Webhooks/events for freshness, plus periodic full reconciliation as a safety net.</span></li>
+<li><b>Why does insertion order not matter in HNSW?</b><span>It supports incremental inserts; quality stays similar.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="multitenancy" data-stage="store retrieve ops">
+<header><div class="eyebrow">8.3</div><h3>Multi-tenancy</h3><p class="src">Isolate data and queries by customer, team, or workspace.</p></header>
+<div class="tbl compare"><table><tr><th>Pattern</th><th>Isolation</th><th>Scale to many tenants</th><th>When</th></tr>
+<tr><td>Shared collection + <code>tenant_id</code> filter</td><td>Logical (relies on correct filter)</td><td>Excellent</td><td>Many small tenants</td></tr>
+<tr><td>Namespace / partition per tenant</td><td>Strong logical</td><td>Good</td><td>Most SaaS apps</td></tr>
+<tr><td>Collection per tenant</td><td>Strong</td><td>Limited (overhead per collection)</td><td>Few large tenants</td></tr>
+<tr><td>Database/cluster per tenant</td><td>Physical</td><td>Poor, expensive</td><td>Regulated / enterprise contracts</td></tr></table></div>
+<p class="callout warn"><b>Security.</b> Derive <code>tenant_id</code> from the authenticated session on the server and inject it into every query. Never accept it from the client request body. In Postgres, row-level security can enforce this at the database level.</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Biggest multi-tenant RAG risk?</b><span>Leaking one tenant's chunks into another tenant's answers.</span></li>
+<li><b>Where should the tenant filter come from?</b><span>The server-side authenticated identity.</span></li>
+<li><b>How does Postgres help?</b><span>Row-level security policies on the chunks table.</span></li>
+<li><b>Trade-off of collection-per-tenant?</b><span>Strong isolation but high overhead with thousands of tenants.</span></li>
+<li><b>How about per-document permissions?</b><span>Store ACL groups in metadata and filter by the user's groups.</span></li>
+</ol></section>
+<section class="refs"><h4>References</h4><ul><li><a href="https://www.postgresql.org/docs/current/ddl-rowsecurity.html" target="_blank" rel="noopener">PostgreSQL – Row security policies</a></li><li><a href="https://qdrant.tech/documentation/guides/multiple-partitions/" target="_blank" rel="noopener">Qdrant – Multitenancy guide</a></li></ul></section>
+</article>
+
+<article class="topic" id="cost" data-stage="ops">
+<header><div class="eyebrow">8.4</div><h3>Cost</h3><p class="src">Consider embedding API cost, storage, index memory, and query cost.</p></header>
+<h4>Worked estimate: 10,000 PDFs × 20 pages</h4>
+<div class="tbl"><table><tr><th>Item</th><th>Calculation</th><th>Result</th></tr>
+<tr><td>Tokens</td><td>200,000 pages × ~500 tokens</td><td>100M tokens</td></tr>
+<tr><td>Chunks</td><td>100M ÷ ~450 new tokens per chunk (500 size, 50 overlap)</td><td>≈ 222,000</td></tr>
+<tr><td>One-time embedding (text-embedding-3-small at $0.02 / 1M tokens)</td><td>~111M tokens incl. overlap</td><td>≈ $2.2</td></tr>
+<tr><td>Vector RAM (1536-dim float32)</td><td>222k × 1536 × 4 B</td><td>≈ 1.4 GB (+ HNSW links)</td></tr>
+<tr><td>Per query</td><td>Query embedding + search + reranker + LLM tokens</td><td>LLM tokens usually dominate</td></tr></table></div>
+<p>Prices change; check current provider pricing. The lesson holds: embedding is often cheap, while <b>index RAM</b> at scale and <b>LLM generation</b> per query are the big recurring costs.</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Largest recurring cost in most RAG apps?</b><span>LLM generation tokens per query.</span></li>
+<li><b>How do you cut vector memory?</b><span>Smaller dimension, quantization, or disk-based indexes.</span></li>
+<li><b>How do you avoid paying twice for embeddings?</b><span>Cache by content hash; only embed changed chunks.</span></li>
+<li><b>How does k affect cost?</b><span>More chunks sent to the LLM means more input tokens.</span></li>
+<li><b>Hidden cost of re-indexing?</b><span>Full re-embedding plus temporary double storage during blue-green switch.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="prod-latency" data-stage="query retrieve rerank generate">
+<header><div class="eyebrow">8.5</div><h3>Latency (production)</h3><p class="src">Optimize index type, top-k, filtering, and reranking.</p></header>
+<div class="tbl"><table><tr><th>Stage</th><th>Typical time</th><th>Levers</th></tr>
+<tr><td>Query rewriting (LLM)</td><td>200–800 ms</td><td>Skip for well-formed queries; small model</td></tr>
+<tr><td>Query embedding</td><td>10–100 ms</td><td>Local model, cache frequent queries</td></tr>
+<tr><td>Vector search</td><td>1–50 ms</td><td>Index type, efSearch/nprobe, smaller k</td></tr>
+<tr><td>Metadata filtering</td><td>0–100+ ms</td><td>Index filter columns, partitions</td></tr>
+<tr><td>Reranking</td><td>50–500 ms</td><td>Fewer candidates, smaller reranker, GPU</td></tr>
+<tr><td>LLM generation</td><td>0.5–5 s</td><td>Fewer context tokens, streaming, faster model</td></tr></table></div>
+<p>Times are rough orders of magnitude. Stream the LLM answer so users see text within about a second.</p>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Which stage usually dominates RAG latency?</b><span>LLM generation.</span></li>
+<li><b>How does streaming help?</b><span>Time-to-first-token feels fast even when total time is unchanged.</span></li>
+<li><b>Two ways to cut reranking latency?</b><span>Fewer candidates or a smaller model.</span></li>
+<li><b>How do filters affect latency?</b><span>Unindexed or very selective filters can slow search.</span></li>
+<li><b>What should you measure?</b><span>p50/p95 per stage, logged per request.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="versioning" data-stage="ops">
+<header><div class="eyebrow">8.6</div><h3>Versioning</h3><p class="src">Track embedding model version, chunking version, parser version, and index schema.</p></header>
+<h4>Why is it important?</h4><p>Six months later someone asks "why did quality drop?". Without versions you can't tell which chunks came from which pipeline, or what to re-index.</p>
+<pre><code>{
+  "index_name": "kb_v3",
+  "embedding_model": "BAAI/bge-base-en-v1.5", "dimension": 768, "metric": "cosine",
+  "parser": "docling 2.x", "cleaner": "clean-v4",
+  "chunker": "recursive size=512 overlap=64 + heading-prefix",
+  "index": "hnsw m=16 ef_construction=64",
+  "schema_version": 3, "built_at": "2025-06-01", "eval": {"recall@5": 0.86, "ndcg@5": 0.70}
+}</code></pre>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>Which versions should be tracked?</b><span>Embedding model, parser, chunker, index schema and parameters.</span></li>
+<li><b>Where to store them?</b><span>A manifest per index and version fields in chunk metadata.</span></li>
+<li><b>How does versioning enable rollback?</b><span>You can point traffic back to an older, known-good index.</span></li>
+<li><b>Why store eval scores with the version?</b><span>To compare builds objectively.</span></li>
+<li><b>What is an index schema?</b><span>The set of fields, types, dimension and metric a collection expects.</span></li>
+</ol></section>
+</article>
+
+<article class="topic" id="consistency" data-stage="ops">
+<header><div class="eyebrow">8.7</div><h3>Backups and consistency</h3><p class="src">Handle failed ingestion, duplicate chunks, stale vectors, and concurrent updates.</p></header>
+<div class="tbl"><table><tr><th>Problem</th><th>Example</th><th>Fix</th></tr>
+<tr><td>Failed ingestion</td><td>Embedding API times out at chunk 400 of 900</td><td>Retries with backoff; job status per document; resume from checkpoint</td></tr>
+<tr><td>Duplicate chunks</td><td>Same file uploaded twice under two names</td><td>Deterministic IDs, upsert, file-level content hash de-dup</td></tr>
+<tr><td>Stale vectors</td><td>Old policy chunks remain after an update</td><td>Delete-by-doc_id on update; periodic reconciliation against source</td></tr>
+<tr><td>Concurrent updates</td><td>Two workers process edits to the same file</td><td>Per-document lock or queue keyed by doc_id; last-write-wins with version numbers</td></tr>
+<tr><td>Data loss</td><td>Vector DB volume corrupted</td><td>Snapshots/backups; keep raw files so you can always rebuild</td></tr></table></div>
+<div class="callout good"><b>Rule.</b> Treat the vector index as a derived, rebuildable cache. The source of truth is your original files plus a metadata database.</div>
+<section class="qa"><h4>Interview questions</h4><ol>
+<li><b>How do you make ingestion retry-safe?</b><span>Idempotent upserts with deterministic IDs.</span></li>
+<li><b>How do you find stale vectors?</b><span>Compare doc_ids/hashes in the index with the source system.</span></li>
+<li><b>How to prevent concurrent update races?</b><span>Serialize work per doc_id with a queue or lock.</span></li>
+<li><b>What should you back up?</b><span>Raw documents, metadata DB, and index snapshots for fast restore.</span></li>
+<li><b>Why is the index a "derived cache"?</b><span>It can always be regenerated from source documents and pipeline versions.</span></li>
+</ol></section>
+</article>
+</section>
+
+<section class="part" id="s9">
+<h2>9. Recommended Learning Order</h2>
+<p class="intro">The source document's order, linked to the notes above. Each step builds on the previous one.</p>
+<article class="topic" id="learning-order">
+<header><div class="eyebrow">9</div><h3>Ten steps, in order</h3></header>
+<div class="tbl"><table><tr><th>#</th><th>Step</th><th>Notes</th><th>Lab</th></tr>
+<tr><td>1</td><td>Vectors, dimensions, and similarity metrics</td><td><a href="#vector">1.1</a>, <a href="#dimension">1.2</a>, <a href="#dot-product">2.1–2.4</a></td><td>—</td></tr>
+<tr><td>2</td><td>Embeddings and embedding models</td><td><a href="#embedding-model">1.3–1.9</a></td><td><a href="#lab1">Lab 1</a></td></tr>
+<tr><td>3</td><td>Brute-force semantic search</td><td><a href="#top-k">2.5</a>, <a href="#exact-search">2.6</a></td><td><a href="#lab2">Lab 2</a></td></tr>
+<tr><td>4</td><td>ANN indexes: flat, HNSW, IVF</td><td><a href="#ann">2.7</a>, <a href="#flat">3.1–3.7</a></td><td><a href="#lab3">Lab 3</a></td></tr>
+<tr><td>5</td><td>Vector database operations and metadata filtering</td><td><a href="#collection">4.1–4.6</a></td><td><a href="#lab4">Lab 4</a></td></tr>
+<tr><td>6</td><td>Document parsing</td><td><a href="#parsing">5.1–5.5</a></td><td><a href="#lab5">Lab 5</a></td></tr>
+<tr><td>7</td><td>Chunking strategies and overlap</td><td><a href="#chunk">6.1–6.11</a></td><td><a href="#lab6">Lab 6</a></td></tr>
+<tr><td>8</td><td>Hybrid search, reranking, and RAG</td><td><a href="#hybrid">4.7–4.9</a>, <a href="#rag">7.1–7.3</a></td><td>—</td></tr>
+<tr><td>9</td><td>Evaluation using a real question set</td><td><a href="#eval-set">7.4–7.7</a></td><td><a href="#lab7">Lab 7</a></td></tr>
+<tr><td>10</td><td>Production concerns: updates, re-indexing, cost, and multi-tenancy</td><td><a href="#reindexing">8.1–8.7</a></td><td>Capstone</td></tr></table></div>
+</article>
+</section>
+
+<section class="part" id="s10">
+<h2>10. Core Rule</h2>
+<div class="core"><p>Build a small end-to-end pipeline first, create an evaluation set from real documents, and optimize chunking, embeddings, indexes, and retrieval only after measuring baseline performance.</p></div>
+<div class="figure"><pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart LR
+  A["Simple pipeline that works end to end"] --> B["Eval set: 20-50 real questions"] --> C["Baseline metrics"]
+  C --> D["Change ONE thing"] --> E["Re-measure"] --> F{"Better?"}
+  F -- yes --> G["Keep it"] --> D
+  F -- no --> H["Revert"] --> D</pre></div>
+<p style="max-width:65ch">Why it matters: beginners often spend weeks choosing the "best" vector database or chunker before they can answer a single question. Most early quality problems come from parsing and chunking, which you only discover by running the whole pipeline on real documents and looking at the misses.</p>
+</section>
+
+<section class="part" id="pipeline">
+<h2>End-to-End RAG Pipeline</h2>
+<p class="intro">How every topic above connects, from a user uploading a PDF to an answer with citations.</p>
+<div class="figure"><pre class="mermaid">%%{init: {'theme':'default'}}%%
+flowchart TD
+  subgraph ING["Ingestion (offline, per document)"]
+    U["1. Document upload: PDF, DOCX, HTML"] --> P["2. Parsing: text, layout, tables, OCR for scans"]
+    P --> CL["3. Cleaning: headers, footers, hyphens, boilerplate"]
+    CL --> CH["4. Chunking: structure-aware + recursive, 400-512 tokens, 10-20% overlap"]
+    CH --> EM["5. Embedding: same model + version, batch, normalize"]
+    EM --> DB[("6. Vector DB: vectors + metadata, HNSW index, upsert by chunk ID")]
+  end
+  subgraph QRY["Query (online, per question)"]
+    Q["7. User query"] --> QR["Optional query rewriting"]
+    QR --> QE["8. Query embedding: same model"]
+    QE --> RT["9. Retrieval: vector + BM25 hybrid, metadata and tenant filters, top 30"]
+    DB --> RT
+    RT --> RR["10. Optional reranking: cross-encoder, keep top 5"]
+    RR --> LLM["11. LLM answer generation: prompt + chunks + citations"]
+    LLM --> ANS["Answer with sources"]
+  end
+  ANS -.-> EV["Evaluation and logs: Recall@k, NDCG, faithfulness"]
+  EV -.-> CH</pre></div>
+
+<article class="topic" id="pipeline-steps" data-stage="upload parse clean chunk embed store query retrieve rerank generate">
+<header><div class="eyebrow">Walkthrough</div><h3>Stage by stage</h3></header>
+<div class="tbl"><table><tr><th>Stage</th><th>What happens</th><th>Key decisions</th><th>Go-to tools</th></tr>
+<tr><td>1. Upload</td><td>File arrives with owner, tenant, type</td><td>Store raw file; compute file hash; assign doc_id</td><td>S3 / local storage, Postgres</td></tr>
+<tr><td>2. Parsing</td><td>File → text with pages and structure</td><td>Light vs heavy parser; OCR if no text layer</td><td>PyMuPDF, Docling, Unstructured, Tesseract</td></tr>
+<tr><td>3. Cleaning</td><td>Remove noise, fix line breaks</td><td>Don't remove headings or numbers</td><td>Python, regex</td></tr>
+<tr><td>4. Chunking</td><td>Text → chunks + metadata</td><td>Strategy, size, overlap, tables, parent-child</td><td>LangChain splitters, LlamaIndex node parsers</td></tr>
+<tr><td>5. Embedding</td><td>Chunk → vector</td><td>Model, dimension, normalization, batching</td><td>Sentence-Transformers, OpenAI, Cohere</td></tr>
+<tr><td>6. Storage</td><td>Upsert vectors + metadata into an index</td><td>DB, index type, metric, namespaces</td><td>FAISS, Chroma, pgvector, Qdrant</td></tr>
+<tr><td>7. User query</td><td>Question from chat/search UI</td><td>Condense chat history; optional rewriting</td><td>LLM</td></tr>
+<tr><td>8. Query embedding</td><td>Question → vector</td><td>Same model and prefixes as documents</td><td>Same as stage 5</td></tr>
+<tr><td>9. Retrieval</td><td>Find candidate chunks</td><td>k, hybrid fusion, filters, tenant isolation</td><td>Vector DB, BM25, RRF</td></tr>
+<tr><td>10. Reranking</td><td>Reorder candidates precisely</td><td>Candidates in, chunks out, latency budget</td><td>Cross-encoder, Cohere Rerank</td></tr>
+<tr><td>11. Generation</td><td>LLM writes grounded answer</td><td>Prompt, chunk order, citations, refusal behaviour</td><td>Any LLM API</td></tr></table></div>
+<h4>Minimal working code (about 40 lines)</h4>
+<pre><code>import pymupdf, chromadb
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from sentence_transformers import SentenceTransformer, CrossEncoder
+
+embedder = SentenceTransformer("BAAI/bge-small-en-v1.5")
+reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(chunk_size=450, chunk_overlap=60)
+col = chromadb.PersistentClient("./kb").get_or_create_collection("docs", metadata={"hnsw:space": "cosine"})
+
+def ingest(path, doc_id):
+    ids, texts, metas = [], [], []
+    for pno, page in enumerate(pymupdf.open(path), start=1):            # 1-2 upload + parse
+        text = " ".join(page.get_text().split())                         # 3 (very light) cleaning
+        for i, chunk in enumerate(splitter.split_text(text)):            # 4 chunking
+            ids.append(f"{doc_id}#p{pno}-{i}"); texts.append(chunk)
+            metas.append({"doc_id": doc_id, "source": path, "page": pno})
+    vecs = embedder.encode(texts, normalize_embeddings=True).tolist()    # 5 embedding
+    col.delete(where={"doc_id": doc_id})                                 # remove stale chunks
+    col.upsert(ids=ids, embeddings=vecs, documents=texts, metadatas=metas)   # 6 storage
+
+def answer(question, llm):
+    q = embedder.encode(question, normalize_embeddings=True).tolist()    # 7-8 query embedding
+    r = col.query(query_embeddings=[q], n_results=20)                    # 9 retrieval
+    cands = list(zip(r["documents"][0], r["metadatas"][0]))
+    scores = reranker.predict([(question, d) for d, _ in cands])         # 10 reranking
+    top = [c for _, c in sorted(zip(scores, cands), key=lambda x: -x[0])][:5]
+    ctx = "\n\n".join(f"[{m['source']} p.{m['page']}] {d}" for d, m in top)
+    prompt = ("Answer only from the context and cite [source p.page]. "
+              "If the answer is not there, say you don't know.\n\n"
+              f"Context:\n{ctx}\n\nQuestion: {question}")
+    return llm(prompt)                                                   # 11 generation</code></pre>
+</article>
+</section>
+
+<section class="part" id="roadmap">
+<h2>30-Day Practical Learning Roadmap</h2>
+<p class="intro">Four weeks plus a two-day capstone, following the recommended learning order. Plan for about 1.5–2 hours a day. Use one real document set throughout (for example 20–50 PDFs of policies, manuals or papers you care about) so every week builds on the last.</p>
+
+<article class="topic week" id="week1">
+<header><div class="eyebrow">Week 1 · Days 1–7</div><h3>Vectors, similarity and embeddings</h3></header>
+<h4>Topics to study</h4><p>Vectors, dimensions, dot product, cosine, Euclidean, normalization, embedding models, dense vs sparse, token limits, model consistency, top-k, exact search (sections 1–2).</p>
+<div class="daygrid">
+<div><b>Days 1–2</b>NumPy refresher; implement dot, cosine, L2 by hand; verify normalization makes dot = cosine.</div>
+<div><b>Days 3–4</b>Lab 1: embed 20 sentences, inspect shapes, plot the similarity heatmap.</div>
+<div><b>Days 5–6</b>Lab 2: brute-force search over 200 FAQ paragraphs; compare cosine vs dot rankings.</div>
+<div><b>Day 7</b>Compare 2 embedding models on 10 hand-written queries; count tokens per paragraph.</div></div>
+<h4>Hands-on task</h4><p>Build <code>search.py</code>: load a text file, embed paragraphs, and answer queries from the command line with top-5 results and scores, using only NumPy + Sentence-Transformers.</p>
+<h4>Expected output</h4><ul><li>Working CLI semantic search with scores.</li><li>A heatmap image showing topic clusters.</li><li>A short note: which model ranked your 10 test queries better, and why.</li></ul>
+<h4>Tools</h4><ul class="tools"><li>Python</li><li>NumPy</li><li>sentence-transformers</li><li>matplotlib</li><li>tiktoken</li></ul>
+</article>
+
+<article class="topic week" id="week2">
+<header><div class="eyebrow">Week 2 · Days 8–14</div><h3>Indexes and vector databases</h3></header>
+<h4>Topics to study</h4><p>ANN, Flat, HNSW, IVF, recall, latency, quantization, index parameters, collections, metadata, filtering, upsert, delete, namespaces (sections 2.7–4.6).</p>
+<div class="daygrid">
+<div><b>Days 8–9</b>FAISS: Flat vs HNSW vs IVF on 100k+ real embeddings (embed Wikipedia paragraphs or your corpus).</div>
+<div><b>Day 10</b>Lab 3: sweep efSearch and nprobe; plot recall vs latency; try IVF-PQ and note memory.</div>
+<div><b>Days 11–12</b>Lab 4 in Chroma: add, upsert, delete, metadata-filtered top-k.</div>
+<div><b>Days 13–14</b>Lab 4 in pgvector (Docker <code>pgvector/pgvector</code> image): HNSW index, filters, <code>ON CONFLICT</code> upserts, tenant_id column.</div></div>
+<h4>Hands-on task</h4><p>Write a benchmark notebook and a tiny "vector store" module with the same <code>add / upsert / delete / search(filter, k)</code> interface backed by both Chroma and pgvector.</p>
+<h4>Expected output</h4><ul><li>A recall-vs-latency chart for Flat, HNSW and IVF.</li><li>A table of memory per index type.</li><li>Passing tests for CRUD and filtered search on both backends.</li></ul>
+<h4>Tools</h4><ul class="tools"><li>FAISS</li><li>Chroma</li><li>pgvector</li><li>PostgreSQL / Docker</li><li>psycopg</li></ul>
+</article>
+
+<article class="topic week" id="week3">
+<header><div class="eyebrow">Week 3 · Days 15–21</div><h3>Parsing, chunking, hybrid search and RAG</h3></header>
+<h4>Topics to study</h4><p>Parsing, OCR, layout awareness, parser trade-offs, cleaning, all chunking strategies, tables, chunk metadata, hybrid search, reranking, query rewriting, RAG, context window (sections 4.7–7.3).</p>
+<div class="daygrid">
+<div><b>Days 15–16</b>Lab 5: PyMuPDF vs Docling (and Tesseract for a scan) on your PDFs; write a cleaning function.</div>
+<div><b>Days 17–18</b>Chunk with LangChain (fixed, recursive, Markdown-header) and LlamaIndex (SentenceSplitter, SemanticSplitter, Hierarchical); store rich chunk metadata.</div>
+<div><b>Day 19</b>Add BM25 (<code>rank_bm25</code> or Postgres full-text) and RRF fusion; add a cross-encoder reranker.</div>
+<div><b>Days 20–21</b>Build the RAG chatbot twice: once in LangChain, once in LlamaIndex, with citations and "I don't know" behaviour.</div></div>
+<h4>Hands-on task</h4><p>A "chat with my PDFs" app: ingest a folder, hybrid retrieve, rerank, and answer with [file, page] citations. A simple Streamlit or Gradio UI is optional.</p>
+<h4>Expected output</h4><ul><li>Clean Markdown output for each PDF, with a parser comparison table.</li><li>Working RAG chatbot answering with citations.</li><li>Notes on which framework felt clearer for your use case.</li></ul>
+<h4>Tools</h4><ul class="tools"><li>PyMuPDF</li><li>Docling / Unstructured</li><li>pytesseract</li><li>LangChain</li><li>LlamaIndex</li><li>rank_bm25</li><li>sentence-transformers CrossEncoder</li><li>Chroma or pgvector</li></ul>
+</article>
+
+<article class="topic week" id="week4">
+<header><div class="eyebrow">Week 4 · Days 22–28</div><h3>Evaluation, ablation and production</h3></header>
+<h4>Topics to study</h4><p>Evaluation sets, Recall@k, NDCG, MRR, retrieval vs generation failures, ablation testing, re-indexing, incremental updates, multi-tenancy, cost, latency, versioning, consistency (sections 7.4–8.7).</p>
+<div class="daygrid">
+<div><b>Days 22–23</b>Lab 7: write 30–50 real questions with expected passages; compute baseline Recall@k, MRR, NDCG.</div>
+<div><b>Days 24–25</b>Lab 6 + ablations: chunk size/overlap grid, embedding model swap, hybrid on/off, reranker on/off.</div>
+<div><b>Day 26</b>Incremental sync: content hashes, delete stale chunks, re-run safely twice (idempotency test).</div>
+<div><b>Days 27–28</b>Multi-tenant pgvector with row-level security; index version manifest; per-stage latency logging and a cost estimate.</div></div>
+<h4>Hands-on task</h4><p>Turn week 3's chatbot into a measured system: an <code>eval.py</code> that prints a metrics table for any configuration, plus a sync job and versioned indexes.</p>
+<h4>Expected output</h4><ul><li>Ablation table (one row per change) with Recall@5, NDCG@5 and p95 latency.</li><li>A miss log classifying each failure as retrieval or generation.</li><li>A chosen "production config" justified by numbers.</li></ul>
+<h4>Tools</h4><ul class="tools"><li>pgvector</li><li>FAISS (ground truth)</li><li>scikit-learn (ndcg_score)</li><li>Ragas (optional)</li><li>LangChain / LlamaIndex</li><li>pandas</li></ul>
+</article>
+
+<article class="topic week" id="capstone">
+<header><div class="eyebrow">Days 29–30</div><h3>Capstone and review</h3></header>
+<h4>Hands-on task</h4><p>Package everything as one repository: <code>ingest/</code>, <code>retrieve/</code>, <code>eval/</code>, <code>app/</code>, a README with an architecture diagram, the final metrics table and the version manifest. Re-index once with a different embedding model using blue-green switching, and compare results.</p>
+<h4>Expected output</h4><ul><li>A demo-able RAG app over your own documents.</li><li>Before/after metrics for the model upgrade.</li><li>Answers to all interview questions in these notes in your own words.</li></ul>
+<h4>Tools</h4><ul class="tools"><li>Everything above</li><li>Git</li><li>Docker Compose</li></ul>
+</article>
+
+<div class="topic">
+<h3 style="font-size:1.1rem">Course and reading list for the month</h3>
+<ul class="refs" style="margin-top:10px">
+<li><a href="https://www.deeplearning.ai/short-courses/" target="_blank" rel="noopener">DeepLearning.AI short courses</a> (search for RAG, vector databases, LlamaIndex)</li>
+<li><a href="https://www.pinecone.io/learn/" target="_blank" rel="noopener">Pinecone Learn</a> (vector search fundamentals, FAISS manual)</li>
+<li><a href="https://github.com/facebookresearch/faiss/wiki" target="_blank" rel="noopener">FAISS wiki</a></li>
+<li><a href="https://docs.trychroma.com/" target="_blank" rel="noopener">Chroma docs</a> · <a href="https://github.com/pgvector/pgvector" target="_blank" rel="noopener">pgvector README</a></li>
+<li><a href="https://python.langchain.com/docs/tutorials/rag/" target="_blank" rel="noopener">LangChain RAG tutorial</a> · <a href="https://docs.llamaindex.ai/" target="_blank" rel="noopener">LlamaIndex docs</a></li>
+<li><a href="https://www.sbert.net/" target="_blank" rel="noopener">Sentence-Transformers docs</a> · <a href="https://huggingface.co/spaces/mteb/leaderboard" target="_blank" rel="noopener">MTEB leaderboard</a></li>
+<li><a href="https://www.anthropic.com/news/contextual-retrieval" target="_blank" rel="noopener">Anthropic – Contextual Retrieval</a></li>
+</ul>
+</div>
+</section>
+
+<footer>Built from "Vector Embeddings, Vector Databases &amp; Chunking — Study Notes" (source PDF, 10 sections). Example numbers marked "illustrative" are for learning; measure your own. Library APIs evolve, so check the linked docs for your installed versions.</footer>
+</main>
+</div>
+
+<script>
+(function(){
+  var STAGES=[["upload","Upload"],["parse","Parse"],["clean","Clean"],["chunk","Chunk"],["embed","Embed"],["store","Store & index"],["query","Query"],["retrieve","Retrieve"],["rerank","Rerank"],["generate","Generate"],["eval","Evaluate"],["ops","Operate"]];
+  document.querySelectorAll(".topic[data-stage]").forEach(function(a){
+    var on=a.getAttribute("data-stage").split(" ");
+    var ol=document.createElement("ol"); ol.className="pipe"; ol.setAttribute("aria-label","Pipeline stages for this topic");
+    STAGES.forEach(function(s){var li=document.createElement("li");li.textContent=s[1];if(on.indexOf(s[0])>-1){li.className="on";li.setAttribute("aria-current","true");}ol.appendChild(li);});
+    var h=a.querySelector("header"); if(h) h.insertAdjacentElement("afterend",ol);
+  });
+  var toc=document.getElementById("toc");
+  document.querySelectorAll("section.part").forEach(function(sec){
+    var h2=sec.querySelector("h2"); if(!h2) return;
+    var li=document.createElement("li"); li.className="h";
+    li.innerHTML='<a href="#'+sec.id+'"></a>'; li.firstChild.textContent=h2.textContent; toc.appendChild(li);
+    sec.querySelectorAll("article.topic[id]").forEach(function(a){
+      var h3=a.querySelector("h3"), eb=a.querySelector(".eyebrow"); if(!h3) return;
+      var t=document.createElement("li"); t.className="t";
+      var link=document.createElement("a"); link.href="#"+a.id;
+      link.textContent=(eb && /^\d/.test(eb.textContent)?eb.textContent+"  ":"")+h3.textContent;
+      t.appendChild(link); toc.appendChild(t);
+    });
+  });
+  var f=document.getElementById("tocfilter");
+  f.addEventListener("input",function(){
+    var q=f.value.trim().toLowerCase();
+    toc.querySelectorAll("li").forEach(function(li){li.hidden=q!=="" && li.className==="t" && li.textContent.toLowerCase().indexOf(q)===-1;});
+    toc.querySelectorAll("li.h").forEach(function(li){li.hidden=q!=="";});
+  });
+  var box=document.getElementById("tocbox");
+  if(window.matchMedia("(max-width:1039px)").matches) box.open=false;
+  toc.addEventListener("click",function(e){ if(e.target.tagName==="A" && window.matchMedia("(max-width:1039px)").matches) box.open=false; });
+  var links={}; toc.querySelectorAll("a").forEach(function(a){links[a.getAttribute("href").slice(1)]=a;});
+  var current=null;
+  function setActive(id){ if(id===current||!links[id]) return; if(current&&links[current]) links[current].classList.remove("active");
+    links[id].classList.add("active"); current=id;
+    if(window.matchMedia("(min-width:1040px)").matches){ var nav=document.querySelector(".rail nav"), a=links[id];
+      if(a.offsetTop<nav.scrollTop+40||a.offsetTop>nav.scrollTop+nav.clientHeight-60) nav.scrollTop=a.offsetTop-nav.clientHeight/3; } }
+  if("IntersectionObserver" in window){
+    var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting) setActive(e.target.id); }); },{rootMargin:"0px 0px -70% 0px"});
+    document.querySelectorAll("article.topic[id], section.part[id]").forEach(function(el){ io.observe(el); });
+  }
+  var bar=document.getElementById("progress"), top=document.getElementById("totop");
+  function onScroll(){ var h=document.documentElement, max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+"%"; top.hidden=h.scrollTop<700; }
+  window.addEventListener("scroll",onScroll,{passive:true}); onScroll();
+  top.addEventListener("click",function(){ window.scrollTo({top:0,behavior:"smooth"}); });
+})();
+</script>
+
+<!--claude-mermaid-runtime-begin:3477-->
+<style>.mermaid-diagram{margin-block:4px}.mermaid-diagram svg{display:block;margin:0 auto;max-width:100%;height:auto}</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>(function(){
+var CFG={"palettes":{"light":{"surface":"#f4efe4","text":"#42392e","line":"#8a7f6d","border":"#7a6c52","bg":"#fffdf8"},"dark":{"surface":"#262b34","text":"#f2f3f5","line":"#a8adb8","border":"#9aa4b8","bg":"#1f232b"}}};
+if(typeof mermaid==='undefined')return;
+var pres=Array.prototype.slice.call(document.querySelectorAll('pre.mermaid')).filter(function(p){if(p.hasAttribute('data-claude-mermaid-claimed'))return false;p.setAttribute('data-claude-mermaid-claimed','1');return true;});
+if(!pres.length)return;
+var mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+var root=document.documentElement;
+var items=pres.map(function(pre){
+var mount=document.createElement('div');mount.className='mermaid-diagram';
+return {pre:pre,mount:mount,src:pre.textContent||''};
+});
+var seq=0;
+var renderGen=0;
+var lastKey='';
+function pageBg(fallback){
+var els=[document.body,document.documentElement];
+for(var i=0;i<els.length;i++){
+var c=els[i]&&getComputedStyle(els[i]).backgroundColor;
+if(c&&c!=='transparent'&&c!=='rgba(0, 0, 0, 0)')return c;
+}
+return fallback;
+}
+function render(){
+var theme=root.getAttribute('data-theme');
+var dark=theme==='dark'||(!!(mq&&mq.matches)&&theme!=='light');
+var pal=dark?CFG.palettes.dark:CFG.palettes.light;
+var bg=pageBg(pal.bg);
+var key=(dark?'d':'l')+'|'+bg;
+if(key===lastKey)return;
+lastKey=key;
+var gen=++renderGen;
+var font=getComputedStyle(document.body).fontFamily||'sans-serif';
+var nat={useMaxWidth:false};
+mermaid.initialize({
+startOnLoad:false,securityLevel:'strict',theme:'base',
+flowchart:nat,sequence:nat,er:nat,state:nat,class:nat,pie:nat,
+gantt:nat,journey:nat,timeline:nat,gitGraph:nat,mindmap:nat,xyChart:nat,
+quadrantChart:nat,sankey:nat,c4:nat,requirement:nat,block:nat,
+packet:nat,kanban:nat,architecture:nat,radar:nat,
+themeVariables:{background:bg,mainBkg:pal.surface,primaryColor:pal.surface,
+primaryTextColor:pal.text,lineColor:pal.line,primaryBorderColor:pal.border,
+nodeBorder:pal.border,clusterBorder:pal.border,edgeLabelBackground:bg,
+clusterBkg:'rgba(127,127,127,0.07)',titleColor:pal.text,
+darkMode:dark,rowOdd:bg,rowEven:'rgba(127,127,127,0.07)',
+attributeBackgroundColorOdd:bg,attributeBackgroundColorEven:'rgba(127,127,127,0.07)',
+fontSize:'16px',fontFamily:font},
+themeCSS:'.node rect, .node circle, .node polygon, .node path, .cluster rect { stroke-width: 2px; }'
+});
+items.forEach(function(it){
+var id='claude-mermaid-'+seq++;
+mermaid.render(id,it.src).then(function(r){
+if(gen!==renderGen)return;
+var prev=it.pre.previousElementSibling;
+if(prev&&prev.className==='mermaid-diagram'&&prev!==it.mount)return;
+it.mount.innerHTML=r.svg;
+if(!it.mount.parentNode)it.pre.parentNode.insertBefore(it.mount,it.pre);
+it.pre.style.display='none';
+},function(){
+var scratch=document.getElementById(id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+scratch=document.getElementById('d'+id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+if(gen!==renderGen)return;
+if(it.mount.parentNode)it.mount.parentNode.removeChild(it.mount);
+it.pre.style.display='';
+});
+});
+}
+render();
+if(mq&&mq.addEventListener)mq.addEventListener('change',render);
+if(typeof MutationObserver!=='undefined')new MutationObserver(render).observe(root,{attributes:true,attributeFilter:['data-theme']});
+})();</script>
+<!--claude-mermaid-runtime-end-->
+
+</body></html>
