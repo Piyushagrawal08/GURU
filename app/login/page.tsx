@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { motion } from "motion/react";
 import { signIn, signUp } from "@/app/actions";
@@ -74,6 +75,16 @@ export default function LoginPage() {
               autoComplete={mode === "signin" ? "current-password" : "new-password"}
               minLength={6}
             />
+            {mode === "signin" && (
+              <div className="-mt-2 text-right">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-muted underline-offset-4 hover:text-ink hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            )}
 
             {msg && (
               <p className="rounded-lg bg-coral-soft px-3 py-2 text-sm text-coral-deep">

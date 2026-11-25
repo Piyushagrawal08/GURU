@@ -118,3 +118,24 @@ begin
       for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
   end if;
 end $$;
+
+-- ---------- email_exists (forgot-password check) --------------------------
+-- Lets the server check whether an account exists before sending a reset
+-- link. Only the server's secret (service_role) key may call it; the public
+-- anon key used in browsers cannot.
+create or replace function public.email_exists(p_email text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from auth.users
+    where lower(email) = lower(trim(p_email))
+      and deleted_at is null
+  );
+$$;
+
+revoke all on function public.email_exists(text) from public, anon, authenticated;
+grant execute on function public.email_exists(text) to service_role;
